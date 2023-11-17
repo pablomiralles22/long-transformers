@@ -12,29 +12,26 @@ sys.path.append(
     os.path.join(os.getcwd(), "src")
 )  # WARNING: this migh file depending on your location
 
-from utils import positional_encoding, ModelWithHead
+from utils import positional_encoding, ModelWithClassificationHead
 from logger import print_and_log
 from models.conv_transformer import ConvTransformer
 from task_data.text_classification import (
     TextClassificationDataset,
     Collator,
-    TEXT_CLASSIFICATION_NUM_EMBEDDINGS,
+    NUM_EMBEDDINGS as TEXT_CLASSIFICATION_NUM_EMBEDDINGS,
+    PAD_TOKEN as TEXT_CLASSIFICATION_PAD_TOKEN,
 )
 
 device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
 
-PAD_TOKEN = 0
-CLS_TOKEN = 1
-
-
 ###### Load Model ######
-def load_conv_transformer(model_params, num_embeddings):
+def load_conv_transformer(model_params, num_embeddings, pad_token):
     embedding_params = {
         "num_embeddings": num_embeddings,
         "embedding_dim": model_params["conv_layers_params"][0]["conv_params"][
             "in_channels"
         ],
-        "padding_idx": PAD_TOKEN,
+        "padding_idx": pad_token,
     }
     return ConvTransformer(
         embedding_params,
@@ -54,12 +51,13 @@ def load_model(config):
     match task:
         case "text-classification":
             num_embeddings = TEXT_CLASSIFICATION_NUM_EMBEDDINGS
+            pad_token = TEXT_CLASSIFICATION_PAD_TOKEN
         case _:
             raise ValueError(f"Unknown task: {task}")
 
     match config["model"]:
         case "conv-transformer":
-            return load_conv_transformer(config["model_params"], num_embeddings)
+            return load_conv_transformer(config["model_params"], num_embeddings, pad_token)
         case _:
             raise ValueError(f"Unknown model: {config['model']}")
 
@@ -149,7 +147,7 @@ def run(config):
     # load model
     model = load_model(config)
     print(f"Total parameters: {sum(p.numel() for p in model.parameters())}")
-    model = ModelWithHead(
+    model = ModelWithClassificationHead(
         model, config["model_params"]["transformer_params"]["layer_params"]["d_model"]
     ).to(device)
 

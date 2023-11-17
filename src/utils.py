@@ -21,9 +21,9 @@ def positional_encoding(length, d_model, device=None):
 
     return pe.to(device)
 
-class ModelWithHead(nn.Module):
+class ModelWithClassificationHead(nn.Module):
     def __init__(self, model, d_model):
-        super(ModelWithHead, self).__init__()
+        super(ModelWithClassificationHead, self).__init__()
 
         self.model = model
         self.head = nn.Linear(d_model, 1)

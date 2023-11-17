@@ -3,7 +3,9 @@ import torch
 
 from torch.utils.data import Dataset
 
-TEXT_CLASSIFICATION_NUM_EMBEDDINGS = 256 + 2 # PAD, CLS, bytes
+NUM_EMBEDDINGS = 256 + 2 # PAD, CLS, bytes
+PAD_TOKEN = 0
+CLS_TOKEN = 1
 
 class TextClassificationDataset(Dataset):
     def __init__(self, root_dir, split="train"):
