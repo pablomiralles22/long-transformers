@@ -1,0 +1,24 @@
+{
+    "model": "transformer",
+    "model_params": {
+        "num_layers": 6,
+        "layer_params": {
+            "d_model": 512,
+            "nhead": 8,
+            "dim_feedforward": 2048,
+            "batch_first": true,
+            "dropout": 0.1
+        }
+    },
+    "train_params": {
+        "batch_size": 32,
+        "epochs": 26,
+        "lr": 0.05,
+        "weight_decay": 0.1,
+        "max_len": 2048
+    },
+    "model_file_name": "out/models/transformer_text_classification.pt",
+    "log_file_name": "out/logs/transformer_text_classification.log",
+    "task": "text-classification",
+    "dataset_root_dir": "datasets/aclImdb"
+}

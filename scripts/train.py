@@ -12,9 +12,10 @@ sys.path.append(
     os.path.join(os.getcwd(), "src")
 )  # WARNING: this migh file depending on your location
 
-from utils import positional_encoding, ModelWithClassificationHead
+from utils import ModelWithClassificationHead
 from logger import print_and_log
-from models.conv_transformer import ConvTransformer
+from models.conv_transformer import ConvTransformer 
+from models.transformer_base import TransformerModel
 from task_data.text_classification import (
     TextClassificationDataset,
     Collator,
@@ -37,7 +38,19 @@ def load_conv_transformer(model_params, num_embeddings, pad_token):
         embedding_params,
         model_params["conv_layers_params"],
         model_params["transformer_params"],
-    )
+    ), model_params["transformer_params"]["layer_params"]["d_model"]
+
+def load_transformer(model_params, num_embeddings, pad_token):
+    embedding_params = {
+        "num_embeddings": num_embeddings,
+        "embedding_dim": model_params["layer_params"]["d_model"],
+        "padding_idx": pad_token,
+    }
+    return TransformerModel(
+        embedding_params,
+        model_params["layer_params"],
+        model_params["num_layers"],
+    ), model_params["layer_params"]["d_model"]
 
 
 def load_model(config):
@@ -58,6 +71,8 @@ def load_model(config):
     match config["model"]:
         case "conv-transformer":
             return load_conv_transformer(config["model_params"], num_embeddings, pad_token)
+        case "transformer":
+            return load_transformer(config["model_params"], num_embeddings, pad_token)
         case _:
             raise ValueError(f"Unknown model: {config['model']}")
 
@@ -114,9 +129,7 @@ def train(model, epoch, training_loader, optimizer, log_file_name):
         optimizer.zero_grad()
 
         if ind % 500 == 0:
-            with open(log_file_name, "a", encoding="utf-8") as f:
-                print(f"TRAIN - {epoch=}, {ind=}, loss={loss.item()}", file=f)
-
+            print_and_log(log_file_name, f"TRAIN - {epoch=}, {ind=}, loss={loss.item()}")
 
 def test(model, epoch, testing_loader, log_file_name):
     losses = []
@@ -138,18 +151,15 @@ def test(model, epoch, testing_loader, log_file_name):
     mean_loss = np.mean(losses)
     mean_accuracy = np.mean(accuracies)
 
-    with open(log_file_name, "a", encoding="utf-8") as f:
-        print(f"EVAL - {epoch=}, {mean_loss=}, {mean_accuracy=}", file=f)
+    print_and_log(log_file_name, f"EVAL - {epoch=}, {mean_loss=}, {mean_accuracy=}")
     return np.mean(losses)
 
 
 def run(config):
     # load model
-    model = load_model(config)
+    model, d_model = load_model(config)
     print(f"Total parameters: {sum(p.numel() for p in model.parameters())}")
-    model = ModelWithClassificationHead(
-        model, config["model_params"]["transformer_params"]["layer_params"]["d_model"]
-    ).to(device)
+    model = ModelWithClassificationHead(model, d_model).to(device)
 
     # load dataset
     training_loader, testing_loader = load_dataset(config)
