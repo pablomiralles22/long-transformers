@@ -185,6 +185,17 @@ def run(config):
 
 ###### MAIN ######
 
+def parse_config(config_file_name):
+    try:
+        with open(config_file_name, "r", encoding="utf-8") as file:
+            return json.load(file)
+    except FileNotFoundError:
+        print(f"Error: The file '{config_file_name}' was not found.")
+        return
+    except json.JSONDecodeError:
+        print(f"Error: The file '{config_file_name}' is not a valid JSON file.")
+        return
+
 
 def main():
     # Create the argparse parser
@@ -192,9 +203,9 @@ def main():
 
     # Add arguments to the parser
     parser.add_argument(
-        "--config",
+        "-c", "--config",
         type=str,
-        required=True,
+        nargs="+",
         help="Path to the JSON file containing the configuration",
     )
 
@@ -202,22 +213,14 @@ def main():
     args = parser.parse_args()
 
     # Load the model configuration from the provided JSON file
-    try:
-        with open(args.config, "r", encoding="utf-8") as file:
-            config = json.load(file)
-            print("Model configuration loaded successfully.")
-    except FileNotFoundError:
-        print(f"Error: The file '{args.config}' was not found.")
-        return
-    except json.JSONDecodeError:
-        print(f"Error: The file '{args.config}' is not a valid JSON file.")
-        return
+    configs = [parse_config(config_file_name) for config_file_name in args.config]
     
     # create required directories
-    os.makedirs(os.path.dirname(config["model_file_name"]), exist_ok=True)
-    os.makedirs(os.path.dirname(config["log_file_name"]), exist_ok=True)
+    for config in configs:
+        os.makedirs(os.path.dirname(config["model_file_name"]), exist_ok=True)
+        os.makedirs(os.path.dirname(config["log_file_name"]), exist_ok=True)
 
-    run(config)
+        run(config)
 
 
 # Run the main function
