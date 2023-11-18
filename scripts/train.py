@@ -132,6 +132,7 @@ def train(model, epoch, training_loader, optimizer, log_file_name):
             print_and_log(log_file_name, f"TRAIN - {epoch=}, {ind=}, loss={loss.item()}")
 
 def test(model, epoch, testing_loader, log_file_name):
+    model.eval()
     losses = []
     accuracies = []
     with torch.no_grad():
@@ -174,6 +175,7 @@ def run(config):
 
     # train
     best_test_loss = 1e10
+
     for epoch in range(train_params["epochs"]):
         train(model, epoch, training_loader, optimizer, config["log_file_name"])
         if epoch % 5 == 0:
@@ -181,6 +183,11 @@ def run(config):
             if test_loss < best_test_loss:
                 best_test_loss = test_loss
                 torch.save(model.model, config["model_file_name"])
+
+    test_loss = test(model, epoch, testing_loader, config["log_file_name"])
+    if test_loss < best_test_loss:
+        best_test_loss = test_loss
+        torch.save(model.model, config["model_file_name"])
 
 
 ###### MAIN ######

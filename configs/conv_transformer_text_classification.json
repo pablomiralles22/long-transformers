@@ -26,8 +26,8 @@
         }
     },
     "train_params": {
-        "batch_size": 64,
-        "epochs": 50,
+        "batch_size": 32,
+        "epochs": 100,
         "lr": 0.001,
         "weight_decay": 0.01,
         "max_len": 2048
