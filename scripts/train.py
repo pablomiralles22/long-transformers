@@ -8,17 +8,17 @@ import numpy as np
 from torch.utils.data import DataLoader
 from torch.nn import functional as F
 
-sys.path.append(
-    os.path.join(os.getcwd(), "src")
-)  # WARNING: this migh file depending on your location
+dir_path = os.path.dirname(os.path.abspath(__file__))
+project_root_path = os.path.join(dir_path, "..")
+sys.path.append(project_root_path)
 
-from utils import ModelWithClassificationHead
-from logger import print_and_log
-from models.conv_transformer import ConvTransformer 
-from models.transformer_base import TransformerModel
-from task_data.text_classification import (
+from src.models.classification_head import ModelWithClassificationHead
+from src.logger import print_and_log
+from src.models.conv_transformer import ConvTransformer 
+from src.models.transformer_base import TransformerModel
+from src.task_data.text_classification import (
     TextClassificationDataset,
-    Collator,
+    Collator as TextClassificationCollator,
     NUM_EMBEDDINGS as TEXT_CLASSIFICATION_NUM_EMBEDDINGS,
     PAD_TOKEN as TEXT_CLASSIFICATION_PAD_TOKEN,
 )
@@ -54,11 +54,11 @@ def load_transformer(model_params, num_embeddings, pad_token):
 
 
 def load_model(config):
-    model_file_name = config["model_file_name"]
-    if os.path.exists(model_file_name):
-        model = torch.load(model_file_name)
-        print("Model loaded from disk.")
-        return model
+    # model_file_name = config["model_file_name"]
+    # if os.path.exists(model_file_name):
+    #     model = torch.load(model_file_name)
+    #     print("Model loaded from disk.")
+    #     return model
 
     task = config["task"]
     match task:
@@ -88,7 +88,7 @@ def load_text_classification_dataset(config):
         "batch_size": train_params["batch_size"],
         "shuffle": True,
         "num_workers": 0,
-        "collate_fn": Collator(train_params["max_len"]),
+        "collate_fn": TextClassificationCollator(train_params["max_len"]),
     }
 
     test_params = {
@@ -132,7 +132,7 @@ def train(model, epoch, training_loader, optimizer, log_file_name):
             print_and_log(log_file_name, f"TRAIN - {epoch=}, {ind=}, loss={loss.item()}")
 
 def test(model, epoch, testing_loader, log_file_name):
-    model.eval()
+    # model.eval()
     losses = []
     accuracies = []
     with torch.no_grad():
@@ -146,8 +146,8 @@ def test(model, epoch, testing_loader, log_file_name):
 
             loss = F.binary_cross_entropy(output, labels.reshape(-1, 1).float())
             losses.append(loss.item())
-            accurcy = ((output > 0.5) == labels.reshape(-1, 1)).float().mean()
-            accuracies.append(accurcy.item())
+            accuracy = ((output > 0.5) == labels.reshape(-1, 1)).float().mean()
+            accuracies.append(accuracy.item())
 
     mean_loss = np.mean(losses)
     mean_accuracy = np.mean(accuracies)
@@ -159,7 +159,7 @@ def test(model, epoch, testing_loader, log_file_name):
 def run(config):
     # load model
     model, d_model = load_model(config)
-    print(f"Total parameters: {sum(p.numel() for p in model.parameters())}")
+    print_and_log(config["log_file_name"], f"Total parameters: {sum(p.numel() for p in model.parameters())}")
     model = ModelWithClassificationHead(model, d_model).to(device)
 
     # load dataset
@@ -178,7 +178,7 @@ def run(config):
 
     for epoch in range(train_params["epochs"]):
         train(model, epoch, training_loader, optimizer, config["log_file_name"])
-        if epoch % 5 == 0:
+        if (epoch + 1) % 5 == 0:
             test_loss = test(model, epoch, testing_loader, config["log_file_name"])
             if test_loss < best_test_loss:
                 best_test_loss = test_loss

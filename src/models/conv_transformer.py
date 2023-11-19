@@ -1,5 +1,5 @@
 from torch import nn
-from utils import positional_encoding
+from src.models.positional_encoding import positional_encoding
 
 
 class ConvLayer(nn.Module):

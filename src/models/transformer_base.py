@@ -1,4 +1,4 @@
-from utils import positional_encoding
+from src.models.positional_encoding import positional_encoding
 from torch import nn
 
 class TransformerModel(nn.Module):
