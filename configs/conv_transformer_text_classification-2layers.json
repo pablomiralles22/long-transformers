@@ -1,0 +1,52 @@
+{
+    "model": "conv-transformer",
+    "model_params": {
+        "conv_layers_params": [
+            {
+                "conv_params": {
+                    "in_channels": 32,
+                    "out_channels": 64,
+                    "kernel_size": 5,
+                    "padding": "same"
+                },
+                "dim_feedforward": 128,
+                "dropout_params": {
+                    "p": 0.1
+                }
+            },
+            {
+                "conv_params": {
+                    "in_channels": 64,
+                    "out_channels": 128,
+                    "kernel_size": 3,
+                    "padding": "same"
+                },
+                "dim_feedforward": 256,
+                "dropout_params": {
+                    "p": 0.1
+                }
+            }
+        ],
+        "transformer_params": {
+            "num_layers": 2,
+            "layer_params": {
+                "d_model": 128,
+                "nhead": 4,
+                "dim_feedforward": 128,
+                "batch_first": true,
+                "dropout": 0.1
+            }
+        }
+    },
+    "train_params": {
+        "batch_size": 32,
+        "epochs": 30,
+        "lr": 0.00005,
+        "weight_decay": 0.01,
+        "max_len": 2048
+    },
+    "out_dir": "out",
+    "file_name_prefix": "conv_transformer_text_classification-2layers",
+    "task": "text-classification",
+    "dataset_root_dir": "datasets/aclImdb"
+}

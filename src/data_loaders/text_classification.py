@@ -37,7 +37,7 @@ class TextClassificationDataset(Dataset):
             label = 0
         return {"text": text, "label": label}
 
-class Collator:
+class CollatorFn:
     def __init__(self, max_length, pad_token=0, cls_token=1):
         self.max_length = max_length
         self.pad_token = pad_token

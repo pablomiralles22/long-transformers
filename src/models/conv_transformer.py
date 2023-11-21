@@ -6,15 +6,16 @@ class ConvLayer(nn.Module):
     def __init__(
         self,
         conv_params: dict,
+        dim_feedforward: int,
         dropout_params: dict,
     ):
         super(ConvLayer, self).__init__()
 
         self.conv = nn.Conv1d(**conv_params)
         self.ff = nn.Sequential(
-            nn.Linear(conv_params["out_channels"], 2 * conv_params["out_channels"]),
+            nn.Linear(conv_params["out_channels"], dim_feedforward),
             nn.ReLU(),
-            nn.Linear(2 * conv_params["out_channels"], conv_params["out_channels"]),
+            nn.Linear(dim_feedforward, conv_params["out_channels"]),
         )
         self.layer_norm1 = nn.LayerNorm(conv_params["out_channels"])
         self.layer_norm2 = nn.LayerNorm(conv_params["out_channels"])
@@ -47,6 +48,7 @@ class ConvTransformer(nn.Module):
             self.conv_layers.append(
                 ConvLayer(
                     conv_layer_params["conv_params"],
+                    conv_layer_params["dim_feedforward"],
                     conv_layer_params["dropout_params"],
                 )
             )
@@ -56,6 +58,10 @@ class ConvTransformer(nn.Module):
         self.transformer_encoder = nn.TransformerEncoder(
             encoder_layer, num_layers=transformer_params["num_layers"]
         )
+
+        # Auxiliar attributes for embed dims
+        self.input_embed_dim = embedding_params["embedding_dim"]
+        self.output_embed_dim = transformer_params["layer_params"]["d_model"]
 
     def forward(
         self,

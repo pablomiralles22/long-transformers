@@ -14,6 +14,9 @@ class TransformerModel(nn.Module):
         encoder_layer = nn.TransformerEncoderLayer(**transformer_encoder_params)
         self.transformer_encoder = nn.TransformerEncoder(encoder_layer, num_layers=num_transformer_encoder_layers)
 
+        self.input_embed_dim = embedding_params["embedding_dim"]
+        self.output_embed_dim = transformer_encoder_params["d_model"]
+
     def forward(
         self,
         input_ids,  # (...BATCH, LENGTH)

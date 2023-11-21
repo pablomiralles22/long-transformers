@@ -12,13 +12,15 @@
     },
     "train_params": {
         "batch_size": 32,
-        "epochs": 100,
-        "lr": 0.001,
-        "weight_decay": 0.01,
-        "max_len": 2048
+        "steps": 50,
+        "learning_rate": 0.00001,
+        "max_len": 2048,
+        "checkpoint_file": "out/transformer_small_text_classification.pt",
+        "log_file": "out/transformer_small_text_classification.log",
+        "device": "cuda:2"
     },
-    "model_file_name": "out/models/transformer_small_text_classification.pt",
-    "log_file_name": "out/logs/transformer_small_text_classification.log",
-    "task": "text-classification",
-    "dataset_root_dir": "datasets/aclImdb"
+    "task_params": {
+        "task": "text-classification",
+        "dataset_root_dir": "datasets/aclImdb"
+    }
 }
