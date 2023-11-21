@@ -101,14 +101,14 @@ class Trainer:
             # log and store checkpoint
             if iter_num % config["eval_every"] == 0:
                 mean_training_loss = np.mean(losses)
-                mean_eval_loss = self.__mean_eval_loss(model, test_loader)
+                mean_eval_loss, mean_eval_accuracy = self.__mean_eval_loss(model, test_loader)
 
                 tnow = time.time()
                 iters_dt = tnow - iter_time
                 iter_time = tnow
 
                 self.__print_and_log(
-                    f"TRAIN - {iter_num=}, {mean_training_loss=}, {mean_eval_loss=}, ({iters_dt:.2f}s)",
+                    f"TRAIN - {iter_num=}, {mean_training_loss=}, {mean_eval_loss=}, {mean_eval_accuracy=}, ({iters_dt:.2f}s)",
                     log_file,
                 )
 
