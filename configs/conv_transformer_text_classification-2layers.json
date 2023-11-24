@@ -11,7 +11,7 @@
                 },
                 "dim_feedforward": 128,
                 "dropout_params": {
-                    "p": 0.1
+                    "p": 0.2
                 }
             },
             {
@@ -23,30 +23,32 @@
                 },
                 "dim_feedforward": 256,
                 "dropout_params": {
-                    "p": 0.1
+                    "p": 0.2
                 }
             }
         ],
         "transformer_params": {
-            "num_layers": 2,
+            "num_layers": 4,
             "layer_params": {
                 "d_model": 128,
-                "nhead": 4,
-                "dim_feedforward": 128,
+                "nhead": 8,
+                "dim_feedforward": 256,
                 "batch_first": true,
-                "dropout": 0.1
+                "dropout": 0.2
             }
         }
     },
     "train_params": {
-        "batch_size": 32,
-        "epochs": 30,
+        "batch_size": 16,
+        "steps": 20000,
         "lr": 0.00005,
-        "weight_decay": 0.01,
-        "max_len": 2048
+        "max_len": 2048,
+        "checkpoint_file": "out/conv_transformer_2layers_text_classification.pt",
+        "log_file": "out/conv_transformer_2layers_text_classification.log",
+        "device": "cuda:1"
     },
-    "out_dir": "out",
-    "file_name_prefix": "conv_transformer_text_classification-2layers",
-    "task": "text-classification",
-    "dataset_root_dir": "datasets/aclImdb"
+    "task_params": {
+        "task": "text-classification",
+        "dataset_root_dir": "datasets/aclImdb"
+    }
 }

@@ -1,8 +1,8 @@
 import argparse
-import torch
 import sys
 import json
 import os
+import pytorch_lightning as pl
 
 dir_path = os.path.dirname(os.path.abspath(__file__))
 project_root_path = os.path.join(dir_path, "..")
@@ -10,73 +10,44 @@ sys.path.append(project_root_path)
 
 from src.heads.classification_head import ModelWithClassificationHead
 from src.models.model_builder import ModelBuilder
-from src.trainers.trainer import Trainer
-from src.data_loaders.text_classification import (
-    TextClassificationDataset,
-    CollatorFn as TextClassificationCollatorFn,
-    NUM_EMBEDDINGS as TEXT_CLASSIFICATION_NUM_EMBEDDINGS,
-    PAD_TOKEN as TEXT_CLASSIFICATION_PAD_TOKEN,
-)
-
-device = torch.device("cuda:2" if torch.cuda.is_available() else "cpu")
-
-###### Load Model ######
-def load_model(config):
-    model_file_name = config["train_params"]["checkpoint_file"]
-    if os.path.exists(model_file_name):
-        model = torch.load(model_file_name)
-        print("Model loaded from disk.")
-        return model
-
-    task = config["task_params"]["task"]
-    match task:
-        case "text-classification":
-            embedding_params = {
-                "num_embeddings": TEXT_CLASSIFICATION_NUM_EMBEDDINGS,
-                "padding_idx": TEXT_CLASSIFICATION_PAD_TOKEN,
-            }
-        case _:
-            raise ValueError(f"Unknown task: {task}")
-
-    return ModelBuilder.build_model(config["model"], config["model_params"], embedding_params)
+from src.trainers.trainer import TextClassificationModule
+from src.data_loaders.data_module_builder import DataModuleBuilder
 
 
 ###### Load Dataset ######
-def load_text_classification_dataset(config):
-    train_set = TextClassificationDataset(config["task_params"]["dataset_root_dir"], split="train")
-    test_set = TextClassificationDataset(config["task_params"]["dataset_root_dir"], split="test")
-    collator_fn = TextClassificationCollatorFn(config["train_params"]["max_len"])
-
-    return train_set, test_set, collator_fn
+def load_data_module(config):
+    return DataModuleBuilder.build_data_module(**config["train_params"]["data_module"])
 
 
-def load_dataset(config):
-    match config["task_params"]["task"]:
-        case "text-classification":
-            return load_text_classification_dataset(config)
-        case _:
-            raise ValueError(f"Unknown task: {config['task']}")
+###### Load Model ######
+def load_model(config, data_module):
+    embedding_params = {
+        "num_embeddings": data_module.get_vocab_size(),
+        "padding_idx": data_module.get_pad_token_id(),
+    }
+    return ModelBuilder.build_model(config["model"], config["model_params"], embedding_params)
 
 
 ###### Train ######
 def run(config):
-    # load model
-    model = load_model(config)
-    d_model = model.output_embed_dim
-    model = ModelWithClassificationHead(model, d_model).to(device)
+    # unpack config
+    train_params = config["train_params"]
 
     # load dataset
-    train_set, test_set, collator_fn = load_dataset(config)
+    data_module = load_data_module(config)
+
+    # load model
+    model = load_model(config, data_module)
+    d_model = model.output_embed_dim
+    model_with_class_head = ModelWithClassificationHead(model, d_model)
 
     # setup trainer params
-    train_params = config["train_params"]
-    train_params["collator_fn"] = collator_fn
-    if torch.cuda.is_available() is False:
-        train_params["device"] =  "cpu"
+    module = TextClassificationModule(model_with_class_head, train_params["optimizer_params"])
 
     # setuo trainer and run
-    trainer = Trainer(train_params, model, train_set, test_set)
-    trainer.run()
+    trainer = pl.Trainer(**train_params["trainer_params"])
+
+    trainer.fit(module, data_module)
 
 
 ###### MAIN ######
