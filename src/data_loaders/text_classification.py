@@ -2,6 +2,7 @@ import os
 import torch
 import pytorch_lightning as pl
 
+from copy import deepcopy
 from torch.utils.data import Dataset, DataLoader
 from typing import Literal
 
@@ -85,6 +86,7 @@ class TextClassificationDataModule(pl.LightningDataModule):
 
     @classmethod
     def from_joint_config(cls, config: dict):
+        config = deepcopy(config)
         data_path = config.pop("data_path")
         collator_config = {
             k: v for k, v in config.items()

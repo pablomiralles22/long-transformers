@@ -3,27 +3,52 @@ import torchmetrics
 import pytorch_lightning as pl
 
 from torch.nn import functional as F
+from pytorch_lightning.callbacks import Callback, ModelCheckpoint, EarlyStopping, LearningRateMonitor
+from src.data_loaders.data_module_builder import DataModuleBuilder
+from src.models.model_builder import ModelBuilder
+from src.heads.classification_head import get_model_with_classification_head
 
 class TextClassificationModule(pl.LightningModule):
     @classmethod
     def get_default_optimizer_config(cls) -> dict:
         return {
             "lr": 1e-4,
-            "betas": (0.9, 0.999),
+            "betas": (0.9, 0.99),
             "weight_decay": 0.0,
         }
 
     def __init__(
         self,
-        model,
-        optimizer_config,
+        model_params: dict,
+        data_module_params: dict,
+        head_params: dict,
+        optimizer_params: dict,
     ):
         super().__init__()
+        self.save_hyperparameters()
+
+        # optimizer config
         self.optimizer_config = {
             **self.get_default_optimizer_config(),
-            **optimizer_config,
+            **optimizer_params,
         }
-        self.model = model
+
+        # build data module
+        self.data_module = DataModuleBuilder.build_data_module(
+            **data_module_params
+        )
+        # build model
+        self.model = ModelBuilder.build_model(
+            **model_params,
+            vocab_size=self.data_module.get_vocab_size(),
+            padding_idx=self.data_module.get_pad_token_id(),
+        )
+        self.model_with_head = get_model_with_classification_head(
+            model=self.model,
+            **head_params,
+        )
+
+        # create metrics
         self.accuracy = torchmetrics.Accuracy(task="binary")
 
     def training_step(self, batch, batch_idx):
@@ -60,8 +85,8 @@ class TextClassificationModule(pl.LightningModule):
         attention_mask = batch["attention_mask"]
         labels = batch["labels"].float().reshape(-1, 1)
 
-        logits = self.model(input_ids, attention_mask)
-        loss = F.binary_cross_entropy(logits, labels)
+        logits = self.model_with_head(input_ids, attention_mask)
+        loss = F.binary_cross_entropy_with_logits(logits, labels)
         return loss, logits, labels
 
     def configure_optimizers(self):
@@ -69,7 +94,7 @@ class TextClassificationModule(pl.LightningModule):
             params=self.model.parameters(), **self.optimizer_config
         )
         scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
-            optimizer, mode="max", factor=0.5
+            optimizer, mode="max", factor=0.75
         )
         return {
             "optimizer": optimizer,
@@ -79,3 +104,19 @@ class TextClassificationModule(pl.LightningModule):
                 "interval": "epoch",
             },
         }
+    
+    def configure_callbacks(self) -> list[Callback]:
+        return [
+            ModelCheckpoint(
+                filename="{epoch}-{val_f1_score:.2f}",
+                monitor="val_f1_score",
+                mode="max",
+            ),
+            EarlyStopping(
+                monitor="val_f1_score",
+                patience=5,
+                mode="max",
+            ),
+            LearningRateMonitor(logging_interval="step"),
+        ]
+

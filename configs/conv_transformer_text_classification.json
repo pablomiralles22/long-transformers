@@ -1,51 +1,45 @@
 {
-    "model": "conv-transformer",
-    "model_params": {
-        "conv_layers_params": [
-            {
-                "conv_params": {
-                    "in_channels": 32,
-                    "out_channels": 128,
-                    "kernel_size": 5,
-                    "padding": "same"
-                },
-                "dim_feedforward": 256,
-                "dropout_params": {
-                    "p": 0.2
-                }
-            }
-        ],
-        "transformer_params": {
-            "num_layers": 4,
-            "layer_params": {
-                "d_model": 128,
-                "nhead": 8,
-                "dim_feedforward": 256,
-                "batch_first": true,
-                "dropout": 0.2
-            }
-        }
-    },
-    "train_params": {
-        "data_module": {
-            "name": "text-classification",
-            "params": {
-                "data_path": "datasets/aclImdb",
-                "max_len": 2048,
-                "batch_size": 16,
-                "pin_memory": true,
-                "num_workers": 4
-            }
-        },
-        "optimizer_params": {
-            "lr": 0.00001
-        },
-        "trainer_params": {
-            "max_steps": 20000,
-            "enable_checkpointing": true,
-            "default_root_dir": "out/text_classification/conv_transformer",
-            "accelerator": "cuda",
-            "devices": [1]
-        }
+  "model_params": {
+    "name": "layered",
+    "params": {
+      "input_embedding_dim": 32,
+      "output_embedding_dim": 128,
+      "layers": [
+        [ "conv", { "in_channels": 32, "out_channels": 64, "kernel_size": 5, "padding": "same" } ],
+        [ "relu", {} ],
+        [ "conv", { "in_channels": 64, "out_channels": 128, "kernel_size": 5, "padding": "same" } ],
+        [ "relu", {} ],
+        [ "transformer_encoder_layer", { "d_model": 128, "nhead": 8, "dim_feedforward": 256, "batch_first": true, "dropout": 0.2 } ],
+        [ "transformer_encoder_layer", { "d_model": 128, "nhead": 8, "dim_feedforward": 256, "batch_first": true, "dropout": 0.2 } ],
+        [ "transformer_encoder_layer", { "d_model": 128, "nhead": 8, "dim_feedforward": 256, "batch_first": true, "dropout": 0.2 } ],
+        [ "transformer_encoder_layer", { "d_model": 128, "nhead": 8, "dim_feedforward": 256, "batch_first": true, "dropout": 0.2 } ]
+      ]
     }
+  },
+  "head_params": {
+    "ff_dim": 2048,
+    "num_hidden_layers": 1,
+    "dropout_p": 0.2,
+    "reduction_method": "cls"
+  },
+  "data_module_params": {
+    "name": "text-classification",
+    "params": {
+      "data_path": "datasets/aclImdb",
+      "max_len": 2048,
+      "batch_size": 16,
+      "pin_memory": true,
+      "num_workers": 4
+    }
+  },
+  "optimizer_params": {
+    "lr": 0.00001
+  },
+  "trainer_params": {
+    "max_steps": 20000,
+    "enable_checkpointing": true,
+    "default_root_dir": "out/text_classification/conv_transformer",
+    "accelerator": "gpu",
+    "devices": [ 2 ]
+  }
 }

@@ -1,6 +1,8 @@
 import torch
 import math
 
+from src.models.layers.layer import Layer
+
 
 def positional_encoding(length, d_model, device=None):
     if d_model % 2 != 0:
@@ -18,3 +20,15 @@ def positional_encoding(length, d_model, device=None):
     pe.requires_grad = False
 
     return pe.to(device)
+
+class PositionalEncodingLayer(Layer):
+    def forward(
+        self,
+        embeddings,  # (BATCH, LENGTH, EMBED_DIM)
+        attention_mask=None,  # (BATCH, LENGTH)
+        token_type_ids=None,  # (BATCH, LENGTH)
+    ):
+        _, seq_len, embed_dim = embeddings.shape
+        device = embeddings.device
+        pe = positional_encoding(seq_len, embed_dim, device=device)
+        return embeddings + pe
