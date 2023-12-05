@@ -7,39 +7,49 @@
       "layers": [
         [ "conv", { "in_channels": 32, "out_channels": 64, "kernel_size": 5, "padding": "same" } ],
         [ "relu", {} ],
-        [ "conv", { "in_channels": 64, "out_channels": 128, "kernel_size": 5, "padding": "same" } ],
+        [ "linear", { "in_features": 64, "out_features": 256 } ],
         [ "relu", {} ],
-        [ "transformer_encoder_layer", { "d_model": 128, "nhead": 8, "dim_feedforward": 256, "batch_first": true, "dropout": 0.2 } ],
-        [ "transformer_encoder_layer", { "d_model": 128, "nhead": 8, "dim_feedforward": 256, "batch_first": true, "dropout": 0.2 } ],
-        [ "transformer_encoder_layer", { "d_model": 128, "nhead": 8, "dim_feedforward": 256, "batch_first": true, "dropout": 0.2 } ],
-        [ "transformer_encoder_layer", { "d_model": 128, "nhead": 8, "dim_feedforward": 256, "batch_first": true, "dropout": 0.2 } ]
+        [ "linear", { "in_features": 256, "out_features": 128 } ],
+        [ "layer_norm", { "normalized_shape": 128 } ],
+        [ "dropout", {} ],
+        
+        [ "positional_encoding", {} ],
+
+        [ "transformer_encoder_layer", { "d_model": 128, "nhead": 8, "dim_feedforward": 256, "batch_first": true, "dropout": 0.3 } ],
+        [ "transformer_encoder_layer", { "d_model": 128, "nhead": 8, "dim_feedforward": 256, "batch_first": true, "dropout": 0.3 } ],
+        [ "transformer_encoder_layer", { "d_model": 128, "nhead": 8, "dim_feedforward": 256, "batch_first": true, "dropout": 0.3 } ],
+        [ "transformer_encoder_layer", { "d_model": 128, "nhead": 8, "dim_feedforward": 256, "batch_first": true, "dropout": 0.3 } ]
       ]
     }
   },
   "head_params": {
     "ff_dim": 2048,
     "num_hidden_layers": 1,
-    "dropout_p": 0.2,
+    "dropout_p": 0.3,
     "reduction_method": "cls"
   },
   "data_module_params": {
     "name": "text-classification",
     "params": {
       "data_path": "datasets/aclImdb",
-      "max_len": 2048,
-      "batch_size": 16,
+      "max_len": 3000,
+      "batch_size": 8,
       "pin_memory": true,
       "num_workers": 4
     }
   },
   "optimizer_params": {
-    "lr": 0.00001
+    "lr": 0.00005
   },
   "trainer_params": {
-    "max_steps": 20000,
+    "max_epochs": 15,
+    "precision": "16-mixed",
     "enable_checkpointing": true,
     "default_root_dir": "out/text_classification/conv_transformer",
     "accelerator": "gpu",
     "devices": [ 2 ]
+  },
+  "fit_params": {
+    "ckpt_path": "out/text_classification/conv_transformer/lightning_logs/version_6/checkpoints/epoch=9-val_accuracy=0.80.ckpt"
   }
 }

@@ -16,6 +16,7 @@ dependencies:
   - conda-forge::jupyterlab==4.0.8
   - conda-forge::sentence-transformers==2.2.2
   - pytorch::pytorch==2.1.0
-  #- pytorch::pytorch-cuda
+  - pytorch::pytorch-cuda
   - conda-forge::pytorch-lightning==2.1.0
   - conda-forge::torchmetrics==1.2.0
+  - conda-forge::einops==0.7.0

@@ -5,6 +5,7 @@ from src.models.layers.residual_block import ResidualBlock
 from src.models.layers.positional_encoding_layer import PositionalEncodingLayer
 from src.models.layers.layer import Layer, Overlayer, ConvLayer
 from src.models.layers.transformer_encoder_layer import TransformerEncoderLayer
+from src.models.layers.rotary_transformer_encoder_layer import RotaryTransformerEncoderLayer
 
 LayerType = Literal[
     "linear",
@@ -55,5 +56,7 @@ class LayerBuilder:
                 return PositionalEncodingLayer()
             case "transformer_encoder_layer":
                 return TransformerEncoderLayer(**params)
+            case "rotary_transformer_encoder_layer":
+                return RotaryTransformerEncoderLayer(**params)
             case _:
                 raise ValueError(f"Invalid LayerType name: {name}")

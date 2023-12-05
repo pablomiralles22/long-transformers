@@ -25,6 +25,7 @@ def run(config):
     data_module_params = config["data_module_params"]
     optimizer_params = config["optimizer_params"]
     trainer_params = config["trainer_params"]
+    fit_params = config.get("fit_params") or {}
 
     # load dataset
     data_module = load_data_module(data_module_params)
@@ -40,7 +41,7 @@ def run(config):
     # setuo trainer and run
     trainer = pl.Trainer(**trainer_params)
 
-    trainer.fit(module, data_module)
+    trainer.fit(module, data_module, **fit_params)
 
 
 ###### MAIN ######

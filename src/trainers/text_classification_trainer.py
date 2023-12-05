@@ -66,7 +66,7 @@ class TextClassificationModule(pl.LightningModule):
         return {"loss": loss, "logits": logits, "labels": labels}
 
     def validation_step(self, batch, batch_idx):
-        self.model.train() # dirty fix for pytorch bug
+        # self.model.train() # dirty fix for pytorch bug
         loss, logits, labels = self._step(batch, batch_idx)
         accuracy = self.accuracy(logits, labels)
         self.log_dict(
@@ -108,15 +108,14 @@ class TextClassificationModule(pl.LightningModule):
     def configure_callbacks(self) -> list[Callback]:
         return [
             ModelCheckpoint(
-                filename="{epoch}-{val_f1_score:.2f}",
-                monitor="val_f1_score",
+                filename="{epoch}-{val_accuracy:.2f}",
+                monitor="val_accuracy",
                 mode="max",
             ),
             EarlyStopping(
-                monitor="val_f1_score",
+                monitor="val_accuracy",
                 patience=5,
                 mode="max",
-            ),
-            LearningRateMonitor(logging_interval="step"),
+            )
         ]
 
