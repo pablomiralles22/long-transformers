@@ -6,6 +6,8 @@ from src.models.layers.positional_encoding_layer import PositionalEncodingLayer
 from src.models.layers.layer import Layer, Overlayer, ConvLayer
 from src.models.layers.transformer_encoder_layer import TransformerEncoderLayer
 from src.models.layers.rotary_transformer_encoder_layer import RotaryTransformerEncoderLayer
+from src.models.layers.conv_transformer_encoder_layer import ConvTransformerEncoderLayer
+from src.models.layers.learned_positional_encoding import LearnedPositionalEncodingLayer
 
 LayerType = Literal[
     "linear",
@@ -18,7 +20,10 @@ LayerType = Literal[
     "layer_norm",
     "residual_block",
     "positional_encoding",
+    "learned_positional_encoding",
     "transformer_encoder_layer",
+    "rotary_transformer_encoder_layer",
+    "conv_transformer_encoder_layer",
 ]
 
 class LayerBuilder:
@@ -54,9 +59,13 @@ class LayerBuilder:
                 return ResidualBlock(layers)
             case "positional_encoding":
                 return PositionalEncodingLayer()
+            case "learned_positional_encoding":
+                return LearnedPositionalEncodingLayer(**params)
             case "transformer_encoder_layer":
                 return TransformerEncoderLayer(**params)
             case "rotary_transformer_encoder_layer":
                 return RotaryTransformerEncoderLayer(**params)
+            case "conv_transformer_encoder_layer":
+                return ConvTransformerEncoderLayer(**params)
             case _:
                 raise ValueError(f"Invalid LayerType name: {name}")

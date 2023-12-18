@@ -3,12 +3,14 @@ import torchmetrics
 import pytorch_lightning as pl
 
 from torch.nn import functional as F
-from pytorch_lightning.callbacks import Callback, ModelCheckpoint, EarlyStopping, StochasticWeightAveraging
+from pytorch_lightning.callbacks import Callback, ModelCheckpoint, EarlyStopping
 from src.data_loaders.data_module_builder import DataModuleBuilder
 from src.models.model_builder import ModelBuilder
 from src.heads.classification_head import get_model_with_classification_head
 
-class TextClassificationModule(pl.LightningModule):
+class ListopsModule(pl.LightningModule):
+    __NUM_CLASSES = 10
+
     @classmethod
     def get_default_optimizer_config(cls) -> dict:
         return {
@@ -46,10 +48,11 @@ class TextClassificationModule(pl.LightningModule):
         self.model_with_head = get_model_with_classification_head(
             model=self.model,
             **head_params,
+            num_classes=self.__NUM_CLASSES,
         )
 
         # create metrics
-        self.accuracy = torchmetrics.Accuracy(task="binary")
+        self.accuracy = torchmetrics.Accuracy(task="multiclass", num_classes=self.__NUM_CLASSES)
 
     def training_step(self, batch, batch_idx):
         loss, logits, labels = self._step(batch, batch_idx)
@@ -83,14 +86,14 @@ class TextClassificationModule(pl.LightningModule):
     def _step(self, batch, _):
         input_ids = batch["input_ids"]
         attention_mask = batch["attention_mask"]
-        labels = batch["labels"].float().reshape(-1, 1)
+        labels = batch["labels"].long()
 
         logits = self.model_with_head(input_ids, attention_mask)
-        loss = F.binary_cross_entropy_with_logits(logits, labels)
+        loss = F.cross_entropy(logits, labels)
         return loss, logits, labels
 
     def configure_optimizers(self):
-        optimizer = torch.optim.AdamW(
+        optimizer = torch.optim.Adam(
             params=self.model.parameters(), **self.optimizer_config
         )
         scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
@@ -116,6 +119,6 @@ class TextClassificationModule(pl.LightningModule):
                 monitor="val_accuracy",
                 patience=10,
                 mode="max",
-            ),
+            )
         ]
 

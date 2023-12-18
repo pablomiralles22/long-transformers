@@ -8,6 +8,7 @@ def get_model_with_classification_head(
     ff_dim: int,
     dropout_p: float = 0.1,
     num_hidden_layers: int = 1,
+    num_classes: int = 2,
     reduction_method: ReductionMethod = "cls",
 ):
     """
@@ -21,6 +22,7 @@ def get_model_with_classification_head(
         input_dim=input_dim,
         ff_dim=ff_dim,
         num_hidden_layers=num_hidden_layers,
+        num_classes=num_classes,
         dropout_p=dropout_p,
         reduction_method=reduction_method,
     )
@@ -53,18 +55,20 @@ class ModelWithClassificationHead(nn.Module):
         input_dim: int,
         ff_dim: int,
         num_hidden_layers: int = 1,
+        num_classes: int = 2,
         dropout_p: float = 0.1,
         reduction_method: ReductionMethod = "cls",
     ):
         super(ModelWithClassificationHead, self).__init__()
         self.model = model
+        output_dim = 1 if num_classes == 2 else num_classes
         self.ff = nn.Sequential(
             linear_block(input_dim, ff_dim, dropout_p),
             *[
                 linear_block(ff_dim, ff_dim, dropout_p)
                 for _ in range(num_hidden_layers - 1)
             ],
-            nn.Linear(ff_dim, 1),
+            nn.Linear(ff_dim, output_dim),
         )
         self.reduction_method = reduction_method
 

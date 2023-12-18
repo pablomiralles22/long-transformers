@@ -1,55 +1,55 @@
 import os
 import torch
 import pytorch_lightning as pl
+import pandas as pd
 
 from copy import deepcopy
 from torch.utils.data import Dataset, DataLoader
 from typing import Literal
 
-NUM_EMBEDDINGS = 256 + 2 # PAD, CLS, bytes
+NUM_EMBEDDINGS = 2 + 17  # PAD, CLS, tokens
 PAD_TOKEN = 0
 CLS_TOKEN = 1
 
-class TextClassificationDataset(Dataset):
+class ListopsDataset(Dataset):
+    # __MAX_LEN = 2048
+    __MAX_LEN = 10000
+
     def __init__(
         self,
-        root_dir: str,
-        split: Literal["train", "val"],
+        tsv_dir_path: str,
+        split: Literal["train", "val", "test"],
     ):
         """
         Args:
             root_dir (string): Directory with all the data.
             split (string): One of "train" or "val" to specify the split.
         """
-        self.root_dir = os.path.join(root_dir, split)
-        pos_dir = os.path.join(self.root_dir, "pos")
-        self.pos_files = os.listdir(pos_dir)
-
-        neg_dir = os.path.join(self.root_dir, "neg")
-        self.neg_files = os.listdir(neg_dir)
+        self.tsv_file_path = os.path.join(tsv_dir_path, f"basic_{split}.tsv")
+        self.df = pd.read_csv(self.tsv_file_path, sep='\t')
+        self.df = self.df[self.df["Source"].str.split().apply(len) <= self.__MAX_LEN]
 
     def __len__(self):
-        return len(self.pos_files) + len(self.neg_files)
+        return len(self.df)
 
     def __getitem__(self, idx):
-        if idx < len(self.pos_files):
-            file = self.pos_files[idx]
-            with open(os.path.join(self.root_dir, "pos", file), 'r', encoding='utf-8') as f:
-                text = f.read()
-            label = 1
-        else:
-            file = self.neg_files[idx - len(self.pos_files)]
-            with open(os.path.join(self.root_dir, "neg", file), 'r', encoding='utf-8') as f:
-                text = f.read()
-            label = 0
-        return {"text": text, "label": label}
+        return {
+            "sequence": self.df.iloc[idx]["Source"],
+            "label": self.df.iloc[idx]["Target"],
+        }
 
-class TextClassificationCollatorFn:
-    def __init__(self, max_len, pad_token=0, cls_token=1, fixed_start=False):
+class ListopsCollatorFn:
+    __TOKENS = [
+        '(', ')',
+        '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+        '[MAX', '[MED', '[MIN', '[SM', ']'
+    ]
+
+    def __init__(self, max_len, pad_token=0, cls_token=1):
         self.max_len = max_len
         self.pad_token = pad_token
         self.cls_token = cls_token
-        self.fixed_start = fixed_start
+        self.__token_to_id = {token: i for i, token in enumerate(self.__TOKENS)}
 
     def __call__(self, batch):
         input_ids = []
@@ -57,33 +57,35 @@ class TextClassificationCollatorFn:
         labels = []
 
         for item in batch:
-            text, label = item["text"], item["label"]
+            sequence, label = item["sequence"], item["label"]
 
-            # build input ids
-            text_idxs = [int(b) for b in bytes(text, encoding="utf-8")]
-            if self.fixed_start is False and len(text_idxs) > self.max_len:
-                start_idx = torch.randint(0, len(text_idxs) - self.max_len + 1, (1,)).item()
-                text_idxs = text_idxs[start_idx:]
+            # create input ids
+            indices = [self.cls_token] + [self.__token_to_id[token] for token in sequence.split()]
 
-            indices = [self.cls_token] + text_idxs
             length = min(len(indices), self.max_len)
             padding_size = self.max_len - length
+
             indices = indices[:length] + [self.pad_token] * padding_size
 
-            # build attention mask
+            # create attention mask
             attention_mask = [1.] * length + [0.] * padding_size
 
             input_ids.append(indices)
             attention_masks.append(attention_mask)
             labels.append(label)
 
-        return {"input_ids": torch.tensor(input_ids), "attention_mask": torch.tensor(attention_masks), "labels": torch.tensor(labels)}
+        return {
+            "input_ids": torch.tensor(input_ids),
+            "attention_mask": torch.tensor(attention_masks),
+            "labels": torch.tensor(labels)
+        }
 
-class TextClassificationDataModule(pl.LightningDataModule):
+
+class ListopsDataModule(pl.LightningDataModule):
     @classmethod
     def get_default_collator_config(cls):
         return {
-            "max_len": 512,
+            "max_len": 2048,
         }
 
     @classmethod
@@ -113,7 +115,7 @@ class TextClassificationDataModule(pl.LightningDataModule):
         self.data_path = data_path
 
         # build collator_fn
-        self.collator_config = {
+        collator_config = {
             **self.get_default_collator_config(),
             **collator_config,
         }
@@ -122,20 +124,17 @@ class TextClassificationDataModule(pl.LightningDataModule):
         self.loader_config = {
             **self.get_default_loader_config(),
             **loader_config,
+            "collate_fn": ListopsCollatorFn(**collator_config),
         }
 
         # load datasets
-        self.train_dataset = TextClassificationDataset(data_path, "train")
-        self.val_dataset = TextClassificationDataset(data_path, "val")
+        self.train_dataset = ListopsDataset(data_path, "train")
+        self.val_dataset = ListopsDataset(data_path, "val")
 
     def train_dataloader(self):
         return DataLoader(
             dataset=self.train_dataset,
             **self.loader_config,
-            collate_fn=TextClassificationCollatorFn(
-                **self.collator_config,
-                fixed_start=False,
-            ),
             shuffle=True,
         )
 
@@ -143,10 +142,6 @@ class TextClassificationDataModule(pl.LightningDataModule):
         return DataLoader(
             dataset=self.val_dataset,
             **self.loader_config,
-            collate_fn=TextClassificationCollatorFn(
-                **self.collator_config,
-                fixed_start=False,
-            ),
             shuffle=False,
         )
 
@@ -158,3 +153,4 @@ class TextClassificationDataModule(pl.LightningDataModule):
     
     def get_cls_token_id(self):
         return CLS_TOKEN
+    

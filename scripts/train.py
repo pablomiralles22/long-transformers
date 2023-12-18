@@ -8,8 +8,11 @@ dir_path = os.path.dirname(os.path.abspath(__file__))
 project_root_path = os.path.join(dir_path, "..")
 sys.path.append(project_root_path)
 
-from src.trainers.text_classification_trainer import TextClassificationModule
 from src.data_loaders.data_module_builder import DataModuleBuilder
+from src.data_loaders.listops import ListopsDataModule
+from src.data_loaders.text_classification import TextClassificationDataModule
+from src.trainers.listops_trainer import ListopsModule
+from src.trainers.text_classification_trainer import TextClassificationModule
 
 
 ###### Load Dataset ######
@@ -31,16 +34,28 @@ def run(config):
     data_module = load_data_module(data_module_params)
 
     # setup trainer params
-    module = TextClassificationModule(
+    if isinstance(data_module, ListopsDataModule):
+        PlModuleCls = ListopsModule
+    elif isinstance(data_module, TextClassificationDataModule):
+        PlModuleCls = TextClassificationModule
+    
+    module = PlModuleCls(
         model_params=model_params,
         data_module_params=data_module_params,
         head_params=head_params,
         optimizer_params=optimizer_params,
     )
 
-    # setuo trainer and run
+    # setup trainer and run
     trainer = pl.Trainer(**trainer_params)
 
+    # store config in log dir
+    config_path = os.path.join(trainer.log_dir, "config.json")
+    os.makedirs(trainer.log_dir, exist_ok=True)
+    with open(config_path, "w", encoding="utf-8") as file:
+        json.dump(config, file, indent=4)
+
+    # train
     trainer.fit(module, data_module, **fit_params)
 
 
