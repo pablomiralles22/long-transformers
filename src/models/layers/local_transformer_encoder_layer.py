@@ -1,8 +1,8 @@
 from torch import nn
 from src.models.layers.layer import Layer
-from src.models.modules.rotary_multihead_self_attention import RotaryMultiheadSelfAttention
+from src.models.modules.local_multihead_self_attention import LocalMultiheadSelfAttention
 
-class RotaryTransformerEncoderLayer(Layer):
+class LocalTransformerEncoderLayer(Layer):
     def __init__(
         self,
         d_model, vdim=None, qkdim=None,
@@ -12,10 +12,11 @@ class RotaryTransformerEncoderLayer(Layer):
         activation_fn_cls=nn.ReLU,
         layer_norm_eps=1e-05,
         freq=10000,
+        window_size=512,
     ):
         super().__init__()
         
-        self.mh_attention = RotaryMultiheadSelfAttention(d_model, nhead, vdim=vdim, qkdim=qkdim, freq=freq)
+        self.mh_attention = LocalMultiheadSelfAttention(d_model, nhead, vdim=vdim, qkdim=qkdim, window_size=window_size, freq=freq)
         self.dropout_1 = nn.Dropout(dropout)
         self.layer_norm_1 = nn.LayerNorm(d_model, layer_norm_eps)
         
@@ -26,6 +27,7 @@ class RotaryTransformerEncoderLayer(Layer):
             nn.Dropout(dropout),
         )
         self.layer_norm_2 = nn.LayerNorm(d_model, layer_norm_eps)
+
     
     def forward(
         self,
@@ -38,4 +40,4 @@ class RotaryTransformerEncoderLayer(Layer):
         x = self.layer_norm_1(embeddings + x)
         y = self.ff(x)
         return self.layer_norm_2(x + y)
-    
+        

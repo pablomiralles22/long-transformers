@@ -1,3 +1,5 @@
+import torch
+
 from torch import nn
 
 class CompressorStep(nn.Module):
@@ -12,8 +14,8 @@ class CompressorStep(nn.Module):
     ):
         super().__init__()
 
-        self.vdim  = self.d_model if vdim is None else vdim
-        self.qkdim = self.d_model if qkdim is None else qkdim
+        self.vdim  = d_model if vdim is None else vdim
+        self.qkdim = d_model if qkdim is None else qkdim
 
         self.W_Q = nn.Linear(d_model, self.qkdim)
         self.W_K = nn.Linear(d_model, self.qkdim)
@@ -43,12 +45,9 @@ class CompressorStep(nn.Module):
         K = self.W_K(embeddings_2)
         V = self.W_V(embeddings_2)
 
-        Q = self.__separate_heads(Q)  # [B, H, L1, qkdim]
-        K = self.__separate_heads(K)  # [B, H, L2, qkdim]
-        V = self.__separate_heads(V)  # [B, H, L2, vdim]
-
-        x, _ = self.mh_attention(Q, K, V, key_padding_mask=attention_mask)  # [B, H, L1, vdim]
-        x = self.__join_heads(x)  # [B, L1, d_model]
+        if attention_mask is not None:
+            attention_mask = ~attention_mask.bool()
+        x, _ = self.mh_attention(Q, K, V, key_padding_mask=attention_mask)  # [B, L1, D]
 
         x = self.dropout_1(x)
         x = self.layer_norm_1(x + embeddings_1)
@@ -56,16 +55,6 @@ class CompressorStep(nn.Module):
         y = self.ff(x)
 
         return self.layer_norm_2(x + y)
-    
-    def __separate_heads(self, mat):
-        # [B, L, D] -> [B, H, L, D/H]
-        *B, L, D = mat.shape
-        return mat.view(*B, L, self.nhead, D // self.nhead).transpose(-2, -3)
-    
-    def __join_heads(self, mat):
-        # [B, H, L, D/H] -> [B, L, D]
-        *B, H, L, DH = mat.shape
-        return mat.transpose(-2, -3).contiguous().view(*B, L, H * DH)
 
 
 class CompressorLayer(nn.Module):
@@ -107,3 +96,41 @@ class CompressorLayer(nn.Module):
         updated_embeddings = self.update_step(embeddings, updated_mem)
         return updated_embeddings, updated_mem
         
+class Compressor(nn.Module):
+    def __init__(
+        self,
+        d_model, vdim=None, qkdim=None,
+        num_layers=1, mem_length=128,
+        nhead=4,
+        dropout=0.1,
+        dim_feedforward=2048,
+        activation_fn_cls=nn.ReLU,
+        layer_norm_eps=1e-05,
+    ):
+        super().__init__()
+
+        self.compressor_layers = nn.ModuleList([
+            CompressorLayer(
+                d_model, vdim=vdim, qkdim=qkdim,
+                nhead=nhead,
+                dropout=dropout,
+                dim_feedforward=dim_feedforward,
+                activation_fn_cls=activation_fn_cls,
+                layer_norm_eps=layer_norm_eps,
+            ) for _ in range(num_layers)
+        ])
+
+        self.memory = nn.Parameter(torch.empty(mem_length, d_model))
+        nn.init.xavier_uniform_(self.memory)
+
+    
+    def forward(
+        self,
+        embeddings,  # [B, L, D]
+        attention_mask=None,  # [B, L]
+        token_type_ids=None,  # [B, L]
+    ):
+        x, memory = embeddings, self.memory.unsqueeze(0).repeat(embeddings.shape[0], 1, 1)
+        for layer in self.compressor_layers:
+            x, memory = layer(x, memory, attention_mask=attention_mask)
+        return x

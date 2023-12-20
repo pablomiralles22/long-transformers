@@ -3,11 +3,13 @@ from typing import Literal
 
 from src.models.layers.residual_block import ResidualBlock
 from src.models.layers.positional_encoding_layer import PositionalEncodingLayer
-from src.models.layers.layer import Layer, Overlayer, ConvLayer
+from src.models.layers.layer import Layer, Overlayer, ConvLayer, UnpackLayer
 from src.models.layers.transformer_encoder_layer import TransformerEncoderLayer
 from src.models.layers.rotary_transformer_encoder_layer import RotaryTransformerEncoderLayer
+from src.models.layers.local_transformer_encoder_layer import LocalTransformerEncoderLayer
 from src.models.layers.conv_transformer_encoder_layer import ConvTransformerEncoderLayer
 from src.models.layers.learned_positional_encoding import LearnedPositionalEncodingLayer
+from src.models.layers.compressor_layer import Compressor
 
 LayerType = Literal[
     "linear",
@@ -23,7 +25,10 @@ LayerType = Literal[
     "learned_positional_encoding",
     "transformer_encoder_layer",
     "rotary_transformer_encoder_layer",
+    "local_transformer_encoder_layer",
     "conv_transformer_encoder_layer",
+    "compressor",
+    "lstm",
 ]
 
 class LayerBuilder:
@@ -67,5 +72,11 @@ class LayerBuilder:
                 return RotaryTransformerEncoderLayer(**params)
             case "conv_transformer_encoder_layer":
                 return ConvTransformerEncoderLayer(**params)
+            case "local_transformer_encoder_layer":
+                return LocalTransformerEncoderLayer(**params)
+            case "compressor":
+                return Compressor(**params)
+            case "lstm":
+                return UnpackLayer(nn.LSTM(**params))
             case _:
                 raise ValueError(f"Invalid LayerType name: {name}")

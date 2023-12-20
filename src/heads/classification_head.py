@@ -72,26 +72,26 @@ class ModelWithClassificationHead(nn.Module):
         )
         self.reduction_method = reduction_method
 
-    def forward(self, *args, **kwargs):
+    def forward(
+        self,
+        embeddings,  # [B, L, D]
+        attention_mask=None,  # [B, L]
+        token_type_ids=None,  # [B, L]
+    ):
         """
         Forward pass of the model.
-
-        Args:
-            *args: Variable length argument list.
-            **kwargs: Arbitrary keyword arguments.
-
         Returns:
             torch.Tensor: The output logits.
         """
-        x = self.model(*args, **kwargs)
-        logits = self.ff(self._reduce(x))
+        x = self.model(embeddings, attention_mask, token_type_ids)
+        logits = self.ff(self._reduce(x, attention_mask))
         return logits
 
-    def _reduce(self, x):
+    def _reduce(self, x, attention_mask):
         if self.reduction_method == "cls":
             return x[:, 0, :]
         if self.reduction_method == "mean":
-            return x.mean(dim=1)
+            return (x * attention_mask.unsqueeze(-1)).sum(1) / attention_mask.sum(1).unsqueeze(-1)
         raise ValueError(f"Unknown reduction method: {self.reduction_method}")
 
 

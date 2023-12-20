@@ -44,3 +44,17 @@ class ConvLayer(Layer):
         embeddings = self.layer(embeddings)
         embeddings = embeddings.transpose(1, 2)
         return embeddings
+
+class UnpackLayer(Layer):
+    def __init__(self, layer: nn.Module):
+        super(UnpackLayer, self).__init__()
+        self.layer = layer
+    
+    def forward(
+        self,
+        embeddings,  # (BATCH, LENGTH, EMBED_DIM)
+        attention_mask=None,  # (BATCH, LENGTH)
+        token_type_ids=None,  # (BATCH, LENGTH)
+    ):
+        x, *_ = self.layer(embeddings)
+        return x

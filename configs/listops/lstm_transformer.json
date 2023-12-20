@@ -1,0 +1,43 @@
+{
+    "model_params": {
+      "name": "layered",
+      "params": {
+          "input_embedding_dim": 20,
+          "output_embedding_dim": 80,
+          "layers": [
+            [ "lstm", { "input_size": 20, "hidden_size": 80, "num_layers": 4, "dropout": 0.1, "batch_first": true } ]
+          ]
+      }
+  },
+    "head_params": {
+      "ff_dim": 1024,
+      "num_hidden_layers": 1,
+      "dropout_p": 0.2,
+      "reduction_method": "mean"
+    },
+    "data_module_params": {
+      "name": "listops",
+      "params": {
+        "data_path": "datasets/lra_release/listops-1000",
+        "max_len": 4096,
+        "batch_size": 128,
+        "pin_memory": true,
+        "num_workers": 4
+      }
+    },
+    "optimizer_params": {
+      "lr": 0.0001,
+      "weight_decay": 0.001,
+      "betas": [ 0.9, 0.99 ]
+    },
+    "trainer_params": {
+      "max_epochs": 10,
+      "precision": "16-mixed",
+      "enable_checkpointing": true,
+      "default_root_dir": "out/listops/lstm_transformer",
+      "accelerator": "gpu",
+      "devices": [ 1 ]
+    },
+    "fit_params": {}
+  }
+  

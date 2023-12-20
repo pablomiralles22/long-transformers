@@ -77,7 +77,11 @@ class TextClassificationCollatorFn:
             attention_masks.append(attention_mask)
             labels.append(label)
 
-        return {"input_ids": torch.tensor(input_ids), "attention_mask": torch.tensor(attention_masks), "labels": torch.tensor(labels)}
+        return {
+            "input_ids": torch.tensor(input_ids),
+            "attention_mask": torch.tensor(attention_masks, dtype=torch.bool),
+            "labels": torch.tensor(labels),
+        }
 
 class TextClassificationDataModule(pl.LightningDataModule):
     @classmethod
