@@ -13,11 +13,16 @@ class ConvTransformerEncoderLayer(nn.Module):
         dim_feedforward=2048,
         activation_fn_cls=nn.ReLU,
         layer_norm_eps=1e-05,
-        conv_out_channels=256,
-        conv_kernel_size=5,
+        norm_first=True,
+        conv_out_channels=None,
+        conv_kernel_size=3,
         conv_groups=1,
     ):
         super().__init__()
+
+        self.norm_first = norm_first
+
+        conv_out_channels = conv_out_channels or d_model
 
         self.conv = nn.Conv1d(
             in_channels=d_model,
@@ -29,12 +34,7 @@ class ConvTransformerEncoderLayer(nn.Module):
         self.dropout_0 = nn.Dropout(dropout)
         self.layer_norm_0 = nn.LayerNorm(conv_out_channels, layer_norm_eps)
 
-        self.mh_attention = RotaryMultiheadSelfAttention(
-            conv_out_channels,
-            nhead,
-            vdim=vdim,
-            qkdim=qkdim,
-        )
+        self.mh_attention = RotaryMultiheadSelfAttention(conv_out_channels, nhead)
         self.dropout_1 = nn.Dropout(dropout)
         self.layer_norm_1 = nn.LayerNorm(conv_out_channels, layer_norm_eps)
         
@@ -52,15 +52,17 @@ class ConvTransformerEncoderLayer(nn.Module):
         attention_mask=None,  # (BATCH, LENGTH)
         token_type_ids=None,  # (BATCH, LENGTH)
     ):
-        embeddings = embeddings * attention_mask.unsqueeze(-1).float()
+        embeddings = embeddings * attention_mask.unsqueeze(-1).float()  # set padding to 0
         x = self.conv(embeddings.transpose(-1, -2)).transpose(-1, -2)
         x = self.dropout_0(x)
         x = self.layer_norm_0(x)
 
+        if self.norm_first is True:
+            # y = self.layer_norm_1(x)
+            y = self.mh_attention(x, key_attention_mask=attention_mask)
+            y = embeddings + self.dropout_1(y)
+            return y + self.ff(self.layer_norm_2(y))
+
         y = self.mh_attention(x, attention_mask)
-        y = self.dropout_1(y)
-        y = self.layer_norm_1(x + y)
-
-        z = self.ff(y)
-
-        return self.layer_norm_2(z + embeddings)
+        y = self.layer_norm_1(embeddings + self.dropout_1(y))
+        return self.layer_norm_2(y + self.ff(y))

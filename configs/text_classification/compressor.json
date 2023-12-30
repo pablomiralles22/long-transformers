@@ -23,7 +23,7 @@
             "layer_params": [
               [ "linear", { "in_features": 128, "out_features": 128 } ],
               [ "layer_norm", { "normalized_shape": 128 } ],
-              [ "dropout", { "p": 0.3 } ],
+              [ "dropout", { "p": 0.2 } ],
               [ "relu", {} ],
               [ "linear", { "in_features": 128, "out_features": 128 } ],
               [ "layer_norm", { "normalized_shape": 128 } ]
@@ -37,7 +37,7 @@
             "layer_params": [
               [ "linear", { "in_features": 128, "out_features": 128 } ],
               [ "layer_norm", { "normalized_shape": 128 } ],
-              [ "dropout", { "p": 0.3 } ],
+              [ "dropout", { "p": 0.2 } ],
               [ "relu", {} ],
               [ "linear", { "in_features": 128, "out_features": 128 } ],
               [ "layer_norm", { "normalized_shape": 128 } ]
@@ -45,17 +45,17 @@
           }
         ],
 
-        [ "positional_encoding", {} ],
+        [ "positional_embedding", { "mode": "sinusoidal" } ],
         [ 
           "compressor",
-          { "d_model": 128, "nhead": 16, "dim_feedforward": 256, "vdim": 256, "dropout": 0.5, "mem_length": 128, "num_layers": 2 } 
+          { "d_model": 128, "nhead": 16, "dim_feedforward": 256, "mem_dim": 128, "dropout": 0.2, "mem_length": 256, "num_layers": 3 } 
         ]
       ]
     }
   },
   "head_params": {
-    "ff_dim": 512,
-    "num_hidden_layers": 1,
+    "ff_dim": 256,
+    "num_hidden_layers": 2,
     "dropout_p": 0.2,
     "reduction_method": "cls"
   },
@@ -72,14 +72,16 @@
   "optimizer_params": {
     "lr": 5e-5,
     "betas": [ 0.9, 0.99 ],
-    "weight_decay": 0.01
+    "weight_decay": 0.05
   },
   "trainer_params": {
-    "max_epochs": 30,
+    "max_epochs": 60,
     "precision": "16-mixed",
+    "gradient_clip_val": 2.0,
     "enable_checkpointing": true,
     "default_root_dir": "out/text_classification/compressor",
     "accelerator": "gpu",
     "devices": [ 2 ]
-  }
+  },
+  "fit_params": {}
 }

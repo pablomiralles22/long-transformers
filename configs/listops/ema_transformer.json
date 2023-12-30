@@ -1,0 +1,56 @@
+{
+  "model_params": {
+    "name": "layered",
+    "params": {
+      "input_embedding_dim": 16,
+      "output_embedding_dim": 128,
+      "layers": [
+        [ "ema", { "dim": 16, "edim": 256, "out_dim": 256, "kernel_size": 2000, "direction": "forward" } ],
+        [ "relu", {} ],
+        [ "linear", { "in_features": 256, "out_features": 512 } ],
+        [ "relu", {} ],
+        [ "linear", { "in_features": 512, "out_features": 128 } ],
+        [ "layer_norm", { "normalized_shape": 128 } ],
+        [ "dropout", { "p": 0.1 } ],
+        [ "rotary_transformer_encoder_layer", { "d_model": 128, "nhead": 16, "dim_feedforward": 256, "dropout": 0.2, "freq": 10000 } ],
+        [ "rotary_transformer_encoder_layer", { "d_model": 128, "nhead": 16, "dim_feedforward": 256, "dropout": 0.2, "freq": 10000 } ],
+        [ "rotary_transformer_encoder_layer", { "d_model": 128, "nhead": 16, "dim_feedforward": 256, "dropout": 0.2, "freq": 10000 } ],
+        [ "rotary_transformer_encoder_layer", { "d_model": 128, "nhead": 16, "dim_feedforward": 256, "dropout": 0.2, "freq": 10000 } ]
+      ]
+    }
+  },
+  "head_params": {
+    "ff_dim": 512,
+    "num_hidden_layers": 1,
+    "dropout_p": 0.1,
+    "reduction_method": "cls"
+  },
+  "data_module_params": {
+    "name": "listops",
+    "params": {
+      "data_path": "datasets/lra_release/listops-1000",
+      "max_len": 2000,
+      "batch_size": 32,
+      "pin_memory": true,
+      "num_workers": 4
+    }
+  },
+  "optimizer_params": {
+    "lr": 1e-3,
+    "betas": [
+      0.9,
+      0.98
+    ],
+    "weight_decay": 0.05
+  },
+  "trainer_params": {
+    "max_epochs": 60,
+    "val_check_interval": 0.25,
+    "precision": "16-mixed",
+    "enable_checkpointing": true,
+    "default_root_dir": "out/listops/ema_transformer",
+    "accelerator": "gpu",
+    "devices": [ 2 ]
+  },
+  "fit_params": {}
+}

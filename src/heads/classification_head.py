@@ -1,3 +1,5 @@
+import torch
+
 from torch import nn
 from src.models.model_with_embedding import ModelWithEmbedding
 from src.custom_types import ReductionMethod
@@ -91,6 +93,8 @@ class ModelWithClassificationHead(nn.Module):
         if self.reduction_method == "cls":
             return x[:, 0, :]
         if self.reduction_method == "mean":
+            if x.size(1) != attention_mask.size(1):
+                return torch.mean(x, dim=1)
             return (x * attention_mask.unsqueeze(-1)).sum(1) / attention_mask.sum(1).unsqueeze(-1)
         raise ValueError(f"Unknown reduction method: {self.reduction_method}")
 

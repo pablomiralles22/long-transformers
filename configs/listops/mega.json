@@ -1,0 +1,48 @@
+{
+  "model_params": {
+    "name": "layered",
+    "params": {
+      "input_embedding_dim": 80,
+      "output_embedding_dim": 80,
+      "layers": [
+        [ "ema_transformer_encoder_layer", { "d_model": 80, "nhead": 8, "dim_feedforward": 160, "dropout": 0.1, "ema_dim": 16, "ema_kernel_size": 2000, "direction": "bidirectional" } ],
+        [ "ema_transformer_encoder_layer", { "d_model": 80, "nhead": 8, "dim_feedforward": 160, "dropout": 0.1, "ema_dim": 16, "ema_kernel_size": 2000, "direction": "bidirectional" } ],
+        [ "ema_transformer_encoder_layer", { "d_model": 80, "nhead": 8, "dim_feedforward": 160, "dropout": 0.1, "ema_dim": 16, "ema_kernel_size": 2000, "direction": "bidirectional" } ],
+        [ "ema_transformer_encoder_layer", { "d_model": 80, "nhead": 8, "dim_feedforward": 160, "dropout": 0.1, "ema_dim": 16, "ema_kernel_size": 2000, "direction": "bidirectional" } ],
+        [ "ema_transformer_encoder_layer", { "d_model": 80, "nhead": 8, "dim_feedforward": 160, "dropout": 0.1, "ema_dim": 16, "ema_kernel_size": 2000, "direction": "bidirectional" } ],
+        [ "ema_transformer_encoder_layer", { "d_model": 80, "nhead": 8, "dim_feedforward": 160, "dropout": 0.1, "ema_dim": 16, "ema_kernel_size": 2000, "direction": "bidirectional" } ]
+      ]
+    }
+  },
+  "head_params": {
+    "ff_dim": 512,
+    "num_hidden_layers": 1,
+    "dropout_p": 0.1,
+    "reduction_method": "cls"
+  },
+  "data_module_params": {
+    "name": "listops",
+    "params": {
+      "data_path": "datasets/lra_release/listops-1000",
+      "max_len": 2000,
+      "batch_size": 32,
+      "pin_memory": true,
+      "num_workers": 4
+    }
+  },
+  "optimizer_params": {
+    "lr": 1e-4,
+    "betas": [ 0.9, 0.98 ],
+    "weight_decay": 0.1
+  },
+  "trainer_params": {
+    "max_epochs": 60,
+    "val_check_interval": 0.5,
+    "precision": "16-mixed",
+    "enable_checkpointing": true,
+    "default_root_dir": "out/listops/mega",
+    "accelerator": "gpu",
+    "devices": [ 2 ]
+  },
+  "fit_params": {}
+}

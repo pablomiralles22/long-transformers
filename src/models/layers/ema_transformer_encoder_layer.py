@@ -1,11 +1,12 @@
+from typing import Optional, Literal
 from torch import nn
 from src.models.layers.layer import Layer
-from src.models.modules.rotary_multihead_self_attention import (
-    RotaryMultiheadSelfAttention,
+from src.models.modules.ema_multihead_attention import (
+    EMAMultiheadAttention,
 )
 
 
-class RotaryTransformerEncoderLayer(Layer):
+class EMATransformerEncoderLayer(Layer):
     def __init__(
         self,
         d_model,
@@ -14,12 +15,21 @@ class RotaryTransformerEncoderLayer(Layer):
         dim_feedforward=2048,
         activation_fn_cls=nn.ReLU,
         layer_norm_eps=1e-05,
-        freq=10000,
         norm_first=True,
+        ema_dim: Optional[int] = None,
+        ema_kernel_size: int = 15,
+        direction: Literal["forward", "backward", "bidirectional"] = "forward",
     ):
         super().__init__()
 
-        self.mh_attention = RotaryMultiheadSelfAttention(d_model, nhead, freq=freq)
+        self.mh_attention = EMAMultiheadAttention(
+            d_model,
+            nhead,
+            ema_dim=ema_dim,
+            ema_kernel_size=ema_kernel_size,
+            dropout=dropout,
+            direction=direction,
+        )
         self.dropout_1 = nn.Dropout(dropout)
         self.layer_norm_1 = nn.LayerNorm(d_model, layer_norm_eps)
 

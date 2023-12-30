@@ -60,7 +60,7 @@ class TextClassificationCollatorFn:
             text, label = item["text"], item["label"]
 
             # build input ids
-            text_idxs = [int(b) for b in bytes(text, encoding="utf-8")]
+            text_idxs = [2 + int(b) for b in bytes(text, encoding="utf-8")]  # 2 for PAD, CLS
             if self.fixed_start is False and len(text_idxs) > self.max_len:
                 start_idx = torch.randint(0, len(text_idxs) - self.max_len + 1, (1,)).item()
                 text_idxs = text_idxs[start_idx:]

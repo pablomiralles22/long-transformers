@@ -1,0 +1,51 @@
+{
+  "model_params": {
+    "name": "layered",
+    "params": {
+      "input_embedding_dim": 16,
+      "output_embedding_dim": 80,
+      "layers": [
+        [ "ema", { "dim": 16, "edim": 16, "out_dim": 80, "kernel_size": 2000 } ],
+        [ "residual_block", { "layer_params": [ [ "linear", { "in_features": 80, "out_features": 160 } ], [ "relu", {} ], [ "linear", { "in_features": 160, "out_features": 80 } ], [ "layer_norm", { "normalized_shape": 80 } ], [ "dropout", { "p": 0.1 } ] ] } ],
+        [ "ema", { "dim": 80, "edim": 16, "out_dim": 80, "kernel_size": 2000 } ],
+        [ "residual_block", { "layer_params": [ [ "linear", { "in_features": 80, "out_features": 160 } ], [ "relu", {} ], [ "linear", { "in_features": 160, "out_features": 80 } ], [ "layer_norm", { "normalized_shape": 80 } ], [ "dropout", { "p": 0.1 } ] ] } ],
+        [ "ema", { "dim": 80, "edim": 16, "out_dim": 80, "kernel_size": 2000 } ],
+        [ "residual_block", { "layer_params": [ [ "linear", { "in_features": 80, "out_features": 160 } ], [ "relu", {} ], [ "linear", { "in_features": 160, "out_features": 80 } ], [ "layer_norm", { "normalized_shape": 80 } ], [ "dropout", { "p": 0.1 } ] ] } ],
+        [ "ema", { "dim": 80, "edim": 16, "out_dim": 80, "kernel_size": 2000 } ],
+        [ "residual_block", { "layer_params": [ [ "linear", { "in_features": 80, "out_features": 160 } ], [ "relu", {} ], [ "linear", { "in_features": 160, "out_features": 80 } ], [ "layer_norm", { "normalized_shape": 80 } ], [ "dropout", { "p": 0.1 } ] ] } ]
+      ]
+    }
+  },
+  "head_params": {
+    "ff_dim": 512,
+    "num_hidden_layers": 1,
+    "dropout_p": 0.1,
+    "reduction_method": "mean"
+  },
+  "data_module_params": {
+    "name": "listops",
+    "params": {
+      "data_path": "datasets/lra_release/listops-1000",
+      "max_len": 2000,
+      "batch_size": 64,
+      "pin_memory": true,
+      "num_workers": 4
+    }
+  },
+  "optimizer_params": {
+    "lr": 1e-3,
+    "betas": [ 0.9, 0.99 ],
+    "weight_decay": 0.1
+  },
+  "trainer_params": {
+    "max_epochs": 40,
+    "val_check_interval": 0.25,
+    "gradient_clip_val": 1.0,
+    "precision": "16-mixed",
+    "enable_checkpointing": true,
+    "default_root_dir": "out/listops/ema",
+    "accelerator": "gpu",
+    "devices": [ 1 ]
+  },
+  "fit_params": {}
+}

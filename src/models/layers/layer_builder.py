@@ -2,33 +2,46 @@ from torch import nn
 from typing import Literal
 
 from src.models.layers.residual_block import ResidualBlock
-from src.models.layers.positional_encoding_layer import PositionalEncodingLayer
 from src.models.layers.layer import Layer, Overlayer, ConvLayer, UnpackLayer
 from src.models.layers.transformer_encoder_layer import TransformerEncoderLayer
 from src.models.layers.rotary_transformer_encoder_layer import RotaryTransformerEncoderLayer
+from src.models.layers.ema_transformer_encoder_layer import EMATransformerEncoderLayer
 from src.models.layers.local_transformer_encoder_layer import LocalTransformerEncoderLayer
 from src.models.layers.conv_transformer_encoder_layer import ConvTransformerEncoderLayer
-from src.models.layers.learned_positional_encoding import LearnedPositionalEncodingLayer
+from src.models.layers.embeddings import PositionalEmbeddingLayer, TokenTypeEmbeddingLayer
 from src.models.layers.compressor_layer import Compressor
+from src.models.layers.one_sided_conv import OneSidedConv
+from src.models.modules.ema import EMA
 
 LayerType = Literal[
     "linear",
+
     "conv",
+    "one_sided_conv",
     "max_pool",
     "mean_pool",
+
     "relu",
     "dropout",
+
     "batch_norm",
     "layer_norm",
+
     "residual_block",
-    "positional_encoding",
-    "learned_positional_encoding",
+
+    "positional_embedding",
+    "token_type_embedding",
+
     "transformer_encoder_layer",
     "rotary_transformer_encoder_layer",
+    "ema_transformer_encoder_layer",
     "local_transformer_encoder_layer",
     "conv_transformer_encoder_layer",
     "compressor",
+
     "lstm",
+    "rnn",
+    "ema",
 ]
 
 class LayerBuilder:
@@ -44,6 +57,8 @@ class LayerBuilder:
                 return ConvLayer(nn.MaxPool1d(**params))
             case "mean_pool":
                 return ConvLayer(nn.AvgPool1d(**params))
+            case "one_sided_conv":
+                return OneSidedConv(**params)
             # activations
             case "relu":
                 return Overlayer(nn.ReLU())
@@ -55,28 +70,37 @@ class LayerBuilder:
                 return Overlayer(nn.BatchNorm1d(**params))
             case "layer_norm":
                 return Overlayer(nn.LayerNorm(**params))
-            # other
             case "residual_block":
                 layers = [
                     cls.build(subname, subparams)
                     for subname, subparams in params["layer_params"]
                 ]
                 return ResidualBlock(layers)
-            case "positional_encoding":
-                return PositionalEncodingLayer()
-            case "learned_positional_encoding":
-                return LearnedPositionalEncodingLayer(**params)
+            # embeddings
+            case "positional_embedding":
+                return PositionalEmbeddingLayer(**params)
+            case "token_type_embedding":
+                return TokenTypeEmbeddingLayer(**params)
+            # transformers encoder layers
             case "transformer_encoder_layer":
                 return TransformerEncoderLayer(**params)
             case "rotary_transformer_encoder_layer":
                 return RotaryTransformerEncoderLayer(**params)
+            case "ema_transformer_encoder_layer":
+                return EMATransformerEncoderLayer(**params)
             case "conv_transformer_encoder_layer":
                 return ConvTransformerEncoderLayer(**params)
             case "local_transformer_encoder_layer":
                 return LocalTransformerEncoderLayer(**params)
             case "compressor":
                 return Compressor(**params)
+            # lstm
             case "lstm":
                 return UnpackLayer(nn.LSTM(**params))
+            case "rnn":
+                return UnpackLayer(nn.RNN(**params))
+            # ema
+            case "ema":
+                return Overlayer(EMA(**params))
             case _:
                 raise ValueError(f"Invalid LayerType name: {name}")

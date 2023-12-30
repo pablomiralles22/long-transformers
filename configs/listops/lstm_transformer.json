@@ -2,16 +2,16 @@
     "model_params": {
       "name": "layered",
       "params": {
-          "input_embedding_dim": 20,
-          "output_embedding_dim": 80,
+          "input_embedding_dim": 128,
+          "output_embedding_dim": 512,
           "layers": [
-            [ "lstm", { "input_size": 20, "hidden_size": 80, "num_layers": 4, "dropout": 0.1, "batch_first": true } ]
+            [ "rnn", { "input_size": 128, "hidden_size": 512, "num_layers": 4, "nonlinearity": "relu", "dropout": 0.1, "batch_first": true } ]
           ]
       }
   },
     "head_params": {
-      "ff_dim": 1024,
-      "num_hidden_layers": 1,
+      "ff_dim": 512,
+      "num_hidden_layers": 2,
       "dropout_p": 0.2,
       "reduction_method": "mean"
     },
@@ -19,24 +19,26 @@
       "name": "listops",
       "params": {
         "data_path": "datasets/lra_release/listops-1000",
-        "max_len": 4096,
-        "batch_size": 128,
+        "max_len": 2000,
+        "batch_size": 512,
         "pin_memory": true,
         "num_workers": 4
       }
     },
     "optimizer_params": {
       "lr": 0.0001,
-      "weight_decay": 0.001,
-      "betas": [ 0.9, 0.99 ]
+      "weight_decay": 0.01,
+      "betas": [ 0.9, 0.999 ]
     },
     "trainer_params": {
-      "max_epochs": 10,
+      "max_epochs": 40,
       "precision": "16-mixed",
+      "val_check_interval": 0.1,
+      "gradient_clip_val": 1.0,
       "enable_checkpointing": true,
       "default_root_dir": "out/listops/lstm_transformer",
       "accelerator": "gpu",
-      "devices": [ 1 ]
+      "devices": [ 2 ]
     },
     "fit_params": {}
   }
