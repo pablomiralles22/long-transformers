@@ -10,10 +10,9 @@ class EMATransformerEncoderLayer(Layer):
     def __init__(
         self,
         d_model,
-        nhead=4,
         dropout=0.1,
         dim_feedforward=2048,
-        activation_fn_cls=nn.ReLU,
+        activation_fn_cls=nn.SiLU,
         layer_norm_eps=1e-05,
         norm_first=True,
         ema_dim: Optional[int] = None,
@@ -24,7 +23,6 @@ class EMATransformerEncoderLayer(Layer):
 
         self.mh_attention = EMAMultiheadAttention(
             d_model,
-            nhead,
             ema_dim=ema_dim,
             ema_kernel_size=ema_kernel_size,
             dropout=dropout,

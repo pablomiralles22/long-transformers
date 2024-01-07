@@ -5,12 +5,12 @@
       "input_embedding_dim": 80,
       "output_embedding_dim": 80,
       "layers": [
-        [ "ema_transformer_encoder_layer", { "d_model": 80, "nhead": 8, "dim_feedforward": 160, "dropout": 0.1, "ema_dim": 16, "ema_kernel_size": 2000, "direction": "bidirectional" } ],
-        [ "ema_transformer_encoder_layer", { "d_model": 80, "nhead": 8, "dim_feedforward": 160, "dropout": 0.1, "ema_dim": 16, "ema_kernel_size": 2000, "direction": "bidirectional" } ],
-        [ "ema_transformer_encoder_layer", { "d_model": 80, "nhead": 8, "dim_feedforward": 160, "dropout": 0.1, "ema_dim": 16, "ema_kernel_size": 2000, "direction": "bidirectional" } ],
-        [ "ema_transformer_encoder_layer", { "d_model": 80, "nhead": 8, "dim_feedforward": 160, "dropout": 0.1, "ema_dim": 16, "ema_kernel_size": 2000, "direction": "bidirectional" } ],
-        [ "ema_transformer_encoder_layer", { "d_model": 80, "nhead": 8, "dim_feedforward": 160, "dropout": 0.1, "ema_dim": 16, "ema_kernel_size": 2000, "direction": "bidirectional" } ],
-        [ "ema_transformer_encoder_layer", { "d_model": 80, "nhead": 8, "dim_feedforward": 160, "dropout": 0.1, "ema_dim": 16, "ema_kernel_size": 2000, "direction": "bidirectional" } ]
+        [ "ema_transformer_encoder_layer", { "d_model": 80, "dim_feedforward": 160, "dropout": 0.1, "ema_dim": 1, "ema_kernel_size": 2000, "direction": "forward" } ],
+        [ "ema_transformer_encoder_layer", { "d_model": 80, "dim_feedforward": 160, "dropout": 0.1, "ema_dim": 1, "ema_kernel_size": 2000, "direction": "forward" } ],
+        [ "ema_transformer_encoder_layer", { "d_model": 80, "dim_feedforward": 160, "dropout": 0.1, "ema_dim": 1, "ema_kernel_size": 2000, "direction": "forward" } ],
+        [ "ema_transformer_encoder_layer", { "d_model": 80, "dim_feedforward": 160, "dropout": 0.1, "ema_dim": 1, "ema_kernel_size": 2000, "direction": "forward" } ],
+        [ "ema_transformer_encoder_layer", { "d_model": 80, "dim_feedforward": 160, "dropout": 0.1, "ema_dim": 1, "ema_kernel_size": 2000, "direction": "forward" } ],
+        [ "ema_transformer_encoder_layer", { "d_model": 80, "dim_feedforward": 160, "dropout": 0.1, "ema_dim": 1, "ema_kernel_size": 2000, "direction": "forward" } ]
       ]
     }
   },
@@ -31,18 +31,20 @@
     }
   },
   "optimizer_params": {
-    "lr": 1e-4,
+    "lr": 1e-3,
     "betas": [ 0.9, 0.98 ],
-    "weight_decay": 0.1
+    "weight_decay": 0.01
   },
   "trainer_params": {
     "max_epochs": 60,
-    "val_check_interval": 0.5,
+    "val_check_interval": 0.25,
+    "gradient_clip_val": 1.0,
+    "gradient_clip_algorithm": "norm",
     "precision": "16-mixed",
     "enable_checkpointing": true,
     "default_root_dir": "out/listops/mega",
     "accelerator": "gpu",
-    "devices": [ 2 ]
+    "devices": [ 1 ]
   },
   "fit_params": {}
 }

@@ -1,7 +1,6 @@
 import torch
 import torchmetrics
 import pytorch_lightning as pl
-import json
 
 from torch.nn import functional as F
 from pytorch_lightning.callbacks import Callback, ModelCheckpoint, EarlyStopping
@@ -99,12 +98,19 @@ class ListopsModule(pl.LightningModule):
         optimizer = torch.optim.Adam(
             params=self.model.parameters(), **self.optimizer_config
         )
-        # scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
-        #     optimizer, mode="max", factor=0.75
-        # )
-        scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(
-            optimizer=optimizer, T_0=10, T_mult=2, verbose=True
+        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+            optimizer, mode="max", factor=0.5, patience=5, verbose=True,
         )
+        # scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(
+        #     optimizer=optimizer, T_0=10, T_mult=2, verbose=True
+        # )
+        # scheduler = torch.optim.lr_scheduler.LinearLR(
+        #     optimizer=optimizer,
+        #     start_factor=1.0,
+        #     end_factor=0.01,
+        #     total_iters=2,
+        #     verbose=True,
+        # )
         return {
             "optimizer": optimizer,
             "lr_scheduler": {

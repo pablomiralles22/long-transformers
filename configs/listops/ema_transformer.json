@@ -3,19 +3,16 @@
     "name": "layered",
     "params": {
       "input_embedding_dim": 16,
-      "output_embedding_dim": 128,
+      "output_embedding_dim": 80,
       "layers": [
-        [ "ema", { "dim": 16, "edim": 256, "out_dim": 256, "kernel_size": 2000, "direction": "forward" } ],
-        [ "relu", {} ],
-        [ "linear", { "in_features": 256, "out_features": 512 } ],
-        [ "relu", {} ],
-        [ "linear", { "in_features": 512, "out_features": 128 } ],
-        [ "layer_norm", { "normalized_shape": 128 } ],
-        [ "dropout", { "p": 0.1 } ],
-        [ "rotary_transformer_encoder_layer", { "d_model": 128, "nhead": 16, "dim_feedforward": 256, "dropout": 0.2, "freq": 10000 } ],
-        [ "rotary_transformer_encoder_layer", { "d_model": 128, "nhead": 16, "dim_feedforward": 256, "dropout": 0.2, "freq": 10000 } ],
-        [ "rotary_transformer_encoder_layer", { "d_model": 128, "nhead": 16, "dim_feedforward": 256, "dropout": 0.2, "freq": 10000 } ],
-        [ "rotary_transformer_encoder_layer", { "d_model": 128, "nhead": 16, "dim_feedforward": 256, "dropout": 0.2, "freq": 10000 } ]
+        [ "ema", { "dim": 16, "edim": 1, "out_dim": 160, "kernel_size": 2000, "direction": "forward" } ], [ "relu", {} ],
+        [ "linear", { "in_features": 160, "out_features": 80 } ], [ "layer_norm", { "normalized_shape": 80 } ], [ "dropout", { "p": 0.1 } ],
+
+        [ "rotary_transformer_encoder_layer", { "d_model": 80, "nhead": 8, "dim_feedforward": 160, "dropout": 0.2 } ],
+        [ "rotary_transformer_encoder_layer", { "d_model": 80, "nhead": 8, "dim_feedforward": 160, "dropout": 0.2 } ],
+        [ "rotary_transformer_encoder_layer", { "d_model": 80, "nhead": 8, "dim_feedforward": 160, "dropout": 0.2 } ],
+        [ "rotary_transformer_encoder_layer", { "d_model": 80, "nhead": 8, "dim_feedforward": 160, "dropout": 0.2 } ]
+
       ]
     }
   },
@@ -37,20 +34,18 @@
   },
   "optimizer_params": {
     "lr": 1e-3,
-    "betas": [
-      0.9,
-      0.98
-    ],
-    "weight_decay": 0.05
+    "betas": [ 0.9, 0.98 ],
+    "weight_decay": 0.01
   },
   "trainer_params": {
     "max_epochs": 60,
     "val_check_interval": 0.25,
     "precision": "16-mixed",
+    "gradient_clip_val": 1.0,
     "enable_checkpointing": true,
     "default_root_dir": "out/listops/ema_transformer",
     "accelerator": "gpu",
-    "devices": [ 2 ]
+    "devices": [ 1 ]
   },
   "fit_params": {}
 }

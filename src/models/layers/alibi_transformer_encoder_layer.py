@@ -1,11 +1,11 @@
 from torch import nn
 from src.models.layers.layer import Layer
-from src.models.modules.rotary_multihead_attention import (
-    RotaryMultiheadAttention,
+from src.models.modules.alibi_multihead_attention import (
+    ALiBiMultiheadAttention,
 )
 
 
-class RotaryTransformerEncoderLayer(Layer):
+class ALiBiTransformerEncoderLayer(Layer):
     def __init__(
         self,
         d_model,
@@ -14,12 +14,11 @@ class RotaryTransformerEncoderLayer(Layer):
         dim_feedforward=2048,
         activation_fn_cls=nn.ReLU,
         layer_norm_eps=1e-05,
-        freq=10000,
         norm_first=True,
     ):
         super().__init__()
 
-        self.mh_attention = RotaryMultiheadAttention(d_model, nhead, freq=freq)
+        self.mh_attention = ALiBiMultiheadAttention(d_model, nhead)
         self.dropout_1 = nn.Dropout(dropout)
         self.layer_norm_1 = nn.LayerNorm(d_model, layer_norm_eps)
 

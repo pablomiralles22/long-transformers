@@ -2,53 +2,25 @@
   "model_params": {
     "name": "layered",
     "params": {
-      "input_embedding_dim": 32,
+      "input_embedding_dim": 128,
       "output_embedding_dim": 128,
       "layers": [
-        [ "conv", { "in_channels": 32, "out_channels": 64, "kernel_size": 5, "padding": "same" } ],
-        [ "layer_norm", { "normalized_shape": 64 } ],
-        [ "dropout", { "p": 0.2 } ],
-        [ "relu", {} ],
-
-        [ "conv", { "in_channels": 64, "out_channels": 256, "kernel_size": 3, "padding": "same" } ],
-        [ "layer_norm", { "normalized_shape": 256 } ],
-        [ "dropout", { "p": 0.2 } ],
-        [ "relu", {} ],
-
-        [ "linear", { "in_features": 256, "out_features": 128 } ],
-
-        [
-          "residual_block",
-          {
-            "layer_params": [
-              [ "linear", { "in_features": 128, "out_features": 128 } ],
-              [ "layer_norm", { "normalized_shape": 128 } ],
-              [ "dropout", { "p": 0.2 } ],
-              [ "relu", {} ],
-              [ "linear", { "in_features": 128, "out_features": 128 } ],
-              [ "layer_norm", { "normalized_shape": 128 } ]
-            ]
-          }
-        ],
-
-        [
-          "residual_block",
-          {
-            "layer_params": [
-              [ "linear", { "in_features": 128, "out_features": 128 } ],
-              [ "layer_norm", { "normalized_shape": 128 } ],
-              [ "dropout", { "p": 0.2 } ],
-              [ "relu", {} ],
-              [ "linear", { "in_features": 128, "out_features": 128 } ],
-              [ "layer_norm", { "normalized_shape": 128 } ]
-            ]
-          }
-        ],
-
         [ "positional_embedding", { "mode": "sinusoidal" } ],
-        [ 
+        [
           "compressor",
-          { "d_model": 128, "nhead": 16, "dim_feedforward": 256, "mem_dim": 128, "dropout": 0.2, "mem_length": 256, "num_layers": 3 } 
+          {
+            "d_model": 128,
+            "nhead": 16,
+            "dim_feedforward": 256,
+            "mem_dim": 128,
+            "dropout": 0.2,
+            "mem_length": 256,
+            "num_layers": 4,
+            "use_ema": true,
+            "ema_dim": 1,
+            "ema_direction": "bidirectional",
+            "conv_size": 10
+          }
         ]
       ]
     }
@@ -70,14 +42,14 @@
     }
   },
   "optimizer_params": {
-    "lr": 5e-5,
+    "lr": 1e-4,
     "betas": [ 0.9, 0.99 ],
     "weight_decay": 0.05
   },
   "trainer_params": {
     "max_epochs": 60,
     "precision": "16-mixed",
-    "gradient_clip_val": 2.0,
+    "gradient_clip_val": 1.0,
     "enable_checkpointing": true,
     "default_root_dir": "out/text_classification/compressor",
     "accelerator": "gpu",

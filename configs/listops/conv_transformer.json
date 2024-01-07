@@ -2,65 +2,32 @@
   "model_params": {
     "name": "layered",
     "params": {
-        "input_embedding_dim": 128,
+        "input_embedding_dim": 16,
         "output_embedding_dim": 128,
         "layers": [
+          [ "conv", { "in_channels": 16, "out_channels": 64, "kernel_size": 7, "padding": "same" } ],
+          [ "layer_norm", { "normalized_shape": 64 } ],
+          [ "dropout", { "p": 0.2 } ],
+          [ "relu", {} ],
+  
+          [ "conv", { "in_channels": 64, "out_channels": 128, "kernel_size": 5, "padding": "same" } ],
+          [ "layer_norm", { "normalized_shape": 128 } ],
+          [ "dropout", { "p": 0.2 } ],
+          [ "relu", {} ],
 
-          [
-              "residual_block",
-              {
-                "layer_params": [
-                  [ "one_sided_conv", { "in_channels": 128, "out_channels": 128, "kernel_size": 7 } ],
-                  [ "relu", {} ],
-                  [ "linear", { "in_features": 128, "out_features": 128 } ],
-                  [ "layer_norm", { "normalized_shape": 128 } ],
-                  [ "dropout", { "p": 0.1 } ]
-                ]
-              }
-          ],
-          [ "rotary_transformer_encoder_layer", { "d_model": 128, "nhead": 8, "dim_feedforward": 512, "dropout": 0.2 } ],
+          [ "conv", { "in_channels": 128, "out_channels": 256, "kernel_size": 5, "padding": "same" } ],
+          [ "layer_norm", { "normalized_shape": 256 } ],
+          [ "dropout", { "p": 0.2 } ],
+          [ "relu", {} ],
 
-          [
-            "residual_block",
-            {
-              "layer_params": [
-                [ "one_sided_conv", { "in_channels": 128, "out_channels": 128, "kernel_size": 7 } ],
-                [ "relu", {} ],
-                [ "linear", { "in_features": 128, "out_features": 128 } ],
-                [ "layer_norm", { "normalized_shape": 128 } ],
-                [ "dropout", { "p": 0.1 } ]
-              ]
-            }
-          ],
-          [ "rotary_transformer_encoder_layer", { "d_model": 128, "nhead": 8, "dim_feedforward": 512, "dropout": 0.2 } ],
+          [ "linear", { "in_features": 256, "out_features": 128 } ],
 
-          [
-            "residual_block",
-            {
-              "layer_params": [
-                [ "one_sided_conv", { "in_channels": 128, "out_channels": 128, "kernel_size": 7 } ],
-                [ "relu", {} ],
-                [ "linear", { "in_features": 128, "out_features": 128 } ],
-                [ "layer_norm", { "normalized_shape": 128 } ],
-                [ "dropout", { "p": 0.1 } ]
-              ]
-            }
-          ],
-          [ "rotary_transformer_encoder_layer", { "d_model": 128, "nhead": 8, "dim_feedforward": 512, "dropout": 0.2 } ],
-
-          [
-            "residual_block",
-            {
-              "layer_params": [
-                [ "one_sided_conv", { "in_channels": 128, "out_channels": 128, "kernel_size": 7 } ],
-                [ "relu", {} ],
-                [ "linear", { "in_features": 128, "out_features": 128 } ],
-                [ "layer_norm", { "normalized_shape": 128 } ],
-                [ "dropout", { "p": 0.1 } ]
-              ]
-            }
-          ],
-          [ "rotary_transformer_encoder_layer", { "d_model": 128, "nhead": 8, "dim_feedforward": 512, "dropout": 0.2 } ]
+          [ "rotary_transformer_encoder_layer", { "d_model": 128, "nhead": 8, "dim_feedforward": 256, "dropout": 0.2 } ],
+          [ "rotary_transformer_encoder_layer", { "d_model": 128, "nhead": 8, "dim_feedforward": 256, "dropout": 0.2 } ],
+          [ "rotary_transformer_encoder_layer", { "d_model": 128, "nhead": 8, "dim_feedforward": 256, "dropout": 0.2 } ],
+          [ "rotary_transformer_encoder_layer", { "d_model": 128, "nhead": 8, "dim_feedforward": 256, "dropout": 0.2 } ],
+          [ "rotary_transformer_encoder_layer", { "d_model": 128, "nhead": 8, "dim_feedforward": 256, "dropout": 0.2 } ],
+          [ "rotary_transformer_encoder_layer", { "d_model": 128, "nhead": 8, "dim_feedforward": 256, "dropout": 0.2 } ]
         ]
     }
 },
@@ -88,7 +55,7 @@
   "trainer_params": {
     "max_epochs": 40,
     "precision": "16-mixed",
-    "val_check_interval": 0.1,
+    "val_check_interval": 0.25,
     "gradient_clip_val": 1.0,
     "enable_checkpointing": true,
     "default_root_dir": "out/listops/conv_transformer",

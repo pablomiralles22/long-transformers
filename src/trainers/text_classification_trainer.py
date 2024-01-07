@@ -59,7 +59,7 @@ class TextClassificationModule(pl.LightningModule):
                 "train_loss": loss,
                 "train_accuracy": accuracy,
             },
-            on_step=False,
+            on_step=True,
             on_epoch=True,
             prog_bar=True,
         )

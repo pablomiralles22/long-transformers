@@ -63,8 +63,8 @@ class ListopsCollatorFn:
 
         start_id = max(pad_token_id, cls_token_id) + 1
         self.__token_to_id = {
-            token: i
-            for i, token in enumerate(self.__TOKENS, start=start_id)
+            token: i + start_id
+            for i, token in enumerate(self.__TOKENS)
         }
 
     def __call__(self, batch):

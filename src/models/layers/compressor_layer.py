@@ -1,7 +1,9 @@
 import torch
-import torch.nn.functional as F
 
 from torch import nn
+from torch.nn import functional as F
+from typing import Literal
+from src.models.modules.ema import EMA
 
 
 class CompressorStep(nn.Module):
@@ -100,7 +102,10 @@ class CompressorLayer(nn.Module):
         dim_feedforward=2048,
         activation_fn_cls=nn.ReLU,
         layer_norm_eps=1e-05,
-        conv_size=None,
+        use_ema: bool = False,
+        ema_dim: int = 2,
+        ema_direction: Literal["forward", "backward", "bidirectional"] = "forward",
+        conv_size: int = 100,
     ):
         super().__init__()
         mem_dim = mem_dim if mem_dim is not None else d_model
@@ -125,23 +130,14 @@ class CompressorLayer(nn.Module):
             layer_norm_eps=layer_norm_eps,
         )
 
-        if conv_size is not None:
-            self.filter_logits = nn.Parameter(torch.empty(d_model, 1, conv_size))
-            nn.init.xavier_uniform_(self.filter_logits)
-            # self.conv = nn.Conv1d(
-            #     in_channels=d_model,
-            #     out_channels=d_model,
-            #     kernel_size=conv_size,
-            #     padding="same",
-            #     groups=d_model,
+        if use_ema is True:
+            self.ema = EMA(d_model, ema_dim, conv_size, d_model, direction=ema_direction)
+            # self.ema_ff = nn.Sequential(
+            #     activation_fn_cls(),
+            #     nn.Linear(d_model, d_model),
+            #     nn.LayerNorm(d_model, layer_norm_eps),
+            #     nn.Dropout(dropout),
             # )
-            self.ff = nn.Sequential(
-                nn.Linear(d_model, d_model),
-                activation_fn_cls(),
-                nn.Linear(d_model, d_model),
-                nn.Dropout(dropout),
-                nn.LayerNorm(d_model, layer_norm_eps),
-            )
 
     def forward(
         self,
@@ -149,18 +145,8 @@ class CompressorLayer(nn.Module):
         memory,  # [B, ML, D]
         attention_mask=None,  # [B, SL]
     ):
-        if hasattr(self, "filter_logits"):
-            filter_mat = torch.sigmoid(self.filter_logits)
-            convolved_embeddings = F.conv1d(
-                embeddings.transpose(-1, -2),
-                filter_mat,
-                padding="same",
-                groups=embeddings.shape[-1],
-            ).transpose(-1, -2)
-            embeddings = embeddings + self.ff(convolved_embeddings)
-            # embeddings = self.conv(embeddings.transpose(-1, -2)).transpose(-1, -2)
-            # embeddings = self.dropout(embeddings)
-            # embeddings = self.layer_norm(embeddings)
+        if hasattr(self, "ema"):
+            embeddings = embeddings + F.silu(self.ema(embeddings))
         
         updated_mem = self.compress_step(
             memory, embeddings, attention_mask=attention_mask
@@ -182,7 +168,10 @@ class Compressor(nn.Module):
         dim_feedforward=2048,
         activation_fn_cls=nn.ReLU,
         layer_norm_eps=1e-05,
-        conv_size=None,
+        use_ema: bool = False,
+        ema_dim: int = 2,
+        ema_direction: Literal["forward", "backward", "bidirectional"] = "forward",
+        conv_size: int = 100,
         shared_layers=False,
     ):
         super().__init__()
@@ -197,7 +186,7 @@ class Compressor(nn.Module):
                         dim_feedforward=dim_feedforward,
                         activation_fn_cls=activation_fn_cls,
                         layer_norm_eps=layer_norm_eps,
-                        conv_size=conv_size,
+                        use_ema=use_ema, ema_dim=ema_dim, ema_direction=ema_direction, conv_size=conv_size,
                     )
                 ] * num_layers
             )
@@ -211,7 +200,7 @@ class Compressor(nn.Module):
                         dim_feedforward=dim_feedforward,
                         activation_fn_cls=activation_fn_cls,
                         layer_norm_eps=layer_norm_eps,
-                        conv_size=conv_size,
+                        use_ema=use_ema, ema_dim=ema_dim, ema_direction=ema_direction, conv_size=conv_size,
                     )
                     for _ in range(num_layers)
                 ]

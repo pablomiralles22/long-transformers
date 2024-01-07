@@ -34,10 +34,12 @@ class EMA(nn.Module):
 
     @torch.no_grad()
     def reset_parameters(self):
-        nn.init.normal_(self.logit_alpha, mean=0.0, std=3.0)
-        nn.init.normal_(self.logit_delta, mean=2.0, std=0.5)
-        nn.init.normal_(self.beta, mean=0.0, std=0.2)
-        nn.init.normal_(self.eta, mean=0.0, std=0.2)
+        nn.init.uniform_(self.logit_alpha, -3, 3)
+        nn.init.uniform_(self.logit_delta, -3, 3)
+        # nn.init.xavier_normal_(self.beta)
+        # nn.init.xavier_normal_(self.eta)
+        nn.init.xavier_uniform_(self.beta)
+        nn.init.xavier_uniform_(self.eta)
 
     def forward(
         self,
@@ -57,7 +59,6 @@ class EMA(nn.Module):
         len_range = (
             torch
             .arange(
-                # self.kernel_size - 1, -1, -1, TODO
                 self.kernel_size,
                 dtype=dtype,
                 device=device,

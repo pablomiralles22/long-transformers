@@ -23,7 +23,8 @@ class Overlayer(Layer):
         attention_mask=None,  # (BATCH, LENGTH)
         token_type_ids=None,  # (BATCH, LENGTH)
     ):
-        embeddings = embeddings * attention_mask.unsqueeze(-1)  # set padding to 0
+        if attention_mask is not None and attention_mask.shape[-1] == embeddings.shape[-2]:
+            embeddings = embeddings * attention_mask.unsqueeze(-1)  # set padding to 0
         return self.layer(embeddings)
 
 class ConvLayer(Layer):

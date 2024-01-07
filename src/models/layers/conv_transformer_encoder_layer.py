@@ -1,5 +1,5 @@
 from torch import nn
-from src.models.layers.rotary_transformer_encoder_layer import RotaryMultiheadSelfAttention
+from src.models.layers.rotary_transformer_encoder_layer import RotaryMultiheadAttention
 
 
 class ConvTransformerEncoderLayer(nn.Module):
@@ -34,7 +34,7 @@ class ConvTransformerEncoderLayer(nn.Module):
         self.dropout_0 = nn.Dropout(dropout)
         self.layer_norm_0 = nn.LayerNorm(conv_out_channels, layer_norm_eps)
 
-        self.mh_attention = RotaryMultiheadSelfAttention(conv_out_channels, nhead)
+        self.mh_attention = RotaryMultiheadAttention(conv_out_channels, nhead)
         self.dropout_1 = nn.Dropout(dropout)
         self.layer_norm_1 = nn.LayerNorm(conv_out_channels, layer_norm_eps)
         

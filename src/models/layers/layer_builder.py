@@ -5,6 +5,7 @@ from src.models.layers.residual_block import ResidualBlock
 from src.models.layers.layer import Layer, Overlayer, ConvLayer, UnpackLayer
 from src.models.layers.transformer_encoder_layer import TransformerEncoderLayer
 from src.models.layers.rotary_transformer_encoder_layer import RotaryTransformerEncoderLayer
+from src.models.layers.alibi_transformer_encoder_layer import ALiBiTransformerEncoderLayer
 from src.models.layers.ema_transformer_encoder_layer import EMATransformerEncoderLayer
 from src.models.layers.local_transformer_encoder_layer import LocalTransformerEncoderLayer
 from src.models.layers.conv_transformer_encoder_layer import ConvTransformerEncoderLayer
@@ -34,6 +35,7 @@ LayerType = Literal[
 
     "transformer_encoder_layer",
     "rotary_transformer_encoder_layer",
+    "alibi_transformer_encoder_layer",
     "ema_transformer_encoder_layer",
     "local_transformer_encoder_layer",
     "conv_transformer_encoder_layer",
@@ -86,6 +88,8 @@ class LayerBuilder:
                 return TransformerEncoderLayer(**params)
             case "rotary_transformer_encoder_layer":
                 return RotaryTransformerEncoderLayer(**params)
+            case "alibi_transformer_encoder_layer":
+                return ALiBiTransformerEncoderLayer(**params)
             case "ema_transformer_encoder_layer":
                 return EMATransformerEncoderLayer(**params)
             case "conv_transformer_encoder_layer":
