@@ -1,0 +1,87 @@
+{
+    "model_params": {
+        "name": "layered",
+        "params": {
+            "input_embedding_dim": 128,
+            "output_embedding_dim": 128,
+            "layers": [
+                [ "positional_embedding", { "mode": "learned", "max_seq_len": 1025, "embed_dim": 128 } ],
+                [ 
+                  "transformer_encoder_layer", 
+                  { 
+                      "d_model": 128, "nhead": 8, "dim_feedforward": 256, "dropout": 0.0, 
+                      "attention_params": { "type": "rotary", "freq": 10000, "learned_freq": false }
+                  } 
+                ],
+                [ 
+                  "transformer_encoder_layer", 
+                  { 
+                      "d_model": 128, "nhead": 8, "dim_feedforward": 256, "dropout": 0.0, 
+                      "attention_params": { "type": "rotary", "freq": 10000, "learned_freq": false }
+                  } 
+                ],
+                [ 
+                  "transformer_encoder_layer", 
+                  { 
+                      "d_model": 128, "nhead": 8, "dim_feedforward": 256, "dropout": 0.0, 
+                      "attention_params": { "type": "rotary", "freq": 10000, "learned_freq": false }
+                  } 
+                ],
+                [ 
+                  "transformer_encoder_layer", 
+                  { 
+                      "d_model": 128, "nhead": 8, "dim_feedforward": 256, "dropout": 0.0, 
+                      "attention_params": { "type": "rotary", "freq": 10000, "learned_freq": false }
+                  } 
+                ],
+                [ 
+                  "transformer_encoder_layer", 
+                  { 
+                      "d_model": 128, "nhead": 8, "dim_feedforward": 256, "dropout": 0.0, 
+                      "attention_params": { "type": "rotary", "freq": 10000, "learned_freq": false }
+                  } 
+                ],
+                [ 
+                  "transformer_encoder_layer", 
+                  { 
+                      "d_model": 128, "nhead": 8, "dim_feedforward": 256, "dropout": 0.0, 
+                      "attention_params": { "type": "rotary", "freq": 10000, "learned_freq": false }
+                  } 
+                ]
+            ]
+        }
+    },
+    "head_params": {
+        "ff_dim": 256,
+        "num_hidden_layers": 1,
+        "dropout_p": 0.0,
+        "reduction_method": "cls"
+    },
+    "data_module_params": {
+        "name": "pathfinder",
+        "params": {
+            "data_path": "datasets/lra_release/pathfinder32/curv_baseline",
+            "max_len": 1025,
+            "batch_size": 128,
+            "pin_memory": true,
+            "num_workers": 6
+        }
+    },
+    "optimizer_params": {
+        "lr": 0.0005,
+        "betas": [ 0.9, 0.99 ],
+        "weight_decay": 0.01
+    },
+    "trainer_params": {
+        "max_epochs": 40,
+        "precision": "16-mixed",
+        "gradient_clip_val": 1.0,
+        "enable_checkpointing": true,
+        "default_root_dir": "out/pathfinder/rotary",
+        "accelerator": "gpu",
+        "devices": [
+            2
+        ]
+    },
+    "fit_params": {}
+  }

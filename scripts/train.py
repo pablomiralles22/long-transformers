@@ -4,6 +4,7 @@ import json
 import os
 import pytorch_lightning as pl
 
+
 dir_path = os.path.dirname(os.path.abspath(__file__))
 project_root_path = os.path.join(dir_path, "..")
 sys.path.append(project_root_path)
@@ -11,6 +12,10 @@ sys.path.append(project_root_path)
 from src.data_loaders.data_module_builder import DataModuleBuilder
 from src.data_loaders.listops import ListopsDataModule
 from src.data_loaders.text_classification import TextClassificationDataModule
+from src.data_loaders.cifar10 import CIFAR10DataModule
+from src.data_loaders.pathfinder import PathfinderDataModule
+from src.trainers.cifar10_trainer import CIFAR10Module
+from src.trainers.pathfinder_trainer import PathfinderModule
 from src.trainers.listops_trainer import ListopsModule
 from src.trainers.text_classification_trainer import TextClassificationModule
 
@@ -38,6 +43,10 @@ def run(config):
         PlModuleCls = ListopsModule
     elif isinstance(data_module, TextClassificationDataModule):
         PlModuleCls = TextClassificationModule
+    elif isinstance(data_module, CIFAR10DataModule):
+        PlModuleCls = CIFAR10Module
+    elif isinstance(data_module, PathfinderDataModule):
+        PlModuleCls = PathfinderModule
     
     module = PlModuleCls(
         model_params=model_params,

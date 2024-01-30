@@ -1,5 +1,7 @@
+from src.data_loaders.pathfinder import PathfinderDataModule
 from src.data_loaders.text_classification import TextClassificationDataModule
 from src.data_loaders.listops import ListopsDataModule
+from src.data_loaders.cifar10 import CIFAR10DataModule
 
 
 class DataModuleBuilder:
@@ -10,5 +12,9 @@ class DataModuleBuilder:
                 return TextClassificationDataModule.from_joint_config(params)
             case "listops":
                 return ListopsDataModule.from_joint_config(params)
+            case "cifar10":
+                return CIFAR10DataModule.from_joint_config(params)
+            case "pathfinder":
+                return PathfinderDataModule.from_joint_config(params)
             case _:
                 raise ValueError(f"Unknown task: {name}")

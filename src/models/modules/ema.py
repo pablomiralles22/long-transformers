@@ -18,15 +18,18 @@ class EMA(nn.Module):
         super().__init__()
 
         self.dim = dim  # = D
-        self.edim = edim * dim  # = E
+        # self.edim = edim * dim  # = E
+        self.edim = edim  # = E
         self.out_dim = out_dim if out_dim is not None else dim  # = O
         self.kernel_size = kernel_size  # = K
-        self.kernel_channels = (2 if direction == "bidirectional" else 1) * self.edim  # = C
+        self.kernel_channels = (2 if direction == "bidirectional" else 1) * dim  # = C
 
-        self.logit_alpha = nn.Parameter(torch.empty(self.kernel_channels))  # [C]
-        self.logit_delta = nn.Parameter(torch.empty(self.kernel_channels))  # [C]
-        self.beta = nn.Parameter(torch.empty(dim, self.edim))  # [D, E]
-        self.eta = nn.Parameter(torch.empty(self.edim, self.out_dim))  # [E, O]
+        self.logit_alpha = nn.Parameter(torch.empty(self.kernel_channels, edim))  # [C, E]
+        self.logit_delta = nn.Parameter(torch.empty(self.kernel_channels, edim))  # [C, E]
+        # self.beta = nn.Parameter(torch.empty(dim, self.edim))  # [D, E]
+        # self.eta = nn.Parameter(torch.empty(self.edim, self.out_dim))  # [E, O]
+        self.beta = nn.Parameter(torch.empty(self.kernel_channels, edim, 1))  # [C, E, 1]
+        self.eta = nn.Parameter(torch.empty(self.kernel_channels, edim))  # [C, E]
 
         self.reset_parameters()
 
@@ -38,8 +41,16 @@ class EMA(nn.Module):
         nn.init.uniform_(self.logit_delta, -3, 3)
         # nn.init.xavier_normal_(self.beta)
         # nn.init.xavier_normal_(self.eta)
-        nn.init.xavier_uniform_(self.beta)
-        nn.init.xavier_uniform_(self.eta)
+        # nn.init.xavier_uniform_(self.beta)
+        # nn.init.xavier_uniform_(self.eta)
+
+        # beta [1, -1, 1, -1, ...] seems more stable.
+        val = torch.ones(self.edim, 1)
+        if self.edim > 1:
+            idx = torch.tensor(list(range(1, self.edim, 2)))
+            val.index_fill_(0, idx, -1.0)
+        self.beta.normal_(mean=0.0, std=0.02).add_(val)
+        nn.init.normal_(self.eta, mean=0.0, std=1.0)
 
     def forward(
         self,
@@ -50,11 +61,11 @@ class EMA(nn.Module):
         device, dtype = embeddings.device, embeddings.dtype
 
         # compute kernel
-        alpha = torch.sigmoid(self.logit_alpha.view(-1, 1))  # [C, 1]
-        delta = torch.sigmoid(self.logit_delta.view(-1, 1))  # [C, 1]
+        alpha = torch.sigmoid(self.logit_alpha.view(-1, self.edim, 1))  # [C, E, 1]
+        delta = torch.sigmoid(self.logit_delta.view(-1, self.edim, 1))  # [C, E, 1]
 
-        p = alpha  # [C, 1]
-        q = 1. - alpha * delta  # [C, 1]
+        p = alpha  # [C, E, 1]
+        q = 1. - alpha * delta  # [C, E, 1]
 
         len_range = (
             torch
@@ -64,19 +75,20 @@ class EMA(nn.Module):
                 device=device,
                 requires_grad=False,
             )
-            .view(1, -1)
-        )  # [1, kernel_size]
+            .view(1, 1, -1)
+        )  # [1, 1, kernel_size]
 
-        kernel = (p * torch.exp(torch.log(q) * len_range))  # [C, kernel_size]
+        kernel = ((self.beta * p) * torch.exp(torch.log(q) * len_range))  # [C, E, kernel_size]
+        kernel = torch.einsum("c e k, c e -> c k", kernel, self.eta)  # [C, kernel_size]
 
         # compute output
-        u = embeddings @ self.beta  # [B, L, E]
-        u_T = u.transpose(-1, -2)  # [B, E, L]
+        u = embeddings  # [B, L, D]
+        u_T = u.transpose(-1, -2)  # [B, D, L]
 
-        out_T = self.__convolve(u_T, kernel)  # [B, E, L]
+        out_T = self.__convolve(u_T, kernel)  # [B, D, L]
 
-        out = out_T.transpose(-1, -2)  # [B, L, E]
-        return out @ self.eta  # [B, L, O]
+        out = out_T.transpose(-1, -2)  # [B, L, D]
+        return out
 
     def __convolve(
         self,

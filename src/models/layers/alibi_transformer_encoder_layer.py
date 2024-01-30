@@ -15,10 +15,11 @@ class ALiBiTransformerEncoderLayer(Layer):
         activation_fn_cls=nn.ReLU,
         layer_norm_eps=1e-05,
         norm_first=True,
+        max_len=1025,
     ):
         super().__init__()
 
-        self.mh_attention = ALiBiMultiheadAttention(d_model, nhead)
+        self.mh_attention = ALiBiMultiheadAttention(d_model, nhead, max_len=max_len)
         self.dropout_1 = nn.Dropout(dropout)
         self.layer_norm_1 = nn.LayerNorm(d_model, layer_norm_eps)
 

@@ -1,11 +1,9 @@
-import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from src.utils.rotary_embedding import RotaryEmbedding
 from src.utils.attention_head_handler import AttentionHeadHandler
 
-class RotaryMultiheadAttention(nn.Module):
+class MultiheadAttention(nn.Module):
     def __init__(
         self,
         d_model,
@@ -13,8 +11,6 @@ class RotaryMultiheadAttention(nn.Module):
         bias=True,
         vdim=None,
         kdim=None,
-        learned_freq=False,
-        freq=10000,
     ):
         assert d_model % nhead == 0, "Error: the embedding dimension should be divisible by the number of heads"
 
@@ -32,13 +28,6 @@ class RotaryMultiheadAttention(nn.Module):
 
         self.W_O = nn.Linear(d_model, d_model, bias=bias)
 
-        self.freq = freq
-        self.thetas = nn.Parameter(torch.empty(nhead, (d_model // nhead) // 2)) if learned_freq is True else None
-        self.reset_parameters()
-
-    def reset_parameters(self):
-        if self.thetas is not None:
-            nn.init.uniform_(self.thetas, a=-0.1, b=0.1)
 
     def forward(
         self,
@@ -55,11 +44,8 @@ class RotaryMultiheadAttention(nn.Module):
         keys_proj = self.W_K(keys)  # [B, L2, D]
         values_proj = self.W_V(values)  # [B, L2, D]
 
-        Q = RotaryEmbedding.apply(queries_proj, thetas=self.thetas, freq=self.freq)  # [B, H, L, D/H]
-        K = RotaryEmbedding.apply(keys_proj, thetas=self.thetas, freq=self.freq)  # [B, H, L, D/H]
-
-        Q = AttentionHeadHandler.separate_heads(Q, self.nhead)  # [B, H, L, D/H]
-        K = AttentionHeadHandler.separate_heads(K, self.nhead)  # [B, H, L, D/H]
+        Q = AttentionHeadHandler.separate_heads(queries_proj, self.nhead)  # [B, H, L, D/H]
+        K = AttentionHeadHandler.separate_heads(keys_proj, self.nhead)  # [B, H, L, D/H]
         V = AttentionHeadHandler.separate_heads(values_proj, self.nhead)  # [B, H, L, D/H]
         
         if key_attention_mask is not None:

@@ -15,11 +15,12 @@ class RotaryTransformerEncoderLayer(Layer):
         activation_fn_cls=nn.ReLU,
         layer_norm_eps=1e-05,
         freq=10000,
+        learned_freq=False,
         norm_first=True,
     ):
         super().__init__()
 
-        self.mh_attention = RotaryMultiheadAttention(d_model, nhead, freq=freq)
+        self.mh_attention = RotaryMultiheadAttention(d_model, nhead, learned_freq=learned_freq, freq=freq)
         self.dropout_1 = nn.Dropout(dropout)
         self.layer_norm_1 = nn.LayerNorm(d_model, layer_norm_eps)
 

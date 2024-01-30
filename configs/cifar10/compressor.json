@@ -1,0 +1,66 @@
+{
+  "model_params": {
+      "name": "layered",
+      "params": {
+          "input_embedding_dim": 160,
+          "output_embedding_dim": 160,
+          "layers": [
+              [ "positional_embedding", { "mode": "learned", "max_seq_len": 1025, "embed_dim": 160 } ],
+              [
+                  "compressor",
+                  {
+                      "d_model": 160,
+                      "nhead": 16,
+                      "dim_ff_multiplier": 2,
+                      "mem_dim": 160,
+                      "mem_length": 64,
+                      "dropout": 0.01,
+                      "num_layers": 4,
+                      "use_conv": false,
+                      "conv_size": 11,
+                      "bottleneck_size": 80
+                  }
+              ]
+          ]
+      }
+  },
+  "head_params": {
+      "ff_dim": 320,
+      "num_hidden_layers": 1,
+      "dropout_p": 0.1,
+      "num_classes": 10,
+      "reduction_method": "cls"
+  },
+  "data_module_params": {
+      "name": "cifar10",
+      "params": {
+          "data_path": "datasets/cifar10",
+          "max_len": 1025,
+          "batch_size": 32,
+          "pin_memory": true,
+          "num_workers": 6
+      }
+  },
+  "optimizer_params": {
+      "lr": 0.001,
+      "betas": [
+          0.9,
+          0.98
+      ],
+      "weight_decay": 0.1
+  },
+  "trainer_params": {
+      "max_epochs": 140,
+      "precision": "16-mixed",
+      "gradient_clip_val": 1.0,
+      "enable_checkpointing": true,
+      "default_root_dir": "out/cifar10/compressor",
+      "accelerator": "gpu",
+      "devices": [
+          2
+      ]
+  },
+  "fit_params": {
+    "ckpt_path": "out/cifar10/compressor/lightning_logs/version_29/checkpoints/epoch=78-val_accuracy=0.51.ckpt"
+  }
+}

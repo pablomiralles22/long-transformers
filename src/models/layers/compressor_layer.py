@@ -13,7 +13,7 @@ class CompressorStep(nn.Module):
         vdim=None,  # D2
         nhead=4,
         dropout=0.1,
-        dim_feedforward=2048,
+        dim_ff_multiplier=2,
         activation_fn_cls=nn.ReLU,
         layer_norm_eps=1e-05,
         norm_first=True,
@@ -45,11 +45,12 @@ class CompressorStep(nn.Module):
         self.layer_norm_2 = nn.LayerNorm(d_model, layer_norm_eps)
 
         # feed forward
+        dim_ff = int(d_model * dim_ff_multiplier)
         self.ff = nn.Sequential(
-            nn.Linear(d_model, dim_feedforward),
+            nn.Linear(d_model, dim_ff),
             nn.Dropout(dropout),
             activation_fn_cls(),
-            nn.Linear(dim_feedforward, d_model),
+            nn.Linear(dim_ff, d_model),
             nn.Dropout(dropout),
         )
 
@@ -99,15 +100,23 @@ class CompressorLayer(nn.Module):
         mem_dim=None,
         mem_nhead=None,
         dropout=0.1,
-        dim_feedforward=2048,
+        dim_ff_multiplier=2,
         activation_fn_cls=nn.ReLU,
         layer_norm_eps=1e-05,
+
         use_ema: bool = False,
         ema_dim: int = 2,
         ema_direction: Literal["forward", "backward", "bidirectional"] = "forward",
+
+        use_conv: bool = False,
+        bottleneck_size: int = 64,
+
         conv_size: int = 100,
     ):
         super().__init__()
+
+        assert use_conv is False or use_ema is False, "EMA and Conv cannot be used together"
+
         mem_dim = mem_dim if mem_dim is not None else d_model
         mem_nhead = mem_nhead if mem_nhead is not None else nhead
 
@@ -116,7 +125,7 @@ class CompressorLayer(nn.Module):
             vdim=d_model,
             nhead=nhead,
             dropout=dropout,
-            dim_feedforward=dim_feedforward,
+            dim_ff_multiplier=dim_ff_multiplier,
             activation_fn_cls=activation_fn_cls,
             layer_norm_eps=layer_norm_eps,
         )
@@ -125,7 +134,7 @@ class CompressorLayer(nn.Module):
             vdim=mem_dim,
             nhead=mem_nhead,
             dropout=dropout,
-            dim_feedforward=dim_feedforward,
+            dim_ff_multiplier=dim_ff_multiplier,
             activation_fn_cls=activation_fn_cls,
             layer_norm_eps=layer_norm_eps,
         )
@@ -139,6 +148,15 @@ class CompressorLayer(nn.Module):
             #     nn.Dropout(dropout),
             # )
 
+        if use_conv is True:
+            self.conv = nn.Sequential(
+                nn.Conv1d(d_model, bottleneck_size, 1),
+                nn.ReLU(),
+                nn.Conv1d(bottleneck_size, bottleneck_size, conv_size, padding="same"),
+                nn.ReLU(),
+                nn.Conv1d(bottleneck_size, d_model, 1),
+            )
+
     def forward(
         self,
         embeddings,  # [B, SL, D]
@@ -147,6 +165,9 @@ class CompressorLayer(nn.Module):
     ):
         if hasattr(self, "ema"):
             embeddings = embeddings + F.silu(self.ema(embeddings))
+
+        if hasattr(self, "conv"):
+            embeddings += self.conv(embeddings.transpose(1, 2)).transpose(1, 2)
         
         updated_mem = self.compress_step(
             memory, embeddings, attention_mask=attention_mask
@@ -165,13 +186,18 @@ class Compressor(nn.Module):
         mem_nhead=None,
         num_layers=1,
         dropout=0.1,
-        dim_feedforward=2048,
+        dim_ff_multiplier=2,
         activation_fn_cls=nn.ReLU,
         layer_norm_eps=1e-05,
         use_ema: bool = False,
         ema_dim: int = 2,
         ema_direction: Literal["forward", "backward", "bidirectional"] = "forward",
+
+        use_conv: bool = False,
+        bottleneck_size: int = 64,
+
         conv_size: int = 100,
+
         shared_layers=False,
     ):
         super().__init__()
@@ -183,10 +209,12 @@ class Compressor(nn.Module):
                         d_model, nhead=nhead,
                         mem_dim=mem_dim, mem_nhead=mem_nhead,
                         dropout=dropout,
-                        dim_feedforward=dim_feedforward,
+                        dim_ff_multiplier=dim_ff_multiplier,
                         activation_fn_cls=activation_fn_cls,
                         layer_norm_eps=layer_norm_eps,
-                        use_ema=use_ema, ema_dim=ema_dim, ema_direction=ema_direction, conv_size=conv_size,
+                        use_ema=use_ema, ema_dim=ema_dim, ema_direction=ema_direction,
+                        use_conv=use_conv,
+                        conv_size=conv_size,
                     )
                 ] * num_layers
             )
@@ -197,10 +225,12 @@ class Compressor(nn.Module):
                         d_model, nhead=nhead,
                         mem_dim=mem_dim, mem_nhead=mem_nhead,
                         dropout=dropout,
-                        dim_feedforward=dim_feedforward,
+                        dim_ff_multiplier=dim_ff_multiplier,
                         activation_fn_cls=activation_fn_cls,
                         layer_norm_eps=layer_norm_eps,
-                        use_ema=use_ema, ema_dim=ema_dim, ema_direction=ema_direction, conv_size=conv_size,
+                        use_ema=use_ema, ema_dim=ema_dim, ema_direction=ema_direction,
+                        use_conv=use_conv,
+                        conv_size=conv_size,
                     )
                     for _ in range(num_layers)
                 ]

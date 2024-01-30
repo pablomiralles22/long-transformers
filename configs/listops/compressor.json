@@ -35,6 +35,7 @@
     "params": {
       "data_path": "datasets/lra_release/listops-1000",
       "max_len": 2000,
+      "augment": true,
       "batch_size": 64,
       "pin_memory": true,
       "num_workers": 4

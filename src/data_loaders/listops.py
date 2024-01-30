@@ -2,6 +2,8 @@ import os
 import torch
 import pytorch_lightning as pl
 import pandas as pd
+import random
+import math
 
 from copy import deepcopy
 from torch.utils.data import Dataset, DataLoader
@@ -45,15 +47,24 @@ class ListopsCollatorFn:
         '[MAX', '[MED', '[MIN', '[SM', ']',
     ]
 
+    __OPERATORS = {
+        "[MED": lambda x: sorted(x)[len(x) // 2],
+        "[MAX": max,
+        "[MIN": min,
+        "[SM": lambda l : sum(l) % 10,
+    }
+
     def __init__(
         self,
         max_len, 
+        augment: bool = False,
         pad_token_id: int = 0,
         cls_token_id: int = 1,
         pad_token_type_id: int = 0,
         cls_token_type_id: int = 1,
     ):
         self.max_len = max_len
+        self.augment = augment
 
         self.pad_token_id = pad_token_id
         self.cls_token_id = cls_token_id
@@ -70,13 +81,15 @@ class ListopsCollatorFn:
     def __call__(self, batch):
         input_ids = []
         attention_masks = []
-        token_type_ids = []
+        # token_type_ids = []
         labels = []
 
         for item in batch:
             sequence, label = item["sequence"], item["label"]
 
             tokens = sequence.split()
+            if self.augment is True and random.uniform(0, 1) < 0.5:
+                tokens = self.__augment(tokens)
 
             # create input ids and token type ids
             indices = [self.cls_token_id] + [self.__token_to_id[token] for token in tokens]
@@ -113,12 +126,53 @@ class ListopsCollatorFn:
             token_type_ids.append(len(token_queue) + self.cls_token_type_id)
         return token_type_ids
 
+    @classmethod
+    def __augment(cls, tree: list[str], logit_mean=0., logit_std=1.):
+        ops: list[callable] = []
+        operands: list[list[int]] = [[]]
+        subtokens: list[list[str]] = [[]]
+        current_depth = 1
+
+        for token in tree:
+            if token.startswith("["):
+                ops.append(token)
+                operands.append([])
+                subtokens.append([])
+                current_depth += 1
+
+            elif token.startswith("]"):
+                result = cls.__OPERATORS[ops[-1]](operands[-1])
+                
+                full_tokens: list[str] = [ops[-1]] + subtokens[-1] + ["]"]
+                result_token: list[str] = [str(result)]
+
+                ops.pop()
+                operands.pop()
+                subtokens.pop()
+
+                logit_contract = (current_depth - logit_mean) / logit_std
+                prob_contract = 1. / (1. + math.exp(-logit_contract))
+                if random.uniform(0, 1) < prob_contract:
+                    subtokens[-1].extend(result_token)
+                else:
+                    subtokens[-1].extend(full_tokens)
+
+                operands[-1].append(result)
+
+                current_depth -= 1
+            else:
+                operands[-1].append(int(token))
+                subtokens[-1].append(token)
+        
+        return subtokens[0]
+
 
 class ListopsDataModule(pl.LightningDataModule):
     @classmethod
     def get_default_collator_config(cls):
         return {
             "max_len": 2000,
+            "augment": False,
         }
 
     @classmethod
@@ -148,16 +202,25 @@ class ListopsDataModule(pl.LightningDataModule):
         self.data_path = data_path
 
         # build collator_fn
-        collator_config = {
+        train_collator_config = {
             **self.get_default_collator_config(),
             **collator_config,
         }
+        test_collator_config = {
+            **train_collator_config,
+            "augment": False,
+        }
 
         # build loader config
-        self.loader_config = {
+        self.train_loader_config = {
             **self.get_default_loader_config(),
             **loader_config,
-            "collate_fn": ListopsCollatorFn(**collator_config),
+            "collate_fn": ListopsCollatorFn(**train_collator_config),
+        }
+        self.test_loader_config = {
+            **self.get_default_loader_config(),
+            **loader_config,
+            "collate_fn": ListopsCollatorFn(**test_collator_config),
         }
 
         # load datasets
@@ -167,14 +230,14 @@ class ListopsDataModule(pl.LightningDataModule):
     def train_dataloader(self):
         return DataLoader(
             dataset=self.train_dataset,
-            **self.loader_config,
+            **self.train_loader_config,
             shuffle=True,
         )
 
     def val_dataloader(self):
         return DataLoader(
             dataset=self.val_dataset,
-            **self.loader_config,
+            **self.test_loader_config,
             shuffle=False,
         )
 
@@ -182,8 +245,8 @@ class ListopsDataModule(pl.LightningDataModule):
         return NUM_EMBEDDINGS
 
     def get_pad_token_id(self):
-        return self.loader_config["collate_fn"].pad_token_id
+        return self.train_loader_config["collate_fn"].pad_token_id
     
     def get_cls_token_id(self):
-        return self.loader_config["collate_fn"].cls_token_id
+        return self.train_loader_config["collate_fn"].cls_token_id
     

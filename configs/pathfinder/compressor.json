@@ -1,0 +1,72 @@
+{
+  "model_params": {
+    "name": "layered",
+    "params": {
+      "input_embedding_dim": 1,
+      "output_embedding_dim": 128,
+      "layers": [
+        [ "conv", { "in_channels": 1, "out_channels": 32, "kernel_size": 5, "padding": "same" } ],
+        [ "layer_norm", { "normalized_shape": 32 } ],
+        [ "dropout", { "p": 0.2 } ],
+        [ "relu", {} ],
+
+        [ "conv", { "in_channels": 32, "out_channels": 128, "kernel_size": 3, "padding": "same" } ],
+        [ "layer_norm", { "normalized_shape": 128 } ],
+        [ "dropout", { "p": 0.2 } ],
+
+        [ "positional_embedding", { "mode": "learned", "max_seq_len": 1025, "embed_dim": 128 } ],
+        [
+          "compressor",
+          {
+            "d_model": 128,
+            "nhead": 16,
+            "dim_ff_multiplier": 2,
+            "mem_dim": 128,
+            "dropout": 0.0,
+            "mem_length": 64,
+            "num_layers": 4,
+            "use_conv": false,
+            "bottleneck_size": 64,
+            "conv_size": 7
+          }
+        ]
+      ]
+    }
+  },
+  "head_params": {
+    "ff_dim": 128,
+    "num_hidden_layers": 1,
+    "dropout_p": 0.0,
+    "reduction_method": "cls"
+  },
+  "data_module_params": {
+    "name": "pathfinder",
+    "params": {
+      "data_path": "datasets/lra_release/pathfinder32/curv_baseline",
+      "max_len": 1025,
+      "batch_size": 128,
+      "pin_memory": true,
+      "num_workers": 6
+    }
+  },
+  "optimizer_params": {
+    "lr": 0.001,
+    "betas": [
+      0.9,
+      0.9
+    ],
+    "weight_decay": 0.0
+  },
+  "trainer_params": {
+    "max_epochs": 40,
+    "precision": "16-mixed",
+    "gradient_clip_val": 1.0,
+    "enable_checkpointing": true,
+    "default_root_dir": "out/pathfinder/compressor",
+    "accelerator": "gpu",
+    "devices": [
+      2
+    ]
+  },
+  "fit_params": {}
+}

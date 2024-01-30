@@ -1,0 +1,54 @@
+{
+  "model_params": {
+    "name": "layered",
+    "params": {
+      "input_embedding_dim": 128,
+      "output_embedding_dim": 128,
+      "layers": [
+        [ "positional_embedding", { "mode": "learned", "max_seq_len": 1025, "embed_dim": 128 } ], 
+        [ "alibi_transformer_encoder_layer", { "d_model": 128, "nhead": 8, "dim_feedforward": 256, "dropout": 0.01, "max_len": 1025 } ],
+        [ "alibi_transformer_encoder_layer", { "d_model": 128, "nhead": 8, "dim_feedforward": 256, "dropout": 0.01, "max_len": 1025 } ],
+        [ "alibi_transformer_encoder_layer", { "d_model": 128, "nhead": 8, "dim_feedforward": 256, "dropout": 0.01, "max_len": 1025 } ],
+        [ "alibi_transformer_encoder_layer", { "d_model": 128, "nhead": 8, "dim_feedforward": 256, "dropout": 0.01, "max_len": 1025 } ],
+        [ "alibi_transformer_encoder_layer", { "d_model": 128, "nhead": 8, "dim_feedforward": 256, "dropout": 0.01, "max_len": 1025 } ],
+        [ "alibi_transformer_encoder_layer", { "d_model": 128, "nhead": 8, "dim_feedforward": 256, "dropout": 0.01, "max_len": 1025 } ]
+      ]
+    }
+  },
+  "head_params": {
+      "ff_dim": 256,
+      "num_hidden_layers": 1,
+      "dropout_p": 0.01,
+      "num_classes": 10,
+      "reduction_method": "cls"
+  },
+  "data_module_params": {
+      "name": "cifar10",
+      "params": {
+          "data_path": "datasets/cifar10",
+          "max_len": 1025,
+          "batch_size": 32,
+          "pin_memory": true,
+          "num_workers": 6
+      }
+  },
+  "optimizer_params": {
+      "lr": 0.001,
+      "betas": [ 0.9, 0.98 ],
+      "weight_decay": 0.01
+  },
+  "trainer_params": {
+      "max_epochs": 130,
+      "precision": "16-mixed",
+      "gradient_clip_val": 1.0,
+      "enable_checkpointing": true,
+      "default_root_dir": "out/cifar10/alibi",
+      "accelerator": "gpu",
+      "devices": [
+          2
+      ]
+  },
+  "fit_params": { 
+    "ckpt_path": "out/cifar10/alibi/lightning_logs/version_2/checkpoints/epoch=96-val_acc=0.76.ckpt"
+  }
+}
