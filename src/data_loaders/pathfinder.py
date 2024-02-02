@@ -30,8 +30,11 @@ class PathfinderSubdataset(Dataset):
         return self.num_imgs
 
     def __getitem__(self, idx):
-        img = Image.open(os.path.join(self.img_dir, f"sample_{idx}.png"))
         label = self.labels[idx]
+        try:
+            img = Image.open(os.path.join(self.img_dir, f"sample_{idx}.png"))
+        except FileNotFoundError:
+            img = None
         return img, label
 
 
@@ -50,8 +53,8 @@ class PathfinderCollatorFn:
         if enable_augment is True:
             self.transform = transforms.Compose(
                 [
-                    # transforms.RandomHorizontalFlip(p=0.5),
-                    # transforms.RandomVerticalFlip(p=0.5),
+                    transforms.RandomHorizontalFlip(p=0.1),
+                    transforms.RandomVerticalFlip(p=0.1),
                     # transforms.RandomAffine(degrees=0, translate=(0.1, 0.1), scale=(0.9, 0.9)),
                     transforms.ToTensor(),
                 ]
@@ -65,6 +68,8 @@ class PathfinderCollatorFn:
         labels = []
 
         for image, label in batch:
+            if image is None:
+                continue
             image = self.transform(image)
             image = (image.mean(dim=0) * 255).long().flatten().tolist()
 

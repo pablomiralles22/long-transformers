@@ -2,6 +2,7 @@ import torch.nn as nn
 
 from typing import Optional
 from src.models.layers.layer import Layer
+from src.models.layers.activations import ActivationFn, build_activation
 from src.models.modules.attention_module_builder import AttentionModuleBuilder
 
 class TransformerEncoderLayer(Layer):
@@ -11,7 +12,7 @@ class TransformerEncoderLayer(Layer):
         nhead=4,
         dropout=0.1,
         dim_feedforward=2048,
-        activation_fn_cls=nn.SiLU,
+        activation_fn: ActivationFn = "relu",
         layer_norm_eps=1e-05,
         norm_first=True,
         attention_params: Optional[dict] = None,
@@ -25,7 +26,7 @@ class TransformerEncoderLayer(Layer):
 
         self.ff = nn.Sequential(
             nn.Linear(d_model, dim_feedforward),
-            activation_fn_cls(),
+            build_activation(activation_fn),
             nn.Linear(dim_feedforward, d_model),
             nn.Dropout(dropout),
         )

@@ -6,9 +6,10 @@ from copy import deepcopy
 from torch.utils.data import Dataset, DataLoader
 from typing import Literal
 
-NUM_EMBEDDINGS = 256 + 2 # PAD, CLS, bytes
+NUM_EMBEDDINGS = 256 + 2 # PAD, CLS, MASK, bytes
 PAD_TOKEN = 0
 CLS_TOKEN = 1
+START_BYTE_IDX = 2
 
 class TextClassificationDataset(Dataset):
     def __init__(
@@ -45,10 +46,8 @@ class TextClassificationDataset(Dataset):
         return {"text": text, "label": label}
 
 class TextClassificationCollatorFn:
-    def __init__(self, max_len, pad_token=0, cls_token=1, fixed_start=False):
+    def __init__(self, max_len, fixed_start=False):
         self.max_len = max_len
-        self.pad_token = pad_token
-        self.cls_token = cls_token
         self.fixed_start = fixed_start
 
     def __call__(self, batch):
@@ -59,16 +58,19 @@ class TextClassificationCollatorFn:
         for item in batch:
             text, label = item["text"], item["label"]
 
-            # build input ids
-            text_idxs = [2 + int(b) for b in bytes(text, encoding="utf-8")]  # 2 for PAD, CLS
-            if self.fixed_start is False and len(text_idxs) > self.max_len:
-                start_idx = torch.randint(0, len(text_idxs) - self.max_len + 1, (1,)).item()
-                text_idxs = text_idxs[start_idx:]
+            start_idx = 0
+            if self.fixed_start is False and len(text) > self.max_len:
+                start_idx = torch.randint(0, len(text) - self.max_len + 1, (1,)).item()
 
-            indices = [self.cls_token] + text_idxs
+            text = text[start_idx:start_idx + self.max_len]
+
+            # build input ids
+            text_idxs = [START_BYTE_IDX + int(b) for b in bytes(text, encoding="utf-8")]  # 3 for PAD, CLS, MASK
+
+            indices = [CLS_TOKEN] + text_idxs
             length = min(len(indices), self.max_len)
             padding_size = self.max_len - length
-            indices = indices[:length] + [self.pad_token] * padding_size
+            indices = indices[:length] + [PAD_TOKEN] * padding_size
 
             # build attention mask
             attention_mask = [1.] * length + [0.] * padding_size
@@ -149,7 +151,7 @@ class TextClassificationDataModule(pl.LightningDataModule):
             **self.loader_config,
             collate_fn=TextClassificationCollatorFn(
                 **self.collator_config,
-                fixed_start=False,
+                fixed_start=True,
             ),
             shuffle=False,
         )

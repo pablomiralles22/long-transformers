@@ -4,15 +4,13 @@ from typing import Literal
 from src.models.layers.residual_block import ResidualBlock
 from src.models.layers.layer import Layer, Overlayer, ConvLayer, UnpackLayer
 from src.models.layers.transformer_encoder_layer import TransformerEncoderLayer
-from src.models.layers.rotary_transformer_encoder_layer import RotaryTransformerEncoderLayer
-from src.models.layers.alibi_transformer_encoder_layer import ALiBiTransformerEncoderLayer
-from src.models.layers.ema_transformer_encoder_layer import EMATransformerEncoderLayer
 from src.models.layers.local_transformer_encoder_layer import LocalTransformerEncoderLayer
-from src.models.layers.conv_transformer_encoder_layer import ConvTransformerEncoderLayer
+# from src.models.layers.conv_transformer_encoder_layer import ConvTransformerEncoderLayer
 from src.models.layers.embeddings import PositionalEmbeddingLayer, TokenTypeEmbeddingLayer
 from src.models.layers.compressor_layer import Compressor
 from src.models.layers.one_sided_conv import OneSidedConv
 from src.models.modules.ema import EMA
+from src.models.layers.gmlp import GMLP
 
 LayerType = Literal[
     "linear",
@@ -34,12 +32,10 @@ LayerType = Literal[
     "token_type_embedding",
 
     "transformer_encoder_layer",
-    "rotary_transformer_encoder_layer",
-    "alibi_transformer_encoder_layer",
-    "ema_transformer_encoder_layer",
     "local_transformer_encoder_layer",
     "conv_transformer_encoder_layer",
     "compressor",
+    "gmlp"
 
     "lstm",
     "rnn",
@@ -86,18 +82,14 @@ class LayerBuilder:
             # transformers encoder layers
             case "transformer_encoder_layer":
                 return TransformerEncoderLayer(**params)
-            case "rotary_transformer_encoder_layer":
-                return RotaryTransformerEncoderLayer(**params)
-            case "alibi_transformer_encoder_layer":
-                return ALiBiTransformerEncoderLayer(**params)
-            case "ema_transformer_encoder_layer":
-                return EMATransformerEncoderLayer(**params)
-            case "conv_transformer_encoder_layer":
-                return ConvTransformerEncoderLayer(**params)
+            # case "conv_transformer_encoder_layer":
+            #     return ConvTransformerEncoderLayer(**params)
             case "local_transformer_encoder_layer":
                 return LocalTransformerEncoderLayer(**params)
             case "compressor":
                 return Compressor(**params)
+            case "gmlp":
+                return GMLP(**params)
             # lstm
             case "lstm":
                 return UnpackLayer(nn.LSTM(**params))

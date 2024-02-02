@@ -99,13 +99,12 @@ class CIFAR10DataModule(pl.LightningDataModule):
             train=True,
             download=True,
             transform=transforms.Compose([
-                # transforms.AutoAugment(policy=transforms.AutoAugmentPolicy.CIFAR10),
-                transforms.RandomHorizontalFlip(p=0.5),
-                transforms.ColorJitter(brightness=0.1, contrast=0.1, saturation=0.1, hue=0.1),
-                transforms.GaussianBlur(kernel_size=3, sigma=(0.01, 0.5)),
-                transforms.RandomAffine(degrees=5, translate=(0.3, 0.3), scale=(0.6, 0.8), shear=20),
+                transforms.AutoAugment(policy=transforms.AutoAugmentPolicy.CIFAR10),
+                # transforms.RandomHorizontalFlip(p=0.5),
+                # transforms.ColorJitter(brightness=0.1, contrast=0.1, saturation=0.1, hue=0.1),
+                # transforms.GaussianBlur(kernel_size=3, sigma=(0.01, 0.5)),
+                # transforms.RandomAffine(degrees=5, translate=(0.3, 0.3), scale=(0.6, 0.8), shear=20),
                 transforms.ToTensor(),
-                # transforms.RandomErasing(),
             ]),
         )
         self.val_dataset = torchvision.datasets.CIFAR10(

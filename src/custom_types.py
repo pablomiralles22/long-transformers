@@ -4,5 +4,6 @@ ReductionMethod = Literal[
     "cls",
     "mean",
     "sum",
+    "attention",
     "none",
 ]

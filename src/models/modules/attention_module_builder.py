@@ -1,10 +1,12 @@
 from torch import nn
 from typing import Literal
+from src.models.modules.aft import AFT
 from src.models.modules.alibi_multihead_attention import ALiBiMultiheadAttention
 from src.models.modules.ema_multihead_attention import EMAMultiheadAttention
 from src.models.modules.positional_bias_multihead_attention import PositionalBiasMultiheadAttention
 from src.models.modules.rotary_multihead_attention import RotaryMultiheadAttention
 from src.models.modules.multihead_attention import MultiheadAttention
+from src.models.modules.compress_multihead_attention import CompressMultiheadAttention
 
 AttentionModuleType = Literal[
     "std",
@@ -12,6 +14,8 @@ AttentionModuleType = Literal[
     "rotary",
     "alibi",
     "ema",
+    "aft",
+    "compress",
 ]
 
 class AttentionModuleBuilder:
@@ -33,5 +37,9 @@ class AttentionModuleBuilder:
                 return ALiBiMultiheadAttention(**params)
             case "ema":
                 return EMAMultiheadAttention(**params)
+            case "aft":
+                return AFT(**params)
+            case "compress":
+                return CompressMultiheadAttention(**params)
             case _:
                 raise ValueError(f"Unknown attention module type: {type_str}")

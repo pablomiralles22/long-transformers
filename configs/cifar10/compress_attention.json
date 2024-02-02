@@ -1,0 +1,68 @@
+{
+  "model_params": {
+      "name": "layered",
+      "params": {
+          "input_embedding_dim": 128,
+          "output_embedding_dim": 128,
+          "layers": [
+              [ "positional_embedding", { "mode": "learned", "max_seq_len": 1025, "embed_dim": 128 } ],
+              [ 
+                "transformer_encoder_layer", 
+                { "d_model": 128, "nhead": 16, "dim_feedforward": 256, "dropout": 0.0, "attention_params": { "type": "compress", "bottleneck_dim": 256 } } 
+              ],
+              [ 
+                "transformer_encoder_layer", 
+                { "d_model": 128, "nhead": 16, "dim_feedforward": 256, "dropout": 0.0, "attention_params": { "type": "compress", "bottleneck_dim": 256 } } 
+              ],
+              [ 
+                "transformer_encoder_layer", 
+                { "d_model": 128, "nhead": 16, "dim_feedforward": 256, "dropout": 0.0, "attention_params": { "type": "compress", "bottleneck_dim": 256 } } 
+              ],
+              [ 
+                "transformer_encoder_layer", 
+                { "d_model": 128, "nhead": 16, "dim_feedforward": 256, "dropout": 0.0, "attention_params": { "type": "compress", "bottleneck_dim": 256 } } 
+              ],
+              [ 
+                "transformer_encoder_layer", 
+                { "d_model": 128, "nhead": 16, "dim_feedforward": 256, "dropout": 0.0, "attention_params": { "type": "compress", "bottleneck_dim": 256 } } 
+              ],
+              [ 
+                "transformer_encoder_layer", 
+                { "d_model": 128, "nhead": 16, "dim_feedforward": 256, "dropout": 0.0, "attention_params": { "type": "compress", "bottleneck_dim": 256 } } 
+              ]
+          ]
+      }
+  },
+  "head_params": {
+      "ff_dim": 256,
+      "num_hidden_layers": 1,
+      "dropout_p": 0.0,
+      "num_classes": 10,
+      "reduction_method": "cls"
+  },
+  "data_module_params": {
+      "name": "cifar10",
+      "params": {
+          "data_path": "datasets/cifar10",
+          "max_len": 1025,
+          "batch_size": 32,
+          "pin_memory": true,
+          "num_workers": 6
+      }
+  },
+  "optimizer_params": {
+      "lr": 0.0001,
+      "betas": [ 0.9, 0.99 ],
+      "weight_decay": 0.01
+  },
+  "trainer_params": {
+      "max_epochs": 10,
+      "precision": "16-mixed",
+      "gradient_clip_val": 1.0,
+      "enable_checkpointing": true,
+      "default_root_dir": "out/cifar10/compress",
+      "accelerator": "gpu",
+      "devices": [ 0 ]
+  },
+  "fit_params": {}
+}

@@ -10,15 +10,7 @@ project_root_path = os.path.join(dir_path, "..")
 sys.path.append(project_root_path)
 
 from src.data_loaders.data_module_builder import DataModuleBuilder
-from src.data_loaders.listops import ListopsDataModule
-from src.data_loaders.text_classification import TextClassificationDataModule
-from src.data_loaders.cifar10 import CIFAR10DataModule
-from src.data_loaders.pathfinder import PathfinderDataModule
-from src.trainers.cifar10_trainer import CIFAR10Module
-from src.trainers.pathfinder_trainer import PathfinderModule
-from src.trainers.listops_trainer import ListopsModule
-from src.trainers.text_classification_trainer import TextClassificationModule
-
+from src.trainers.trainer_builder import TrainerBuilder
 
 ###### Load Dataset ######
 def load_data_module(data_module_params: dict):
@@ -39,16 +31,7 @@ def run(config):
     data_module = load_data_module(data_module_params)
 
     # setup trainer params
-    if isinstance(data_module, ListopsDataModule):
-        PlModuleCls = ListopsModule
-    elif isinstance(data_module, TextClassificationDataModule):
-        PlModuleCls = TextClassificationModule
-    elif isinstance(data_module, CIFAR10DataModule):
-        PlModuleCls = CIFAR10Module
-    elif isinstance(data_module, PathfinderDataModule):
-        PlModuleCls = PathfinderModule
-    
-    module = PlModuleCls(
+    trainer_module = TrainerBuilder.build_trainer(
         model_params=model_params,
         data_module_params=data_module_params,
         head_params=head_params,
@@ -65,7 +48,7 @@ def run(config):
         json.dump(config, file, indent=4)
 
     # train
-    trainer.fit(module, data_module, **fit_params)
+    trainer.fit(trainer_module, data_module, **fit_params)
 
 
 ###### MAIN ######

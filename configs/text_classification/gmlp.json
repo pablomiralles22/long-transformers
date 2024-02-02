@@ -1,0 +1,46 @@
+{
+    "model_params": {
+        "name": "layered",
+        "params": {
+            "input_embedding_dim": 32,
+            "output_embedding_dim": 32,
+            "layers": [
+                [ "gmlp", { "d_model": 32, "hidden_dim": 256, "seq_len": 2048, "dropout": 0.1, "mode": "conv", "num_kernels": 1, "kernel_size": 3 } ],
+                [ "gmlp", { "d_model": 32, "hidden_dim": 256, "seq_len": 2048, "dropout": 0.1, "mode": "conv", "num_kernels": 1, "kernel_size": 3 } ],
+                [ "positional_embedding", { "mode": "learned", "max_seq_len": 2048, "embed_dim": 32 } ],
+                [ "gmlp", { "d_model": 32, "hidden_dim": 64, "seq_len": 2048, "dropout": 0.1, "mode": "linear", "bottleneck_dim": 16 } ],
+                [ "gmlp", { "d_model": 32, "hidden_dim": 64, "seq_len": 2048, "dropout": 0.1, "mode": "linear", "bottleneck_dim": 16 } ]
+            ]
+        }
+    },
+  "head_params": {
+    "ff_dim": 64,
+    "num_hidden_layers": 1,
+    "dropout_p": 0.1,
+    "reduction_method": "attention"
+  },
+  "data_module_params": {
+    "name": "text-classification",
+    "params": {
+      "data_path": "datasets/aclImdb",
+      "max_len": 2048,
+      "batch_size": 64,
+      "pin_memory": true,
+      "num_workers": 4
+    }
+  },
+  "optimizer_params": {
+    "lr": 1e-2,
+    "betas": [ 0.9, 0.99 ],
+    "weight_decay": 0.01
+  },
+  "trainer_params": {
+    "max_epochs": 30,
+    "precision": "16-mixed",
+    "enable_checkpointing": true,
+    "default_root_dir": "out/text_classification/gmlp",
+    "accelerator": "gpu",
+    "devices": [ 0 ]
+  },
+  "fit_params": {}
+}

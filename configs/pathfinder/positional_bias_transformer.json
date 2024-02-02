@@ -59,9 +59,9 @@
     "data_module_params": {
         "name": "pathfinder",
         "params": {
-            "data_path": "datasets/lra_release/pathfinder32/curv_contour_length_14",
+            "data_path": "datasets/lra_release/pathfinder32/curv_baseline",
             "max_len": 1025,
-            "batch_size": 128,
+            "batch_size": 64,
             "pin_memory": true,
             "num_workers": 6
         }

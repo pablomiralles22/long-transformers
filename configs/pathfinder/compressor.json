@@ -5,26 +5,17 @@
       "input_embedding_dim": 1,
       "output_embedding_dim": 128,
       "layers": [
-        [ "conv", { "in_channels": 1, "out_channels": 32, "kernel_size": 5, "padding": "same" } ],
-        [ "layer_norm", { "normalized_shape": 32 } ],
-        [ "dropout", { "p": 0.2 } ],
-        [ "relu", {} ],
-
-        [ "conv", { "in_channels": 32, "out_channels": 128, "kernel_size": 3, "padding": "same" } ],
-        [ "layer_norm", { "normalized_shape": 128 } ],
-        [ "dropout", { "p": 0.2 } ],
-
         [ "positional_embedding", { "mode": "learned", "max_seq_len": 1025, "embed_dim": 128 } ],
         [
           "compressor",
           {
             "d_model": 128,
-            "nhead": 16,
+            "nhead": 32,
             "dim_ff_multiplier": 2,
             "mem_dim": 128,
             "dropout": 0.0,
-            "mem_length": 64,
-            "num_layers": 4,
+            "mem_length": 32,
+            "num_layers": 6,
             "use_conv": false,
             "bottleneck_size": 64,
             "conv_size": 7
@@ -50,12 +41,12 @@
     }
   },
   "optimizer_params": {
-    "lr": 0.001,
+    "lr": 0.0001,
     "betas": [
       0.9,
-      0.9
+      0.99
     ],
-    "weight_decay": 0.0
+    "weight_decay": 0.01
   },
   "trainer_params": {
     "max_epochs": 40,
@@ -64,9 +55,7 @@
     "enable_checkpointing": true,
     "default_root_dir": "out/pathfinder/compressor",
     "accelerator": "gpu",
-    "devices": [
-      2
-    ]
+    "devices": [ 1 ]
   },
   "fit_params": {}
 }
