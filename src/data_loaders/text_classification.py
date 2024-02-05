@@ -1,6 +1,7 @@
 import os
 import torch
 import pytorch_lightning as pl
+import random
 
 from copy import deepcopy
 from torch.utils.data import Dataset, DataLoader
@@ -45,10 +46,23 @@ class TextClassificationDataset(Dataset):
             label = 0
         return {"text": text, "label": label}
 
+def augment_shuffle(text: str):
+    words = text.split()
+    random.shuffle(words)
+    return " ".join(words)
+
+def augment_random_changes(text: str):
+    idxs = random.sample(range(len(text)), int(0.2 * len(text)))
+    text = list(text)
+    for idx in idxs:
+        text[idx] = chr(random.randint(0, 255))
+    return "".join(text)
+
 class TextClassificationCollatorFn:
-    def __init__(self, max_len, fixed_start=False):
+    def __init__(self, max_len, fixed_start=False, augment_prob=0.):
         self.max_len = max_len
         self.fixed_start = fixed_start
+        self.augment_prob = augment_prob
 
     def __call__(self, batch):
         input_ids = []
@@ -57,6 +71,10 @@ class TextClassificationCollatorFn:
 
         for item in batch:
             text, label = item["text"], item["label"]
+
+            if random.random() < self.augment_prob:
+                # augment_fn = random.choice([augment_shuffle, augment_random_changes])
+                text = augment_shuffle(text)
 
             start_idx = 0
             if self.fixed_start is False and len(text) > self.max_len:
@@ -90,6 +108,8 @@ class TextClassificationDataModule(pl.LightningDataModule):
     def get_default_collator_config(cls):
         return {
             "max_len": 512,
+            "fixed_start": False,
+            "augment_prob": 0.,
         }
 
     @classmethod
@@ -140,18 +160,20 @@ class TextClassificationDataModule(pl.LightningDataModule):
             **self.loader_config,
             collate_fn=TextClassificationCollatorFn(
                 **self.collator_config,
-                fixed_start=False,
             ),
             shuffle=True,
         )
 
     def val_dataloader(self):
+        collator_config = deepcopy(self.collator_config)
+        collator_config["augment_prob"] = 0.
+        collator_config["fixed_start"] = True
+
         return DataLoader(
             dataset=self.val_dataset,
             **self.loader_config,
             collate_fn=TextClassificationCollatorFn(
-                **self.collator_config,
-                fixed_start=True,
+                **collator_config,
             ),
             shuffle=False,
         )

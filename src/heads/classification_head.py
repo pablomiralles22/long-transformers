@@ -4,6 +4,8 @@ from torch import nn
 from src.models.model_with_embedding import ModelWithEmbedding
 from src.custom_types import ReductionMethod
 from src.heads.attention_reducer import AttentionReducer
+from src.heads.mean_reducer import MeanReducer
+from src.heads.glu_reducer import GLUReducer
 
 
 def get_model_with_classification_head(
@@ -76,6 +78,8 @@ class ModelWithClassificationHead(nn.Module):
         self.reduction_method = reduction_method
         if reduction_method == "attention":
             self.reducer = AttentionReducer(input_dim, dropout_p=dropout_p)
+        elif reduction_method == "glu":
+            self.reducer = GLUReducer(input_dim, dropout_p=dropout_p)
 
     def forward(
         self,
@@ -96,11 +100,11 @@ class ModelWithClassificationHead(nn.Module):
         if self.reduction_method == "cls":
             return x[:, 0, :]
         elif self.reduction_method == "mean":
-            if x.size(1) != attention_mask.size(1):
-                return torch.mean(x, dim=1)
-            return (x * attention_mask.unsqueeze(-1)).sum(1) / attention_mask.sum(1).unsqueeze(-1)
+            return MeanReducer.reduce(x, attention_mask)
         elif self.reduction_method == "attention":
             return self.reducer(x, attention_mask)
+        elif self.reduction_method == "glu":
+            return MeanReducer.reduce(self.reducer(x, attention_mask), attention_mask)
         raise ValueError(f"Unknown reduction method: {self.reduction_method}")
 
 

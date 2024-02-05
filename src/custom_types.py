@@ -5,5 +5,6 @@ ReductionMethod = Literal[
     "mean",
     "sum",
     "attention",
+    "glu",
     "none",
 ]

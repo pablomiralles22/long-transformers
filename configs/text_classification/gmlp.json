@@ -2,45 +2,47 @@
     "model_params": {
         "name": "layered",
         "params": {
-            "input_embedding_dim": 32,
-            "output_embedding_dim": 32,
+            "input_embedding_dim": 64,
+            "output_embedding_dim": 64,
             "layers": [
-                [ "gmlp", { "d_model": 32, "hidden_dim": 256, "seq_len": 2048, "dropout": 0.1, "mode": "conv", "num_kernels": 1, "kernel_size": 3 } ],
-                [ "gmlp", { "d_model": 32, "hidden_dim": 256, "seq_len": 2048, "dropout": 0.1, "mode": "conv", "num_kernels": 1, "kernel_size": 3 } ],
-                [ "positional_embedding", { "mode": "learned", "max_seq_len": 2048, "embed_dim": 32 } ],
-                [ "gmlp", { "d_model": 32, "hidden_dim": 64, "seq_len": 2048, "dropout": 0.1, "mode": "linear", "bottleneck_dim": 16 } ],
-                [ "gmlp", { "d_model": 32, "hidden_dim": 64, "seq_len": 2048, "dropout": 0.1, "mode": "linear", "bottleneck_dim": 16 } ]
+                [ "gmlp", { "d_model": 64, "hidden_dim": 1024, "seq_len": 1024, "dropout": 0.1, "mode": "conv", "num_kernels": 1, "kernel_size": 3 } ],
+                [ "gmlp", { "d_model": 64, "hidden_dim": 1024, "seq_len": 1024, "dropout": 0.1, "mode": "conv", "num_kernels": 1, "kernel_size": 3 } ],
+                [ "gmlp", { "d_model": 64, "hidden_dim": 1024, "seq_len": 1024, "dropout": 0.1, "mode": "conv", "num_kernels": 1 } ],
+                [ "gmlp", { "d_model": 64, "hidden_dim": 1024, "seq_len": 1024, "dropout": 0.1, "mode": "conv", "num_kernels": 1 } ],
+                [ "gmlp", { "d_model": 64, "hidden_dim": 1024, "seq_len": 1024, "dropout": 0.1, "mode": "conv", "num_kernels": 1 } ],
+                [ "gmlp", { "d_model": 64, "hidden_dim": 1024, "seq_len": 1024, "dropout": 0.1, "mode": "conv", "num_kernels": 1 } ]
             ]
         }
     },
   "head_params": {
-    "ff_dim": 64,
+    "ff_dim": 128,
     "num_hidden_layers": 1,
-    "dropout_p": 0.1,
-    "reduction_method": "attention"
+    "dropout_p": 0.2,
+    "reduction_method": "glu"
   },
   "data_module_params": {
     "name": "text-classification",
     "params": {
       "data_path": "datasets/aclImdb",
-      "max_len": 2048,
-      "batch_size": 64,
+      "max_len": 1024,
+      "batch_size": 32,
+      "augment_prob": 0.3,
       "pin_memory": true,
       "num_workers": 4
     }
   },
   "optimizer_params": {
-    "lr": 1e-2,
+    "lr": 1e-3,
     "betas": [ 0.9, 0.99 ],
-    "weight_decay": 0.01
+    "weight_decay": 0.0
   },
   "trainer_params": {
-    "max_epochs": 30,
+    "max_epochs": 100,
     "precision": "16-mixed",
     "enable_checkpointing": true,
     "default_root_dir": "out/text_classification/gmlp",
     "accelerator": "gpu",
-    "devices": [ 0 ]
+    "devices": [ 1 ]
   },
   "fit_params": {}
 }

@@ -5,12 +5,12 @@
             "input_embedding_dim": 128,
             "output_embedding_dim": 128,
             "layers": [
-                [ "gmlp", { "d_model": 128, "hidden_dim": 256, "seq_len": 1025, "dropout": 0.1, "mode": "conv", "num_kernels": 1 } ],
-                [ "gmlp", { "d_model": 128, "hidden_dim": 256, "seq_len": 1025, "dropout": 0.1, "mode": "conv", "num_kernels": 1 } ],
-                [ "gmlp", { "d_model": 128, "hidden_dim": 256, "seq_len": 1025, "dropout": 0.1, "mode": "conv", "num_kernels": 1 } ],
-                [ "gmlp", { "d_model": 128, "hidden_dim": 256, "seq_len": 1025, "dropout": 0.1, "mode": "conv", "num_kernels": 1 } ],
-                [ "gmlp", { "d_model": 128, "hidden_dim": 256, "seq_len": 1025, "dropout": 0.1, "mode": "conv", "num_kernels": 1 } ],
-                [ "gmlp", { "d_model": 128, "hidden_dim": 256, "seq_len": 1025, "dropout": 0.1, "mode": "conv", "num_kernels": 1 } ]
+                [ "gmlp", { "d_model": 128, "hidden_dim": 256, "seq_len": 1025, "selection": "softmax", "dropout": 0.0, "mode": "conv", "num_kernels": 1 } ],
+                [ "gmlp", { "d_model": 128, "hidden_dim": 256, "seq_len": 1025, "selection": "softmax", "dropout": 0.0, "mode": "conv", "num_kernels": 1 } ],
+                [ "gmlp", { "d_model": 128, "hidden_dim": 256, "seq_len": 1025, "selection": "softmax", "dropout": 0.0, "mode": "conv", "num_kernels": 1 } ],
+                [ "gmlp", { "d_model": 128, "hidden_dim": 256, "seq_len": 1025, "selection": "softmax", "dropout": 0.0, "mode": "conv", "num_kernels": 1 } ],
+                [ "gmlp", { "d_model": 128, "hidden_dim": 256, "seq_len": 1025, "selection": "softmax", "dropout": 0.0, "mode": "conv", "num_kernels": 1 } ],
+                [ "gmlp", { "d_model": 128, "hidden_dim": 256, "seq_len": 1025, "selection": "softmax", "dropout": 0.0, "mode": "conv", "num_kernels": 1 } ]
             ]
         }
     },
@@ -19,7 +19,7 @@
         "num_hidden_layers": 1,
         "dropout_p": 0.1,
         "num_classes": 10,
-        "reduction_method": "mean"
+        "reduction_method": "glu"
     },
     "data_module_params": {
         "name": "cifar10",
@@ -40,7 +40,7 @@
         "weight_decay": 0.01
     },
     "trainer_params": {
-        "max_epochs": 140,
+        "max_epochs": 200,
         "precision": "16-mixed",
         "gradient_clip_val": 1.0,
         "enable_checkpointing": true,
@@ -48,5 +48,7 @@
         "accelerator": "gpu",
         "devices": [ 2 ]
     },
-    "fit_params": { }
+    "fit_params": {
+        "ckpt_path": "out/cifar10/gmlp/lightning_logs/version_47/checkpoints/epoch=46-val_acc=0.73.ckpt"
+    }
 }
