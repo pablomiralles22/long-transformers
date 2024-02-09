@@ -2,15 +2,15 @@
     "model_params": {
         "name": "layered",
         "params": {
-            "input_embedding_dim": 128,
-            "output_embedding_dim": 128,
+            "input_embedding_dim": 512,
+            "output_embedding_dim": 512,
             "layers": [
-                [ "gmlp", { "d_model": 128, "hidden_dim": 256, "seq_len": 1025, "selection": "softmax", "dropout": 0.0, "mode": "conv", "num_kernels": 1 } ],
-                [ "gmlp", { "d_model": 128, "hidden_dim": 256, "seq_len": 1025, "selection": "softmax", "dropout": 0.0, "mode": "conv", "num_kernels": 1 } ],
-                [ "gmlp", { "d_model": 128, "hidden_dim": 256, "seq_len": 1025, "selection": "softmax", "dropout": 0.0, "mode": "conv", "num_kernels": 1 } ],
-                [ "gmlp", { "d_model": 128, "hidden_dim": 256, "seq_len": 1025, "selection": "softmax", "dropout": 0.0, "mode": "conv", "num_kernels": 1 } ],
-                [ "gmlp", { "d_model": 128, "hidden_dim": 256, "seq_len": 1025, "selection": "softmax", "dropout": 0.0, "mode": "conv", "num_kernels": 1 } ],
-                [ "gmlp", { "d_model": 128, "hidden_dim": 256, "seq_len": 1025, "selection": "softmax", "dropout": 0.0, "mode": "conv", "num_kernels": 1 } ]
+                [ "gmlp", { "d_model": 512, "hidden_dim": 128, "seq_len": 1025, "dropout": 0.1, "mode": "conv", "num_kernels": 8 } ],
+                [ "gmlp", { "d_model": 512, "hidden_dim": 128, "seq_len": 1025, "dropout": 0.1, "mode": "conv", "num_kernels": 8 } ],
+                [ "gmlp", { "d_model": 512, "hidden_dim": 128, "seq_len": 1025, "dropout": 0.1, "mode": "conv", "num_kernels": 8 } ],
+                [ "gmlp", { "d_model": 512, "hidden_dim": 128, "seq_len": 1025, "dropout": 0.1, "mode": "conv", "num_kernels": 8 } ],
+                [ "gmlp", { "d_model": 512, "hidden_dim": 128, "seq_len": 1025, "dropout": 0.1, "mode": "conv", "num_kernels": 8 } ],
+                [ "gmlp", { "d_model": 512, "hidden_dim": 128, "seq_len": 1025, "dropout": 0.1, "mode": "conv", "num_kernels": 8 } ]
             ]
         }
     },
@@ -19,7 +19,7 @@
         "num_hidden_layers": 1,
         "dropout_p": 0.1,
         "num_classes": 10,
-        "reduction_method": "glu"
+        "reduction_method": "mean"
     },
     "data_module_params": {
         "name": "cifar10",
@@ -33,22 +33,16 @@
     },
     "optimizer_params": {
         "lr": 0.001,
-        "betas": [
-            0.9,
-            0.99
-        ],
-        "weight_decay": 0.01
+        "betas": [ 0.9, 0.98 ],
+        "weight_decay": 0.0
     },
     "trainer_params": {
         "max_epochs": 200,
         "precision": "16-mixed",
-        "gradient_clip_val": 1.0,
         "enable_checkpointing": true,
         "default_root_dir": "out/cifar10/gmlp",
         "accelerator": "gpu",
         "devices": [ 2 ]
     },
-    "fit_params": {
-        "ckpt_path": "out/cifar10/gmlp/lightning_logs/version_47/checkpoints/epoch=46-val_acc=0.73.ckpt"
-    }
+    "fit_params": { }
 }

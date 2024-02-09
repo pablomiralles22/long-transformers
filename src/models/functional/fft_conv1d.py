@@ -13,8 +13,8 @@ def fft_conv1d(
     # get next power of 2
     fft_dim = 2 ** (fft_dim - 1).bit_length()
 
-    inp_fft = torch.fft.rfft(inp, dim=-1, n=fft_dim)
-    kernel_fft = torch.fft.rfft(kernel, dim=-1, n=fft_dim)
+    inp_fft = torch.fft.rfft(inp, dim=-1, n=fft_dim, norm="ortho")
+    kernel_fft = torch.fft.rfft(kernel, dim=-1, n=fft_dim, norm="ortho")
 
     if 1 < N < D:
         kernel_fft = kernel_fft.repeat(D // N, 1)
@@ -22,4 +22,4 @@ def fft_conv1d(
     # Perform element-wise multiplication in the frequency domain
     out_T_fft = inp_fft * kernel_fft
 
-    return torch.fft.irfft(out_T_fft, dim=-1, n=fft_dim).type_as(inp)
+    return torch.fft.irfft(out_T_fft, dim=-1, n=fft_dim, norm="ortho").type_as(inp)

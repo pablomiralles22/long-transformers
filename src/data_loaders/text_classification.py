@@ -77,8 +77,10 @@ class TextClassificationCollatorFn:
                 text = augment_shuffle(text)
 
             start_idx = 0
-            if self.fixed_start is False and len(text) > self.max_len:
-                start_idx = torch.randint(0, len(text) - self.max_len + 1, (1,)).item()
+            # if self.fixed_start is False and len(text) > self.max_len:
+            #     start_idx = torch.randint(0, len(text) - self.max_len + 1, (1,)).item()
+            if self.fixed_start is False:
+                start_idx = torch.randint(0, max(1, len(text) - 64), (1,)).item()
 
             text = text[start_idx:start_idx + self.max_len]
 

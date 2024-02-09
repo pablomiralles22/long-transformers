@@ -53,9 +53,9 @@ class PathfinderCollatorFn:
         if enable_augment is True:
             self.transform = transforms.Compose(
                 [
-                    transforms.RandomHorizontalFlip(p=0.1),
-                    transforms.RandomVerticalFlip(p=0.1),
-                    # transforms.RandomAffine(degrees=0, translate=(0.1, 0.1), scale=(0.9, 0.9)),
+                    transforms.RandomHorizontalFlip(p=0.5),
+                    transforms.RandomVerticalFlip(p=0.5),
+                    transforms.RandomAffine(degrees=0, translate=(0.1, 0.1), scale=(1., 1.)),
                     transforms.ToTensor(),
                 ]
             )

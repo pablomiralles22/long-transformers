@@ -7,6 +7,16 @@ from src.models.layers.activations import ActivationFn, build_activation
 from src.models.layers.layer import Layer
 from src.models.functional.fft_conv1d import fft_conv1d
 
+class BatchNorm1dTranspose(nn.Module):
+    def __init__(self, *args, **kwargs):
+        super().__init__()
+        self.bn = nn.BatchNorm1d(*args, **kwargs)
+
+    def forward(self, x):
+        x = x.transpose(-1, -2)
+        x = self.bn(x)
+        return x.transpose(-1, -2)
+
 class SpatialConv(nn.Module):
     __FFT_THRESHOLD: int = 30
 
@@ -14,10 +24,12 @@ class SpatialConv(nn.Module):
         self,
         num_kernels: int,
         kernel_size: int,
+        causal: bool = False,
     ):
         super().__init__()
         self.kernel = nn.Parameter(torch.empty(num_kernels, kernel_size))
         self.bias = nn.Parameter(torch.empty(num_kernels))
+        self.causal = causal
         self.reset_parameters()
     
     def reset_parameters(self):
@@ -48,12 +60,13 @@ class GMLP(Layer):
         d_model: int,
         hidden_dim: int,
         seq_len: int,
-        ff_dim: int = -1,
         dropout=0.1,
-        activation: ActivationFn = "silu",
+        activation: ActivationFn = "relu",
         selection: ActivationFn = "softmax",
-        layer_norm_eps=1e-05,
+        norm_eps=1e-05,
         mode: Literal["conv", "linear"] = "linear",
+        causal: bool = False,
+        residual: bool = True,
         # conv mode params
         num_kernels: int = -1,
         kernel_size: int = -1,
@@ -62,49 +75,44 @@ class GMLP(Layer):
     ):
         super().__init__()
 
+        assert not (causal and mode == "linear"), "Causal mode is only supported for conv mode"
+
         # set default values
         if bottleneck_dim == -1: bottleneck_dim = seq_len // 2
         if num_kernels == -1: num_kernels = hidden_dim
-        if kernel_size == -1: kernel_size = 2 * seq_len + 1
-        if ff_dim == -1: ff_dim = 4 * d_model
+        if kernel_size == -1: kernel_size = (2 * seq_len + 1)
+
+        self.residual = residual
 
         # expansion
-        self.layer_norm_1 = nn.LayerNorm(d_model, layer_norm_eps)
+        self.batch_norm_1 = BatchNorm1dTranspose(d_model, norm_eps)
         self.ff_pointwise = nn.Sequential(
-            nn.Linear(d_model, 2 * hidden_dim),
-            nn.LayerNorm(2 * hidden_dim, layer_norm_eps, bias=False),
+            nn.Linear(d_model, 2 * hidden_dim, bias=False),
+            BatchNorm1dTranspose(2 * hidden_dim, norm_eps),
             nn.Dropout(dropout),
         )
         self.selection = build_activation(selection)
 
         # spatial mixin
+        spatial_dim = seq_len
         if mode == "conv":
-            spatial_layers = [SpatialConv(num_kernels, kernel_size)]
+            spatial_layers = [ SpatialConv(num_kernels, kernel_size, causal=causal) ]
         elif mode == "linear":
-            spatial_layers = [ nn.Linear(seq_len, bottleneck_dim), nn.Linear(bottleneck_dim, seq_len) ]
+            spatial_layers = [ nn.Linear(spatial_dim, bottleneck_dim), nn.Linear(bottleneck_dim, spatial_dim) ]
         else:
             raise ValueError(f"Invalid mode: {self.mode}")
 
-        spatial_layers = (
-            spatial_layers +
-            [nn.LayerNorm(seq_len, layer_norm_eps, bias=False), build_activation(activation), nn.Dropout(dropout)]
-        )
+        spatial_layers += [
+            nn.BatchNorm1d(hidden_dim, norm_eps, affine=False),
+            nn.Dropout(dropout),
+        ]
         self.ff_spatial = nn.Sequential(*spatial_layers)
 
         self.proj_out = nn.Sequential(
-            nn.Linear(hidden_dim, d_model),
-            nn.LayerNorm(d_model, layer_norm_eps, bias=False),
+            nn.Linear(hidden_dim, d_model, bias=False),
+            BatchNorm1dTranspose(d_model, norm_eps),
             nn.Dropout(dropout),
         )
-
-        # self.layer_norm_2 = nn.LayerNorm(d_model, layer_norm_eps)
-        # self.ff = nn.Sequential(
-        #     nn.Linear(d_model, 2 * d_model),
-        #     build_activation(activation),
-        #     nn.Linear(2 * d_model, d_model),
-        #     nn.LayerNorm(d_model, layer_norm_eps, bias=False),
-        #     nn.Dropout(dropout),
-        # )
 
     def forward(
         self,
@@ -112,27 +120,19 @@ class GMLP(Layer):
         attention_mask=None,  # [B, L]
         token_type_ids=None,  # [B, L]
     ):
-        embeddings = self.layer_norm_1(embeddings)
+        embeddings = self.batch_norm_1(embeddings)
 
-        attn_mask = attention_mask.unsqueeze(-1).float()  # [B, L, 1]
-        embeddings = embeddings * attn_mask
+        attn_mask = attention_mask.unsqueeze(-1).bool()  # [B, L, 1]
 
-        z = self.ff_pointwise(embeddings)  # [B, L, H]
-        z = z * attn_mask
+        z = self.ff_pointwise(embeddings)  # [B, L, 2H]
+        z.masked_fill_(~attn_mask, 0.)
 
-        z1, z2 = z.chunk(2, dim=-1)  # [B, L, H/2], [B, L, H/2]
-        fwb_z2 = self.ff_spatial(z2.transpose(1, 2)).transpose(1, 2)
+        z1, z2 = z.chunk(2, dim=-1)  # [B, L, H], [B, L, H]
+
+        fwb_z2 = self.ff_spatial(z2.transpose(1, 2)).transpose(1, 2)  # [B, L, H]
         s_z = self.selection(z1) * fwb_z2
+        # s_z = self.selection(fwb_z2) * z1
 
-        # z1, z2 = z.chunk(2, dim=-1)  # [B, L, H/2], [B, L, H/2]
-        # fwb_z1 = self.ff_spatial(z1.transpose(1, 2)).transpose(1, 2)
-        # s_z = self.selection(fwb_z1) * z2
-
-        # fwb_z = self.ff_spatial(z.transpose(1, 2)).transpose(1, 2)
-        # fwb_z1, fwb_z2 = fwb_z.chunk(2, dim=-1)  # [B, L, H/2], [B, L, H/2]
-        # s_z = self.selection(fwb_z1) * fwb_z2
-
-        proj = embeddings + self.proj_out(s_z)
-        return proj
-
-        # return self.ff(self.layer_norm_2(proj)) + proj
+        if self.residual is True:
+             return self.proj_out(s_z) + embeddings
+        return self.proj_out(s_z)

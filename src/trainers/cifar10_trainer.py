@@ -86,7 +86,7 @@ class CIFAR10Module(pl.LightningModule):
         labels = batch["labels"]
 
         logits = self.model_with_head(input_ids, attention_mask)
-        loss = F.cross_entropy(logits, labels)
+        loss = F.cross_entropy(logits, labels, label_smoothing=0.1)
         return loss, logits, labels
 
     def configure_optimizers(self):

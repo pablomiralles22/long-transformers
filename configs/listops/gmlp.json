@@ -5,40 +5,41 @@
             "input_embedding_dim": 128,
             "output_embedding_dim": 128,
             "layers": [
-                [ "gmlp", { "d_model": 128, "hidden_dim": 256, "seq_len": 2001, "dropout": 0.1, "mode": "conv", "num_kernels": 1 } ],
-                [ "gmlp", { "d_model": 128, "hidden_dim": 256, "seq_len": 2001, "dropout": 0.1, "mode": "conv", "num_kernels": 1 } ],
-                [ "gmlp", { "d_model": 128, "hidden_dim": 256, "seq_len": 2001, "dropout": 0.1, "mode": "conv", "num_kernels": 1 } ],
-                [ "gmlp", { "d_model": 128, "hidden_dim": 256, "seq_len": 2001, "dropout": 0.1, "mode": "conv", "num_kernels": 1 } ]
+                [ "gmlp", { "d_model": 128, "hidden_dim": 256, "seq_len": 2001, "dropout": 0.0, "mode": "conv", "num_kernels": 8 } ],
+                [ "gmlp", { "d_model": 128, "hidden_dim": 256, "seq_len": 2001, "dropout": 0.0, "mode": "conv", "num_kernels": 8 } ],
+                [ "gmlp", { "d_model": 128, "hidden_dim": 256, "seq_len": 2001, "dropout": 0.0, "mode": "conv", "num_kernels": 8 } ],
+                [ "gmlp", { "d_model": 128, "hidden_dim": 256, "seq_len": 2001, "dropout": 0.0, "mode": "conv", "num_kernels": 8 } ],
+                [ "gmlp", { "d_model": 128, "hidden_dim": 256, "seq_len": 2001, "dropout": 0.0, "mode": "conv", "num_kernels": 8 } ],
+                [ "gmlp", { "d_model": 128, "hidden_dim": 256, "seq_len": 2001, "dropout": 0.0, "mode": "conv", "num_kernels": 8 } ]
             ]
         }
     },
   "head_params": {
-    "ff_dim": 128,
+    "ff_dim": 256,
     "num_hidden_layers": 1,
-    "dropout_p": 0.1,
-    "reduction_method": "attention"
+    "dropout_p": 0.0,
+    "reduction_method": "glu"
   },
   "data_module_params": {
     "name": "listops",
     "params": {
       "data_path": "datasets/lra_release/listops-1000",
       "max_len": 2001,
-      "augment": true,
-      "batch_size": 256,
+      "augment": false,
+      "batch_size": 64,
       "pin_memory": true,
       "num_workers": 4
     }
   },
   "optimizer_params": {
-    "lr": 3e-4,
-    "betas": [ 0.9, 0.99 ],
-    "weight_decay": 0.01
+    "lr": 1e-3,
+    "betas": [ 0.9, 0.98 ],
+    "weight_decay": 0.0
   },
   "trainer_params": {
     "max_epochs": 40,
     "val_check_interval": 0.25,
     "precision": "16-mixed",
-    "gradient_clip_val": 1.0,
     "enable_checkpointing": true,
     "default_root_dir": "out/listops/gmlp",
     "accelerator": "gpu",

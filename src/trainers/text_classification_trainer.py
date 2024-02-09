@@ -86,7 +86,9 @@ class TextClassificationModule(pl.LightningModule):
         labels = batch["labels"].float().reshape(-1, 1)
 
         logits = self.model_with_head(input_ids, attention_mask)
-        loss = F.binary_cross_entropy_with_logits(logits, labels)
+        # target with label smoothing eps=0.1
+        targets = labels * (1 - 0.1) + 0.1 / 2
+        loss = F.binary_cross_entropy_with_logits(logits, targets)
         return loss, logits, labels
 
     def configure_optimizers(self):
