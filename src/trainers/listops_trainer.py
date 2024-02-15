@@ -98,12 +98,12 @@ class ListopsModule(pl.LightningModule):
         optimizer = torch.optim.Adam(
             params=self.model.parameters(), **self.optimizer_config
         )
-        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
-            optimizer, mode="max", factor=0.5, patience=5, verbose=True,
-        )
-        # scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(
-        #     optimizer=optimizer, T_0=10, T_mult=2, verbose=True
+        # scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+        #     optimizer, mode="max", factor=0.5, patience=5, verbose=True,
         # )
+        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
+            optimizer=optimizer, T_max=10, eta_min=1e-7
+        )
         # scheduler = torch.optim.lr_scheduler.LinearLR(
         #     optimizer=optimizer,
         #     start_factor=1.0,

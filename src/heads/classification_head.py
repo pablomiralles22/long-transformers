@@ -1,10 +1,9 @@
-import torch
-
 from torch import nn
 from src.models.model_with_embedding import ModelWithEmbedding
 from src.custom_types import ReductionMethod
 from src.heads.attention_reducer import AttentionReducer
 from src.heads.mean_reducer import MeanReducer
+from src.heads.max_reducer import MaxReducer
 from src.heads.glu_reducer import GLUReducer
 
 
@@ -101,6 +100,8 @@ class ModelWithClassificationHead(nn.Module):
             return x[:, 0, :]
         elif self.reduction_method == "mean":
             return MeanReducer.reduce(x, attention_mask)
+        elif self.reduction_method == "max":
+            return MaxReducer.reduce(x, attention_mask)
         elif self.reduction_method == "attention":
             return self.reducer(x, attention_mask)
         elif self.reduction_method == "glu":

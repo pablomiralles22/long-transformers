@@ -27,7 +27,8 @@ class CIFAR100CollatorFn:
             image = (image.mean(dim=0) * 255).long().flatten().tolist()
 
             # build input ids
-            idxs = [self.cls_token] + [2 + pixel for pixel in image]  # 2 for PAD, CLS
+            # idxs = [self.cls_token] + [2 + pixel for pixel in image]  # 2 for PAD, CLS
+            idxs = [2 + pixel for pixel in image]  # 2 for PAD, CLS TODO
 
             length = min(len(idxs), self.max_len)
             padding_size = self.max_len - length
@@ -99,7 +100,7 @@ class CIFAR10DataModule(pl.LightningDataModule):
             transform=transforms.Compose([
                 transforms.AutoAugment(policy=transforms.AutoAugmentPolicy.CIFAR10),
                 transforms.RandomHorizontalFlip(p=0.5),
-                # transforms.RandomAffine(degrees=15, translate=(0.2, 0.2), scale=(1., 1.)),
+                # transforms.RandomAffine(degrees=10),
                 transforms.ToTensor(),
             ]),
         )

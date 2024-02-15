@@ -86,15 +86,18 @@ class CIFAR10Module(pl.LightningModule):
         labels = batch["labels"]
 
         logits = self.model_with_head(input_ids, attention_mask)
-        loss = F.cross_entropy(logits, labels, label_smoothing=0.1)
+        loss = F.cross_entropy(logits, labels)
         return loss, logits, labels
 
     def configure_optimizers(self):
         optimizer = torch.optim.AdamW(
             params=self.model.parameters(), **self.optimizer_config
         )
-        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
-            optimizer, mode="max", factor=0.25, patience=5, verbose=True
+        # scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+        #     optimizer, mode="max", factor=0.25, patience=5, verbose=True
+        # )
+        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
+            optimizer=optimizer, T_max=10, eta_min=1e-6
         )
         return {
             "optimizer": optimizer,

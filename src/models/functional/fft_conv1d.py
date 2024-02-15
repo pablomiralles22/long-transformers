@@ -10,7 +10,7 @@ def fft_conv1d(
     assert D % N == 0, "num_channels must be divisible by num_kernels"
 
     fft_dim = L + K
-    # get next power of 2
+    # get next power of 2, it might be faster
     fft_dim = 2 ** (fft_dim - 1).bit_length()
 
     inp_fft = torch.fft.rfft(inp, dim=-1, n=fft_dim, norm="ortho")

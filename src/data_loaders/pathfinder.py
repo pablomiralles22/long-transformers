@@ -55,7 +55,7 @@ class PathfinderCollatorFn:
                 [
                     transforms.RandomHorizontalFlip(p=0.5),
                     transforms.RandomVerticalFlip(p=0.5),
-                    transforms.RandomAffine(degrees=0, translate=(0.1, 0.1), scale=(1., 1.)),
+                    transforms.RandomAffine(degrees=25),
                     transforms.ToTensor(),
                 ]
             )

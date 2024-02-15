@@ -5,12 +5,11 @@
             "input_embedding_dim": 128,
             "output_embedding_dim": 128,
             "layers": [
-                [ "gmlp", { "d_model": 128, "hidden_dim": 256, "seq_len": 2001, "dropout": 0.0, "mode": "conv", "num_kernels": 8 } ],
-                [ "gmlp", { "d_model": 128, "hidden_dim": 256, "seq_len": 2001, "dropout": 0.0, "mode": "conv", "num_kernels": 8 } ],
-                [ "gmlp", { "d_model": 128, "hidden_dim": 256, "seq_len": 2001, "dropout": 0.0, "mode": "conv", "num_kernels": 8 } ],
-                [ "gmlp", { "d_model": 128, "hidden_dim": 256, "seq_len": 2001, "dropout": 0.0, "mode": "conv", "num_kernels": 8 } ],
-                [ "gmlp", { "d_model": 128, "hidden_dim": 256, "seq_len": 2001, "dropout": 0.0, "mode": "conv", "num_kernels": 8 } ],
-                [ "gmlp", { "d_model": 128, "hidden_dim": 256, "seq_len": 2001, "dropout": 0.0, "mode": "conv", "num_kernels": 8 } ]
+                [ "positional_embedding", { "mode": "learned", "max_seq_len": 2001, "embed_dim": 128 } ],
+                [ "gmlp", { "d_model": 128, "hidden_dim": 512, "seq_len": 2001, "dropout": 0.0, "mode": "conv", "num_kernels": 128, "direction": "bidirectional" } ],
+                [ "gmlp", { "d_model": 128, "hidden_dim": 512, "seq_len": 2001, "dropout": 0.0, "mode": "conv", "num_kernels": 128, "direction": "bidirectional" } ],
+                [ "gmlp", { "d_model": 128, "hidden_dim": 512, "seq_len": 2001, "dropout": 0.0, "mode": "conv", "num_kernels": 128, "direction": "bidirectional" } ],
+                [ "gmlp", { "d_model": 128, "hidden_dim": 512, "seq_len": 2001, "dropout": 0.0, "mode": "conv", "num_kernels": 128, "direction": "bidirectional" } ]
             ]
         }
     },
@@ -18,7 +17,7 @@
     "ff_dim": 256,
     "num_hidden_layers": 1,
     "dropout_p": 0.0,
-    "reduction_method": "glu"
+    "reduction_method": "cls"
   },
   "data_module_params": {
     "name": "listops",
@@ -26,7 +25,7 @@
       "data_path": "datasets/lra_release/listops-1000",
       "max_len": 2001,
       "augment": false,
-      "batch_size": 64,
+      "batch_size": 32,
       "pin_memory": true,
       "num_workers": 4
     }
@@ -34,7 +33,7 @@
   "optimizer_params": {
     "lr": 1e-3,
     "betas": [ 0.9, 0.98 ],
-    "weight_decay": 0.0
+    "weight_decay": 0.01
   },
   "trainer_params": {
     "max_epochs": 40,
@@ -43,7 +42,8 @@
     "enable_checkpointing": true,
     "default_root_dir": "out/listops/gmlp",
     "accelerator": "gpu",
-    "devices": [ 0 ]
+    "devices": [ 2 ]
   },
-  "fit_params": {}
+  "fit_params": {},
+  "notes": "cifar10 augmentation + random flip, residual identity + linear"
 }
