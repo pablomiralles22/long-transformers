@@ -11,4 +11,4 @@ class MeanReducer:
         
         attention_mask = attention_mask.unsqueeze(-1).bool()  # [B, L, 1]
         x.masked_fill_(~attention_mask, 0.)
-        return x.sum(1) / attention_mask.sum(1)
+        return (x / attention_mask.sum(1, keepdim=True)).sum(1)

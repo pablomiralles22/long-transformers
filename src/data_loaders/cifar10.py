@@ -12,10 +12,22 @@ PAD_TOKEN = 0
 CLS_TOKEN = 1
 
 class CIFAR100CollatorFn:
-    def __init__(self, max_len, pad_token=0, cls_token=1):
+    def __init__(self, max_len, augment=True, pad_token=0, cls_token=1):
         self.max_len = max_len
         self.pad_token = pad_token
         self.cls_token = cls_token
+        self.transform = transforms.Compose([
+            transforms.RandomCrop(32, padding=4, fill=128),
+            transforms.RandomHorizontalFlip(p=0.5),
+            transforms.AutoAugment(policy=transforms.AutoAugmentPolicy.CIFAR10, fill=128),
+            transforms.RandomAffine(degrees=10),
+            transforms.Grayscale(num_output_channels=1),
+            transforms.PILToTensor(),
+            transforms.RandomErasing(p=0.1, scale=(0.02, 0.33), ratio=(0.3, 3.3), value=0, inplace=False),
+        ]) if augment is True else transforms.Compose([
+            transforms.Grayscale(num_output_channels=1),
+            transforms.PILToTensor(),
+        ])
 
     def __call__(self, batch):
         input_ids = []
@@ -24,11 +36,13 @@ class CIFAR100CollatorFn:
 
         for item in batch:
             image, label = item
-            image = (image.mean(dim=0) * 255).long().flatten().tolist()
+            image = self.transform(image)
+            image = torch.flatten(image)
 
             # build input ids
-            # idxs = [self.cls_token] + [2 + pixel for pixel in image]  # 2 for PAD, CLS
-            idxs = [2 + pixel for pixel in image]  # 2 for PAD, CLS TODO
+            idxs = [self.cls_token] + [2 + pixel for pixel in image]  # 2 for PAD, CLS
+            assert len(idxs) == 32 * 32 + 1, f"len(idxs)={len(idxs)}"
+            # idxs = [2 + pixel for pixel in image]  # 2 for PAD, CLS TODO
 
             length = min(len(idxs), self.max_len)
             padding_size = self.max_len - length
@@ -36,7 +50,7 @@ class CIFAR100CollatorFn:
             idxs = idxs[:length] + [self.pad_token] * padding_size
 
             # build attention mask
-            attention_mask = [1.] * length + [0.] * padding_size
+            attention_mask = [True] * length + [False] * padding_size
 
             input_ids.append(idxs)
             attention_masks.append(attention_mask)
@@ -53,6 +67,7 @@ class CIFAR10DataModule(pl.LightningDataModule):
     def get_default_collator_config(cls):
         return {
             "max_len": 512,
+            "augment": True,
         }
 
     @classmethod
@@ -93,22 +108,23 @@ class CIFAR10DataModule(pl.LightningDataModule):
             **loader_config,
         }
         # load datasets
-        self.train_dataset = torchvision.datasets.CIFAR10(
+        self.train_val_dataset = torchvision.datasets.CIFAR10(
             data_path,
             train=True,
             download=True,
-            transform=transforms.Compose([
-                transforms.AutoAugment(policy=transforms.AutoAugmentPolicy.CIFAR10),
-                transforms.RandomHorizontalFlip(p=0.5),
-                # transforms.RandomAffine(degrees=10),
-                transforms.ToTensor(),
-            ]),
         )
-        self.val_dataset = torchvision.datasets.CIFAR10(
+
+        train_len = int(0.9 * len(self.train_val_dataset))
+        val_len = len(self.train_val_dataset) - train_len
+
+        self.train_dataset, self.val_dataset = torch.utils.data.random_split(
+            self.train_val_dataset, [train_len, val_len], generator=torch.Generator().manual_seed(42),
+        )
+
+        self.test_dataset = torchvision.datasets.CIFAR10(
             data_path,
             train=False,
             download=True,
-            transform=torchvision.transforms.ToTensor(),
         )
 
     def train_dataloader(self):
@@ -122,11 +138,25 @@ class CIFAR10DataModule(pl.LightningDataModule):
         )
 
     def val_dataloader(self):
+        collator_config = deepcopy(self.collator_config)
+        collator_config["augment"] = False
         return DataLoader(
             dataset=self.val_dataset,
             **self.loader_config,
             collate_fn=CIFAR100CollatorFn(
-                **self.collator_config,
+                **collator_config,
+            ),
+            shuffle=False,
+        )
+
+    def test_dataloader(self):
+        collator_config = deepcopy(self.collator_config)
+        collator_config["augment"] = False
+        return DataLoader(
+            dataset=self.test_dataset,
+            **self.loader_config,
+            collate_fn=CIFAR100CollatorFn(
+                **collator_config,
             ),
             shuffle=False,
         )

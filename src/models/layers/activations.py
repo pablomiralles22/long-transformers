@@ -9,6 +9,7 @@ ActivationFn = Literal[
     "sigmoid",
     "hardsigmoid",
     "silu",
+    "selu",
     "mish",
     "softmax",
 ]
@@ -29,6 +30,8 @@ def build_activation(fn: ActivationFn):
             return nn.Hardsigmoid()
         case "silu":
             return nn.SiLU()
+        case "selu":
+            return nn.SELU()
         case "mish":
             return nn.Mish()
         case _:

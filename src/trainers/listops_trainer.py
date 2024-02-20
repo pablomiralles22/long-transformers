@@ -2,11 +2,13 @@ import torch
 import torchmetrics
 import pytorch_lightning as pl
 
+from copy import deepcopy
 from torch.nn import functional as F
 from pytorch_lightning.callbacks import Callback, ModelCheckpoint, EarlyStopping
 from src.data_loaders.data_module_builder import DataModuleBuilder
 from src.models.model_builder import ModelBuilder
 from src.heads.classification_head import get_model_with_classification_head
+from src.utils.weight_decay_param_filter import WeightDecayParamFilter
 
 
 class ListopsModule(pl.LightningModule):
@@ -58,25 +60,22 @@ class ListopsModule(pl.LightningModule):
     def training_step(self, batch, batch_idx):
         loss, logits, labels = self._step(batch, batch_idx)
         accuracy = self.accuracy(logits, labels)
-        self.log_dict(
-            {
-                "train_loss": loss,
-                "train_accuracy": accuracy,
-            },
-            on_step=True,
-            on_epoch=True,
-            prog_bar=True,
-        )
+
+        self.log_dict({ "tr_loss_step": loss, "tr_acc_step": accuracy, }, on_step=True, on_epoch=False, prog_bar=True, logger=False)
+        self.log_dict({ "tr_loss": loss, "tr_acc": accuracy, }, on_step=False, on_epoch=True, logger=True, prog_bar=True)
+
+        learning_rate = self.lr_schedulers().get_last_lr()[0]
+        self.log("lr", learning_rate, on_step=True, on_epoch=False, prog_bar=True, logger=False)
+
         return {"loss": loss, "logits": logits, "labels": labels}
 
     def validation_step(self, batch, batch_idx):
-        # self.model.train() # dirty fix for pytorch bug
         loss, logits, labels = self._step(batch, batch_idx)
         accuracy = self.accuracy(logits, labels)
         self.log_dict(
             {
                 "val_loss": loss,
-                "val_accuracy": accuracy,
+                "val_acc": accuracy,
             },
             on_step=False,
             on_epoch=True,
@@ -95,40 +94,50 @@ class ListopsModule(pl.LightningModule):
         return loss, logits, labels
 
     def configure_optimizers(self):
-        optimizer = torch.optim.Adam(
-            params=self.model.parameters(), **self.optimizer_config
+        # set up optimizer
+        weight_decay_params, no_weight_decay_params = WeightDecayParamFilter.filter(self.model_with_head)
+
+        general_optimizer_config = deepcopy(self.optimizer_config)
+        weight_decay = general_optimizer_config.pop("weight_decay")
+        general_optimizer_config["weight_decay"] = 0.0
+
+        optim_groups = [
+            {"params": weight_decay_params, "weight_decay": weight_decay},
+            {"params": no_weight_decay_params, "weight_decay": 0.0},
+        ]
+        optimizer = torch.optim.AdamW(optim_groups, **general_optimizer_config)
+
+        # set up scheduler
+        train_len = len(self.data_module.train_dataloader())
+        max_epochs = self.trainer.max_epochs
+        swap_point = int(0.1 * max_epochs * train_len)
+
+        linear_lr = torch.optim.lr_scheduler.LinearLR(optimizer, start_factor=1e-4, end_factor=1., total_iters=swap_point)
+        cosine_anneal_lr = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=10, eta_min=1e-7)
+        scheduler = torch.optim.lr_scheduler.SequentialLR(
+            optimizer,
+            [linear_lr, cosine_anneal_lr],
+            [swap_point],
         )
-        # scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
-        #     optimizer, mode="max", factor=0.5, patience=5, verbose=True,
-        # )
-        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
-            optimizer=optimizer, T_max=10, eta_min=1e-7
-        )
-        # scheduler = torch.optim.lr_scheduler.LinearLR(
-        #     optimizer=optimizer,
-        #     start_factor=1.0,
-        #     end_factor=0.01,
-        #     total_iters=2,
-        #     verbose=True,
-        # )
+        
         return {
             "optimizer": optimizer,
             "lr_scheduler": {
                 "scheduler": scheduler,
-                "monitor": "train_accuracy",
-                "interval": "epoch",
+                "interval": "step",
+                "frequency": 1,
             },
         }
 
     def configure_callbacks(self) -> list[Callback]:
         return [
             ModelCheckpoint(
-                filename="{epoch}-{val_accuracy:.2f}",
-                monitor="val_accuracy",
+                filename="{epoch}-{val_acc:.2f}",
+                monitor="val_acc",
                 mode="max",
             ),
             EarlyStopping(
-                monitor="val_accuracy",
+                monitor="val_acc",
                 patience=40,
                 mode="max",
             ),

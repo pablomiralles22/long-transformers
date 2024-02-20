@@ -57,7 +57,7 @@ class ListopsCollatorFn:
     def __init__(
         self,
         max_len, 
-        augment: bool = False,
+        augment: float = 0.,
         pad_token_id: int = 0,
         cls_token_id: int = 1,
         pad_token_type_id: int = 0,
@@ -88,7 +88,7 @@ class ListopsCollatorFn:
             sequence, label = item["sequence"], item["label"]
 
             tokens = sequence.split()
-            if self.augment is True and random.uniform(0, 1) < 0.5:
+            if random.uniform(0, 1) < self.augment:
                 tokens = self.__augment(tokens)
 
             # create input ids and token type ids
@@ -127,7 +127,7 @@ class ListopsCollatorFn:
         return token_type_ids
 
     @classmethod
-    def __augment(cls, tree: list[str], logit_mean=0., logit_std=1.):
+    def __augment(cls, tree: list[str], a=-8., b=0.5):
         ops: list[callable] = []
         operands: list[list[int]] = [[]]
         subtokens: list[list[str]] = [[]]
@@ -150,7 +150,7 @@ class ListopsCollatorFn:
                 operands.pop()
                 subtokens.pop()
 
-                logit_contract = (current_depth - logit_mean) / logit_std
+                logit_contract = a + b * current_depth
                 prob_contract = 1. / (1. + math.exp(-logit_contract))
                 if random.uniform(0, 1) < prob_contract:
                     subtokens[-1].extend(result_token)
