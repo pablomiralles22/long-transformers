@@ -20,6 +20,6 @@ def fft_conv1d(
         kernel_fft = kernel_fft.repeat(D // N, 1)
 
     # Perform element-wise multiplication in the frequency domain
-    out_T_fft = inp_fft * kernel_fft
+    out_fft = inp_fft * kernel_fft
 
-    return torch.fft.irfft(out_T_fft, dim=-1, n=fft_dim, norm="ortho").type_as(inp)
+    return torch.fft.irfft(out_fft, dim=-1, n=fft_dim, norm="ortho").type_as(inp)

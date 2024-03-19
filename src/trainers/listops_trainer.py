@@ -110,10 +110,10 @@ class ListopsModule(pl.LightningModule):
         # set up scheduler
         train_len = len(self.data_module.train_dataloader())
         max_epochs = self.trainer.max_epochs
-        swap_point = int(0.1 * max_epochs * train_len)
+        swap_point = int(0.05 * max_epochs * train_len)
 
         linear_lr = torch.optim.lr_scheduler.LinearLR(optimizer, start_factor=1e-4, end_factor=1., total_iters=swap_point)
-        cosine_anneal_lr = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=10, eta_min=1e-7)
+        cosine_anneal_lr = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=20, eta_min=1e-7)
         scheduler = torch.optim.lr_scheduler.SequentialLR(
             optimizer,
             [linear_lr, cosine_anneal_lr],

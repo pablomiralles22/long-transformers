@@ -1,3 +1,4 @@
+from copy import deepcopy
 import torch
 import torchmetrics
 import pytorch_lightning as pl
@@ -7,6 +8,7 @@ from pytorch_lightning.callbacks import Callback, ModelCheckpoint, EarlyStopping
 from src.data_loaders.data_module_builder import DataModuleBuilder
 from src.models.model_builder import ModelBuilder
 from src.heads.classification_head import get_model_with_classification_head
+from src.utils.weight_decay_param_filter import WeightDecayParamFilter
 
 class PathfinderModule(pl.LightningModule):
     @classmethod
@@ -90,18 +92,38 @@ class PathfinderModule(pl.LightningModule):
         return loss, logits, labels
 
     def configure_optimizers(self):
-        optimizer = torch.optim.AdamW(
-            params=self.model.parameters(), **self.optimizer_config
+        # set up optimizer
+        weight_decay_params, no_weight_decay_params = WeightDecayParamFilter.filter(self.model_with_head)
+
+        general_optimizer_config = deepcopy(self.optimizer_config)
+        weight_decay = general_optimizer_config.pop("weight_decay")
+        general_optimizer_config["weight_decay"] = 0.0
+
+        optim_groups = [
+            {"params": weight_decay_params, "weight_decay": weight_decay},
+            {"params": no_weight_decay_params, "weight_decay": 0.0},
+        ]
+        optimizer = torch.optim.AdamW(optim_groups, **general_optimizer_config)
+
+        # set up scheduler
+        train_len = len(self.data_module.train_dataloader())
+        max_epochs = self.trainer.max_epochs
+        swap_point = int(0.1 * max_epochs * train_len)
+
+        linear_lr = torch.optim.lr_scheduler.LinearLR(optimizer, start_factor=1e-4, end_factor=1., total_iters=swap_point)
+        cosine_anneal_lr = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=10, eta_min=1e-7)
+        scheduler = torch.optim.lr_scheduler.SequentialLR(
+            optimizer,
+            [linear_lr, cosine_anneal_lr],
+            [swap_point],
         )
-        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
-            optimizer, mode="max", factor=0.25, patience=5, verbose=True
-        )
+        
         return {
             "optimizer": optimizer,
             "lr_scheduler": {
                 "scheduler": scheduler,
-                "monitor": "tr_acc",
-                "interval": "epoch",
+                "interval": "step",
+                "frequency": 1,
             },
         }
     

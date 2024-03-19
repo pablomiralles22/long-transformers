@@ -13,6 +13,7 @@ class EMAMultiheadAttention(nn.Module):
     def __init__(
         self,
         d_model,
+        nhead,  # ignore, just for compatibility
         bias=True,
         vdim=None,
         kdim=None,
@@ -57,9 +58,16 @@ class EMAMultiheadAttention(nn.Module):
 
     def forward(
         self,
-        embeddings,  # [B, L, D]
+        queries,  # [B, L1, D]
+        values=None,  # [B, L2, VDIM]
+        keys=None,  # [B, L2, KDIM]
         key_attention_mask=None,  # [B, L]
     ):  # -> [B, L, D]
+
+        assert (values is None or values is queries) and (keys is None or keys is queries), "EMA only makes sense with queries == values == keys"
+        
+
+        embeddings = queries
 
         x = embeddings * key_attention_mask.unsqueeze(-1)  # [B, L, D] set padding to 0
         x_prime = F.silu(self.dropout_ema(self.ema(x)) + x * self.omega)  # [B, L, D]

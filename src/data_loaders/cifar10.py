@@ -5,6 +5,7 @@ import torchvision
 from copy import deepcopy
 from torch.utils.data import DataLoader
 from torchvision import transforms
+# from torchvision.transforms import v2
 
 
 NUM_EMBEDDINGS = 256 + 2 # PAD, CLS, bytes
@@ -17,13 +18,12 @@ class CIFAR100CollatorFn:
         self.pad_token = pad_token
         self.cls_token = cls_token
         self.transform = transforms.Compose([
-            transforms.RandomCrop(32, padding=4, fill=128),
-            transforms.RandomHorizontalFlip(p=0.5),
-            transforms.AutoAugment(policy=transforms.AutoAugmentPolicy.CIFAR10, fill=128),
-            transforms.RandomAffine(degrees=10),
+            transforms.RandomHorizontalFlip(),
+            transforms.AutoAugment(policy=transforms.AutoAugmentPolicy.CIFAR10),
+            # transforms.AutoAugment(policy=transforms.AutoAugmentPolicy.CIFAR10),
+            # transforms.RandomApply([transforms.AutoAugment(policy=transforms.AutoAugmentPolicy.CIFAR10)], p=0.25),
             transforms.Grayscale(num_output_channels=1),
             transforms.PILToTensor(),
-            transforms.RandomErasing(p=0.1, scale=(0.02, 0.33), ratio=(0.3, 3.3), value=0, inplace=False),
         ]) if augment is True else transforms.Compose([
             transforms.Grayscale(num_output_channels=1),
             transforms.PILToTensor(),
@@ -37,12 +37,14 @@ class CIFAR100CollatorFn:
         for item in batch:
             image, label = item
             image = self.transform(image)
-            image = torch.flatten(image)
+            image = torch.flatten(image).long()  # Important to prevent overflow
 
-            # build input ids
-            idxs = [self.cls_token] + [2 + pixel for pixel in image]  # 2 for PAD, CLS
+            # build list of indexes
+            pixels = (2 + image).tolist()  # 2 for PAD, CLS
+            assert all([2 <= pixel <= 257 for pixel in pixels]), f"pixels={pixels}"
+
+            idxs = [self.cls_token] + pixels  # 2 for PAD, CLS
             assert len(idxs) == 32 * 32 + 1, f"len(idxs)={len(idxs)}"
-            # idxs = [2 + pixel for pixel in image]  # 2 for PAD, CLS TODO
 
             length = min(len(idxs), self.max_len)
             padding_size = self.max_len - length

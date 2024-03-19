@@ -93,13 +93,11 @@ class ListopsCollatorFn:
 
             # create input ids and token type ids
             indices = [self.cls_token_id] + [self.__token_to_id[token] for token in tokens]
-            # token_type_ids = self.__get_token_type_ids(tokens)
 
             length = min(len(indices), self.max_len)
             padding_size = self.max_len - length
 
             indices = indices[:length] + [self.pad_token_id] * padding_size
-            # token_type_ids = token_type_ids[:length] + [self.pad_token_type_id] * padding_size
 
             # create attention mask
             attention_mask = [1.] * length + [0.] * padding_size
@@ -111,23 +109,35 @@ class ListopsCollatorFn:
         return {
             "input_ids": torch.tensor(input_ids),
             "attention_mask": torch.tensor(attention_masks),
-            # "token_type_ids": torch.tensor(token_type_ids),
             "labels": torch.tensor(labels)
         }
-    
-    def __get_token_type_ids(self, tokens: list[str]):
-        token_type_ids = [self.cls_token_type_id]
-        token_queue = []
-        for token in tokens:
-            if token.startswith("[") or token.startswith("("):
-                token_queue.append(token)
-            elif token.endswith("]") or token.endswith(")"):
-                token_queue.pop()
-            token_type_ids.append(len(token_queue) + self.cls_token_type_id)
-        return token_type_ids
 
     @classmethod
-    def __augment(cls, tree: list[str], a=-8., b=0.5):
+    def __augment(cls, tree: list[str]):
+        ops: list[callable] = []
+        subtokens: list[list[str]] = [[]]
+
+        for token in tree:
+            if token.startswith("["):
+                ops.append(token)
+                subtokens.append([])
+
+            elif token.startswith("]"):
+                random.shuffle(subtokens[-1])
+                joined_tokens: str = " ".join([ops[-1]] + subtokens[-1] + ["]"])
+
+                ops.pop()
+                subtokens.pop()
+
+                subtokens[-1].append(joined_tokens)
+
+            else:
+                subtokens[-1].append(token)
+        
+        return subtokens[0][0].split()
+    
+    @classmethod
+    def __augment_close_nodes(cls, tree: list[str], a=-8., b=0.5):
         ops: list[callable] = []
         operands: list[list[int]] = [[]]
         subtokens: list[list[str]] = [[]]
@@ -226,6 +236,7 @@ class ListopsDataModule(pl.LightningDataModule):
         # load datasets
         self.train_dataset = ListopsDataset(data_path, "train")
         self.val_dataset = ListopsDataset(data_path, "val")
+        self.test_dataset = ListopsDataset(data_path, "test")
 
     def train_dataloader(self):
         return DataLoader(
@@ -237,6 +248,13 @@ class ListopsDataModule(pl.LightningDataModule):
     def val_dataloader(self):
         return DataLoader(
             dataset=self.val_dataset,
+            **self.test_loader_config,
+            shuffle=False,
+        )
+    
+    def test_dataloader(self):
+        return DataLoader(
+            dataset=self.test_dataset,
             **self.test_loader_config,
             shuffle=False,
         )

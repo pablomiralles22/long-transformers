@@ -5,21 +5,45 @@
       "input_embedding_dim": 160,
       "output_embedding_dim": 160,
       "layers": [
-        [ "ema_transformer_encoder_layer", { "d_model": 160, "dim_feedforward": 320, "dropout": 0.0, "ema_dim": 16, "ema_kernel_size": 5, "direction": "bidirectional" } ],
-        [ "ema_transformer_encoder_layer", { "d_model": 160, "dim_feedforward": 320, "dropout": 0.0, "ema_dim": 16, "ema_kernel_size": 5, "direction": "bidirectional" } ],
-        [ "ema_transformer_encoder_layer", { "d_model": 160, "dim_feedforward": 320, "dropout": 0.0, "ema_dim": 16, "ema_kernel_size": 5, "direction": "bidirectional" } ],
-        [ "ema_transformer_encoder_layer", { "d_model": 160, "dim_feedforward": 320, "dropout": 0.0, "ema_dim": 16, "ema_kernel_size": 5, "direction": "bidirectional" } ],
-        [ "ema_transformer_encoder_layer", { "d_model": 160, "dim_feedforward": 320, "dropout": 0.0, "ema_dim": 16, "ema_kernel_size": 5, "direction": "bidirectional" } ],
-        [ "ema_transformer_encoder_layer", { "d_model": 160, "dim_feedforward": 320, "dropout": 0.0, "ema_dim": 16, "ema_kernel_size": 5, "direction": "bidirectional" } ],
-        [ "ema_transformer_encoder_layer", { "d_model": 160, "dim_feedforward": 320, "dropout": 0.0, "ema_dim": 16, "ema_kernel_size": 5, "direction": "bidirectional" } ],
-        [ "ema_transformer_encoder_layer", { "d_model": 160, "dim_feedforward": 320, "dropout": 0.0, "ema_dim": 16, "ema_kernel_size": 5, "direction": "bidirectional" } ]
+        [ 
+          "transformer_encoder_layer", 
+          { "d_model": 160, "nhead": 16, "dim_feedforward": 320, "dropout": 0.0, "attention_params": { "type": "ema", "ema_dim": 16, "ema_kernel_size": 128, "direction": "bidirectional" } } 
+        ],
+        [ 
+          "transformer_encoder_layer", 
+          { "d_model": 160, "nhead": 16, "dim_feedforward": 320, "dropout": 0.0, "attention_params": { "type": "ema", "ema_dim": 16, "ema_kernel_size": 128, "direction": "bidirectional" } } 
+        ],
+        [ 
+          "transformer_encoder_layer", 
+          { "d_model": 160, "nhead": 16, "dim_feedforward": 320, "dropout": 0.0, "attention_params": { "type": "ema", "ema_dim": 16, "ema_kernel_size": 128, "direction": "bidirectional" } } 
+        ],
+        [ 
+          "transformer_encoder_layer", 
+          { "d_model": 160, "nhead": 16, "dim_feedforward": 320, "dropout": 0.0, "attention_params": { "type": "ema", "ema_dim": 16, "ema_kernel_size": 128, "direction": "bidirectional" } } 
+        ],
+        [ 
+          "transformer_encoder_layer", 
+          { "d_model": 160, "nhead": 16, "dim_feedforward": 320, "dropout": 0.0, "attention_params": { "type": "ema", "ema_dim": 16, "ema_kernel_size": 128, "direction": "bidirectional" } } 
+        ],
+        [ 
+          "transformer_encoder_layer", 
+          { "d_model": 160, "nhead": 16, "dim_feedforward": 320, "dropout": 0.0, "attention_params": { "type": "ema", "ema_dim": 16, "ema_kernel_size": 128, "direction": "bidirectional" } } 
+        ],
+        [ 
+          "transformer_encoder_layer", 
+          { "d_model": 160, "nhead": 16, "dim_feedforward": 320, "dropout": 0.0, "attention_params": { "type": "ema", "ema_dim": 16, "ema_kernel_size": 128, "direction": "bidirectional" } } 
+        ],
+        [ 
+          "transformer_encoder_layer", 
+          { "d_model": 160, "nhead": 16, "dim_feedforward": 320, "dropout": 0.0, "attention_params": { "type": "ema", "ema_dim": 16, "ema_kernel_size": 128, "direction": "bidirectional" } } 
+        ]
       ]
     }
   },
   "head_params": {
     "ff_dim": 320,
-    "num_hidden_layers": 1,
-    "dropout_p": 0.2,
+    "num_hidden_layers": 0,
+    "dropout_p": 0.0,
     "num_classes": 10,
     "reduction_method": "cls"
   },
@@ -34,18 +58,17 @@
     }
   },
   "optimizer_params": {
-    "lr": 2e-4,
+    "lr": 1e-3,
     "betas": [ 0.9, 0.98 ],
     "weight_decay": 0.02
   },
   "trainer_params": {
     "max_epochs": 40,
     "precision": "16-mixed",
-    "gradient_clip_val": 1.0,
     "enable_checkpointing": true,
     "default_root_dir": "out/cifar10/mega",
     "accelerator": "gpu",
-    "devices": [ 2 ]
+    "devices": [ 0 ]
   },
   "fit_params": {}
 }

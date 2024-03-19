@@ -6,7 +6,6 @@ from typing import Literal
 from src.models.layers.activations import ActivationFn, build_activation
 from src.models.layers.layer import Layer
 from src.models.functional.fft_conv1d import fft_conv1d
-from opt_einsum import contract
 
 class SpatialConv(nn.Module):
     __FFT_THRESHOLD: int = 30
@@ -24,7 +23,7 @@ class SpatialConv(nn.Module):
         self.reset_parameters()
     
     def reset_parameters(self):
-        nn.init.normal_(self.kernel, std=1e-6)
+        nn.init.normal_(self.kernel, std=1e-5)
         nn.init.constant_(self.bias, 1.0)
 
     def forward(self, x):
@@ -115,33 +114,24 @@ class GMLP(Layer):
         self.norm_1 = nn.LayerNorm(d_model, norm_eps)
         self.ff_z2 = nn.Sequential(
             nn.Linear(d_model, hidden_dim),
-            # nn.Linear(d_model, hidden_dim, bias=False),
-            # nn.LayerNorm(hidden_dim, norm_eps),
             build_activation(activation),
+            # nn.LayerNorm(hidden_dim, norm_eps),
         )
         self.ff_z1 = nn.Sequential(
             nn.Linear(d_model, hidden_dim),
-            # nn.Linear(d_model, hidden_dim, bias=False),
-            # nn.LayerNorm(hidden_dim, norm_eps),
             build_activation(selection),
         )
 
         # spatial mixin
         if mode == "conv":
-            spatial_layer = SpatialConv(num_channels, kernel_size, direction=direction)
+            self.spatial_layer = SpatialConv(num_channels, kernel_size, direction=direction)
         elif mode == "linear":
-            spatial_layer = SpatialLinear(seq_len, bottleneck_dim, num_hidden_layers)
+            self.spatial_layer = SpatialLinear(seq_len, bottleneck_dim, num_hidden_layers)
         else:
             raise ValueError(f"Invalid mode: {self.mode}")
-        self.ff_spatial = nn.Sequential(
-            spatial_layer,
-            nn.BatchNorm1d(hidden_dim, norm_eps, affine=False)
-        )
+        self.norm_2 = nn.LayerNorm(hidden_dim, norm_eps)
 
         self.proj_out = nn.Sequential(
-            # nn.LayerNorm(hidden_dim, norm_eps),
-            # nn.Linear(hidden_dim, d_model, bias=False),
-            # nn.LayerNorm(d_model, norm_eps),
             nn.Linear(hidden_dim, d_model),
             nn.Dropout(dropout),
         )
@@ -160,36 +150,9 @@ class GMLP(Layer):
         attn_mask = attention_mask.unsqueeze(-1).bool()  # [B, L, 1]
         z2.masked_fill_(~attn_mask, 0.)
 
-        fwb_z2 = self.ff_spatial(z2.transpose(1, 2)).transpose(1, 2)  # [B, L, H]
-        s_z = z1 * fwb_z2
+        fwb_z2 = self.spatial_layer(z2.transpose(1, 2)).transpose(1, 2)  # [B, L, H]
+        s_z = z1 * self.norm_2(fwb_z2)
 
         if self.residual is True:
             return self.proj_out(s_z) + embeddings
         return self.proj_out(s_z)
-
-    # def forward(
-    #     self,
-    #     embeddings,  # [B, L, D]
-    #     attention_mask=None,  # [B, L]
-    #     token_type_ids=None,  # [B, L]
-    # ):
-    #     embeddings = self.norm_1(embeddings)
-
-    #     attn_mask = attention_mask.unsqueeze(-1).bool()  # [B, L, 1]
-
-    #     y = self.ff_pointwise(embeddings)  # [B, L, 2H]
-    #     y.masked_fill_(~attn_mask, 0.)
-
-    #     # z1, z2 = z.chunk(2, dim=-1)  # [B, L, H], [B, L, H]
-    #     y1, y2 = y.split([2 * self.hidden_dim, self.hidden_dim], dim=-1)  # [B, L, 2H], [B, L, H]
-
-    #     fwb_y2 = self.ff_spatial(y2.transpose(1, 2)).transpose(1, 2)  # [B, L, H]
-    #     # s_z = self.selection(z1) * fwb_z2
-    #     # s_z = self.selection(fwb_z2) * z1
-    #     z = y1 + self.spatial_expand(fwb_y2)  # [B, L, 2H]
-    #     z1, z2 = z.chunk(2, dim=-1)  # [B, L, H]
-    #     s_z = self.selection(z1) * z2
-
-    #     if self.residual is True:
-    #          return self.proj_out(s_z) + embeddings
-    #     return self.proj_out(s_z)

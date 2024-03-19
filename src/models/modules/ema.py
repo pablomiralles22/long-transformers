@@ -3,6 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from typing import Optional, Literal
+from src.models.functional.fft_conv1d import fft_conv1d
 
 class EMA(nn.Module):
     __FFT_THRESHOLD: int = 30
@@ -112,35 +113,13 @@ class EMA(nn.Module):
             start = kernel_size - 1
             
 
-        # if conv is small, apply naive alg
-        if self.kernel_size < self.__FFT_THRESHOLD:
+        if self.kernel_size < self.__FFT_THRESHOLD: # if conv is small, apply naive alg
             out_T = self.__convolve_naive(inp, kernel)
-        
-        # else, apply FFT
-        out_T = self.__convolve_fft(inp, kernel)
+        else: # else, apply FFT
+            out_T = fft_conv1d(inp, kernel)
 
         return out_T[..., start:start+L]
             
-
-    def __convolve_fft(
-        self,
-        inp,  # [B, E, L]
-        kernel,  # [E, kernel_size]
-    ):
-        _, _, L = inp.shape
-        _, kernel_size = kernel.shape
-
-        fft_dim = L + kernel_size
-        # get next power of 2
-        fft_dim = 2 ** (fft_dim - 1).bit_length()
-
-        inp_fft = torch.fft.rfft(inp, dim=-1, n=fft_dim)
-        kernel_fft = torch.fft.rfft(kernel, dim=-1, n=fft_dim)
-
-        # Perform element-wise multiplication in the frequency domain
-        out_T_fft = inp_fft * kernel_fft
-
-        return torch.fft.irfft(out_T_fft).type_as(inp)
 
     def __convolve_naive(
         self,
@@ -149,9 +128,5 @@ class EMA(nn.Module):
     ):
         _, E, _ = inp.shape
         _, kernel_size = kernel.shape
-        return F.conv1d(
-            inp,
-            kernel.flip(-1).view(E, 1, kernel_size),
-            padding=kernel_size - 1,
-            groups=E
-        )
+        kernel = kernel.flip(-1).view(E, 1, kernel_size)
+        return F.conv1d(inp, kernel, padding=kernel_size - 1, groups=E)
