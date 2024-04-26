@@ -100,7 +100,7 @@ class ModelWithClassificationHead(nn.Module):
 
     def forward(
         self,
-        embeddings,  # [B, L, D]
+        embeddings,  # [B, L]
         attention_mask=None,  # [B, L]
         token_type_ids=None,  # [B, L]
     ):
@@ -109,9 +109,9 @@ class ModelWithClassificationHead(nn.Module):
         Returns:
             torch.Tensor: The output logits.
         """
-        B, L, D = embeddings.size()
-
         x = self.model(embeddings, attention_mask, token_type_ids)  # [B, L, D]
+        *B, L, D = x.size()
+
         reduced_x = self._reduce(x, attention_mask)  # [B, D]
 
         if self.concat_consecutive is True:

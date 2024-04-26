@@ -17,7 +17,7 @@ class DataModuleBuilder:
                 return CIFAR10DataModule.from_joint_config(params)
             case "pathfinder":
                 return PathfinderDataModule.from_joint_config(params)
-            case "text_retrieval":
+            case "text-retrieval":
                 return TextRetrievalDataModule.from_joint_config(params)
             case _:
                 raise ValueError(f"Unknown task: {name}")

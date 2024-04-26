@@ -2,23 +2,25 @@
   "model_params": {
     "name": "layered",
     "params": {
-      "input_embedding_dim": 32,
+      "input_embedding_dim": 128,
       "output_embedding_dim": 128,
       "layers": [
-        [ "conv", { "in_channels": 32, "out_channels": 64, "kernel_size": 5, "padding": "same" } ],
-        [ "layer_norm", { "normalized_shape": 64 } ],
-        [ "dropout", { "p": 0.1 } ],
-        [ "activation", { "fn": "gelu" } ],
-
-        [ "conv", { "in_channels": 64, "out_channels": 256, "kernel_size": 3, "padding": "same" } ],
-        [ "layer_norm", { "normalized_shape": 256 } ],
-        [ "dropout", { "p": 0.1 } ],
-        [ "activation", { "fn": "gelu" } ],
-
-        [ "linear", { "in_features": 256, "out_features": 128 } ],
-
         [ "positional_embedding", { "mode": "learned", "max_seq_len": 2048, "embed_dim": 128 } ],
 
+        [ 
+          "transformer_encoder_layer", 
+          { 
+              "d_model": 128, "nhead": 8, "dim_feedforward": 256, "dropout": 0.1, "activation_fn": "gelu",
+              "attention_params": { "type": "rotary", "freq": 10000, "learned_freq": false }
+          } 
+        ],
+        [ 
+          "transformer_encoder_layer", 
+          { 
+              "d_model": 128, "nhead": 8, "dim_feedforward": 256, "dropout": 0.1, "activation_fn": "gelu",
+              "attention_params": { "type": "rotary", "freq": 10000, "learned_freq": false }
+          } 
+        ],
         [ 
           "transformer_encoder_layer", 
           { 
@@ -51,34 +53,37 @@
     }
   },
   "head_params": {
-    "ff_dim": 256,
-    "num_hidden_layers": 0,
+    "ff_dim": 512,
+    "num_hidden_layers": 1,
     "dropout_p": 0.1,
-    "reduction_method": "mean"
+    "reduction_method": "mean",
+    "concat_consecutive": true
   },
   "data_module_params": {
-    "name": "text-classification",
+    "name": "text-retrieval",
     "params": {
-      "data_path": "datasets/aclImdb",
+      "data_path": "datasets/text_retrieval",
       "max_len": 2048,
-      "batch_size": 32,
+      "batch_size": 64,
       "pin_memory": true,
       "num_workers": 4
     }
   },
   "optimizer_params": {
-    "lr": 4e-3,
+    "lr": 1e-3,
     "weight_decay": 0.01,
     "betas": [ 0.9, 0.98 ]
   },
   "trainer_params": {
-    "max_epochs": 50,
+    "max_epochs": 40,
     "precision": "16-mixed",
     "enable_checkpointing": true,
-    "default_root_dir": "out/text_classification/conv_transformer",
+    "default_root_dir": "out/text_retrieval/rotary_transformer",
     "accelerator": "gpu",
-    "devices": [ 2 ]
+    "devices": [ 0 ]
   },
-  "fit_params": { }
+  "fit_params": {
+    "ckpt_path": "out/text_retrieval/rotary_transformer/lightning_logs/version_1/checkpoints/epoch=19-val_accuracy=0.74.ckpt"
+  }
 }
   

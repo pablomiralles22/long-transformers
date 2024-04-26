@@ -9,6 +9,7 @@ from src.models.layers.local_transformer_encoder_layer import LocalTransformerEn
 from src.models.layers.embeddings import PositionalEmbeddingLayer, TokenTypeEmbeddingLayer
 from src.models.layers.compressor_layer import Compressor
 from src.models.layers.one_sided_conv import OneSidedConv
+from src.models.layers.activations import build_activation
 from src.models.modules.ema import EMA
 from src.models.layers.gmlp import GMLP
 
@@ -20,7 +21,7 @@ LayerType = Literal[
     "max_pool",
     "mean_pool",
 
-    "relu",
+    "activation",
     "dropout",
 
     "batch_norm",
@@ -58,8 +59,8 @@ class LayerBuilder:
             case "one_sided_conv":
                 return OneSidedConv(**params)
             # activations
-            case "relu":
-                return Overlayer(nn.ReLU())
+            case "activation":
+                return Overlayer(build_activation(params["fn"]))
             # regularization
             case "dropout":
                 return Overlayer(nn.Dropout(**params))

@@ -5,17 +5,42 @@
       "input_embedding_dim": 128,
       "output_embedding_dim": 128,
       "layers": [
-        [ "positional_embedding", { "mode": "learned", "max_seq_len": 1024, "embed_dim": 128 } ],
-        [ "rotary_transformer_encoder_layer", { "d_model": 128, "nhead": 16, "dim_feedforward": 256, "dropout": 0.0, "freq": 10000 } ],
-        [ "rotary_transformer_encoder_layer", { "d_model": 128, "nhead": 16, "dim_feedforward": 256, "dropout": 0.0, "freq": 10000 } ],
-        [ "rotary_transformer_encoder_layer", { "d_model": 128, "nhead": 16, "dim_feedforward": 256, "dropout": 0.0, "freq": 10000 } ],
-        [ "rotary_transformer_encoder_layer", { "d_model": 128, "nhead": 16, "dim_feedforward": 256, "dropout": 0.0, "freq": 10000 } ]
+        [ "positional_embedding", { "mode": "learned", "max_seq_len": 2048, "embed_dim": 128 } ],
+
+        [ 
+          "transformer_encoder_layer", 
+          { 
+              "d_model": 128, "nhead": 8, "dim_feedforward": 256, "dropout": 0.1, "activation_fn": "gelu",
+              "attention_params": { "type": "rotary", "freq": 10000, "learned_freq": false }
+          } 
+        ],
+        [ 
+          "transformer_encoder_layer", 
+          { 
+              "d_model": 128, "nhead": 8, "dim_feedforward": 256, "dropout": 0.1, "activation_fn": "gelu",
+              "attention_params": { "type": "rotary", "freq": 10000, "learned_freq": false }
+          } 
+        ],
+        [ 
+          "transformer_encoder_layer", 
+          { 
+              "d_model": 128, "nhead": 8, "dim_feedforward": 256, "dropout": 0.1, "activation_fn": "gelu",
+              "attention_params": { "type": "rotary", "freq": 10000, "learned_freq": false }
+          } 
+        ],
+        [ 
+          "transformer_encoder_layer", 
+          { 
+              "d_model": 128, "nhead": 8, "dim_feedforward": 256, "dropout": 0.1, "activation_fn": "gelu",
+              "attention_params": { "type": "rotary", "freq": 10000, "learned_freq": false }
+          } 
+        ]
       ]
     }
   },
   "head_params": {
     "ff_dim": 256,
-    "num_hidden_layers": 1,
+    "num_hidden_layers": 0,
     "dropout_p": 0.1,
     "reduction_method": "cls"
   },
@@ -35,11 +60,11 @@
     "betas": [ 0.9, 0.98 ]
   },
   "trainer_params": {
-    "max_epochs": 40,
+    "max_epochs": 50,
     "precision": "16-mixed",
     "enable_checkpointing": true,
     "default_root_dir": "out/text_classification/rotary_transformer",
     "accelerator": "gpu",
-    "devices": [ 1 ]
+    "devices": [ 0 ]
   }
 }

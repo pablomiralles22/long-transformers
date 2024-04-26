@@ -22,6 +22,13 @@ class TrainerBuilder:
                     head_params=head_params,
                     optimizer_params=optimizer_params,
                 )
+            case "text-retrieval":
+                return TextClassificationModule(
+                    model_params=model_params,
+                    data_module_params=data_module_params,
+                    head_params=head_params,
+                    optimizer_params=optimizer_params,
+                )
             case "listops":
                 return ListopsModule(
                     model_params=model_params,

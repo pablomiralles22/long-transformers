@@ -24,6 +24,7 @@ class TextRetrievalDataset(Dataset):
             root_dir (string): Directory with all the data.
             split (string): One of "train" or "val" to specify the split.
         """
+        if split == "val": split = "eval"
         self.root_dir = os.path.join(root_dir, split)
         self.files = os.listdir(self.root_dir)
 
