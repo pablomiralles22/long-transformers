@@ -7,6 +7,7 @@ from src.models.modules.positional_bias_multihead_attention import PositionalBia
 from src.models.modules.rotary_multihead_attention import RotaryMultiheadAttention
 from src.models.modules.multihead_attention import MultiheadAttention
 from src.models.modules.compress_multihead_attention import CompressMultiheadAttention
+from src.models.modules.positive_multihead_attention import PositiveMultiheadAttention
 
 AttentionModuleType = Literal[
     "std",
@@ -16,6 +17,7 @@ AttentionModuleType = Literal[
     "ema",
     "aft",
     "compress",
+    "positive",
 ]
 
 class AttentionModuleBuilder:
@@ -41,5 +43,7 @@ class AttentionModuleBuilder:
                 return AFT(**params)
             case "compress":
                 return CompressMultiheadAttention(**params)
+            case "positive":
+                return PositiveMultiheadAttention(**params)
             case _:
                 raise ValueError(f"Unknown attention module type: {type_str}")

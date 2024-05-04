@@ -36,7 +36,9 @@ class RotaryEmbedding:
 
         if thetas is None:
             thetas_inds = torch.arange(0, D // 2, requires_grad=False, device=device, dtype=dtype) # (D // 2)
-            thetas = torch.exp(-2 * math.log(freq) * (thetas_inds // 2) / D) # (D // 2)
+            # thetas = torch.exp(-2 * math.log(freq) * (thetas_inds // 2) / D) # (D // 2)
+            thetas = torch.exp(-2 * math.log(freq) * thetas_inds / D) # (D // 2)
+            thetas[::2] = 0
         else:
             thetas = thetas.unsqueeze(-2) / L  # [H, 1, D // 2] or [1, D // 2]
 

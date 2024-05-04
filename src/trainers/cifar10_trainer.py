@@ -62,8 +62,8 @@ class CIFAR10Module(pl.LightningModule):
         self.log_dict({ "tr_loss_step": loss, "tr_acc_step": accuracy, }, on_step=True, on_epoch=False, prog_bar=True, logger=False)
         self.log_dict({ "tr_loss": loss, "tr_acc": accuracy, }, on_step=False, on_epoch=True, logger=True, prog_bar=True)
 
-        learning_rate = self.lr_schedulers().get_last_lr()[0]
-        self.log("lr", learning_rate, on_step=True, on_epoch=False, prog_bar=True, logger=False)
+        # learning_rate = self.lr_schedulers().get_last_lr()[0]
+        # self.log("lr", learning_rate, on_step=True, on_epoch=False, prog_bar=True, logger=False)
 
         return {"loss": loss, "logits": logits, "labels": labels}
 
@@ -113,11 +113,11 @@ class CIFAR10Module(pl.LightningModule):
 
         return {
             "optimizer": optimizer,
-            "lr_scheduler": {
-                "scheduler": scheduler,
-                "interval": "step",
-                "frequency": 1,
-            },
+            # "lr_scheduler": {
+            #     "scheduler": scheduler,
+            #     "interval": "step",
+            #     "frequency": 1,
+            # },
         }
     
     def configure_callbacks(self) -> list[Callback]:
