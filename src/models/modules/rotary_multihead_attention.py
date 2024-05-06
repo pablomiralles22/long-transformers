@@ -13,6 +13,8 @@ class RotaryMultiheadAttention(nn.Module):
         bias=True,
         vdim=None,
         kdim=None,
+        qk_dim_out=None,
+        v_dim_out=None,
         learned_freq=False,
         freq=10000,
     ):
@@ -25,20 +27,16 @@ class RotaryMultiheadAttention(nn.Module):
         
         vdim = d_model if vdim is None else vdim
         kdim = d_model if kdim is None else kdim
+        qk_dim_out = d_model if qk_dim_out is None else qk_dim_out * nhead
+        v_dim_out = d_model if v_dim_out is None else v_dim_out * nhead
 
-        self.W_Q = nn.Linear(d_model, d_model, bias=bias)
-        self.W_K = nn.Linear(kdim, d_model, bias=bias)
-        self.W_V = nn.Linear(vdim, d_model, bias=bias)
+        self.W_Q = nn.Linear(d_model, qk_dim_out, bias=bias)
+        self.W_K = nn.Linear(kdim, qk_dim_out, bias=bias)
+        self.W_V = nn.Linear(vdim, v_dim_out, bias=bias)
 
-        self.W_O = nn.Linear(d_model, d_model, bias=bias)
+        self.W_O = nn.Linear(v_dim_out, d_model, bias=bias)
 
         self.freq = freq
-        self.thetas = nn.Parameter(torch.empty(nhead, (d_model // nhead) // 2)) if learned_freq is True else None
-        self.reset_parameters()
-
-    def reset_parameters(self):
-        if self.thetas is not None:
-            nn.init.uniform_(self.thetas, a=-0.1, b=0.1)
 
     def forward(
         self,
@@ -55,8 +53,8 @@ class RotaryMultiheadAttention(nn.Module):
         keys_proj = self.W_K(keys)  # [B, L2, D]
         values_proj = self.W_V(values)  # [B, L2, D]
 
-        Q = RotaryEmbedding.apply(queries_proj, thetas=self.thetas, freq=self.freq)  # [B, H, L, D/H]
-        K = RotaryEmbedding.apply(keys_proj, thetas=self.thetas, freq=self.freq)  # [B, H, L, D/H]
+        Q = RotaryEmbedding.apply(queries_proj, thetas=None, freq=self.freq)  # [B, L, D]
+        K = RotaryEmbedding.apply(keys_proj, thetas=None, freq=self.freq)  # [B, L, D]
 
         Q = AttentionHeadHandler.separate_heads(Q, self.nhead)  # [B, H, L, D/H]
         K = AttentionHeadHandler.separate_heads(K, self.nhead)  # [B, H, L, D/H]

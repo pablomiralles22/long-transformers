@@ -17,34 +17,34 @@
 
         [ "linear", { "in_features": 256, "out_features": 128 } ],
 
-        [ "positional_embedding", { "mode": "learned", "max_seq_len": 2048, "embed_dim": 128 } ],
+        [ "positional_embedding", { "mode": "", "max_seq_len": 2048, "embed_dim": 128 } ],
 
         [ 
           "transformer_encoder_layer", 
           { 
               "d_model": 128, "nhead": 8, "dim_feedforward": 256, "dropout": 0.1, "activation_fn": "gelu",
-              "attention_params": { "type": "rotary", "freq": 10000, "learned_freq": false }
+              "attention_params": { "type": "rotary", "freq": 10000, "_freq": false }
           } 
         ],
         [ 
           "transformer_encoder_layer", 
           { 
               "d_model": 128, "nhead": 8, "dim_feedforward": 256, "dropout": 0.1, "activation_fn": "gelu",
-              "attention_params": { "type": "rotary", "freq": 10000, "learned_freq": false }
+              "attention_params": { "type": "rotary", "freq": 10000, "_freq": false }
           } 
         ],
         [ 
           "transformer_encoder_layer", 
           { 
               "d_model": 128, "nhead": 8, "dim_feedforward": 256, "dropout": 0.1, "activation_fn": "gelu",
-              "attention_params": { "type": "rotary", "freq": 10000, "learned_freq": false }
+              "attention_params": { "type": "rotary", "freq": 10000, "_freq": false }
           } 
         ],
         [ 
           "transformer_encoder_layer", 
           { 
               "d_model": 128, "nhead": 8, "dim_feedforward": 256, "dropout": 0.1, "activation_fn": "gelu",
-              "attention_params": { "type": "rotary", "freq": 10000, "learned_freq": false }
+              "attention_params": { "type": "rotary", "freq": 10000, "_freq": false }
           } 
         ]
       ]

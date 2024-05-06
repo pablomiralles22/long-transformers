@@ -2,87 +2,62 @@
   "model_params": {
       "name": "layered",
       "params": {
-          "input_embedding_dim": 160,
-          "output_embedding_dim": 160,
+          "input_embedding_dim": 64,
+          "output_embedding_dim": 64,
           "layers": [
-              [ "positional_embedding", { "mode": "learned", "max_seq_len": 1025, "embed_dim": 160 } ],
-              [ 
-                "transformer_encoder_layer", 
-                { 
-                    "d_model": 160, "nhead": 8, "dim_feedforward": 320, "dropout": 0.0, 
-                    "attention_params": { "type": "std" }
-                } 
-              ],
-              [ 
-                "transformer_encoder_layer", 
-                { 
-                    "d_model": 160, "nhead": 8, "dim_feedforward": 320, "dropout": 0.0, 
-                    "attention_params": { "type": "std" }
-                } 
-              ],
-              [ 
-                "transformer_encoder_layer", 
-                { 
-                    "d_model": 160, "nhead": 8, "dim_feedforward": 320, "dropout": 0.0, 
-                    "attention_params": { "type": "std" }
-                } 
-              ],
-              [ 
-                "transformer_encoder_layer", 
-                { 
-                    "d_model": 160, "nhead": 8, "dim_feedforward": 320, "dropout": 0.0, 
-                    "attention_params": { "type": "std" }
-                } 
-              ],
-              [ 
-                "transformer_encoder_layer", 
-                { 
-                    "d_model": 160, "nhead": 8, "dim_feedforward": 320, "dropout": 0.0, 
-                    "attention_params": { "type": "std" }
-                } 
-              ],
-              [ 
-                "transformer_encoder_layer", 
-                { 
-                    "d_model": 160, "nhead": 8, "dim_feedforward": 320, "dropout": 0.0, 
-                    "attention_params": { "type": "std" }
-                } 
-              ]
+              [ "positional_embedding", { "mode": "learned", "max_seq_len": 1025, "embed_dim": 64 } ],
+              [ "transformer_encoder_layer", 
+                { "d_model": 64, "nhead": 4, "dim_feedforward": 128, "dropout": 0.0, 
+                    "attention_params": { "type": "std" } } ],
+              [ "transformer_encoder_layer", 
+                { "d_model": 64, "nhead": 4, "dim_feedforward": 128, "dropout": 0.0, 
+                    "attention_params": { "type": "std" } } ],
+              [ "transformer_encoder_layer", 
+                { "d_model": 64, "nhead": 4, "dim_feedforward": 128, "dropout": 0.0, 
+                    "attention_params": { "type": "std" } } ],
+              [ "transformer_encoder_layer", 
+                { "d_model": 64, "nhead": 4, "dim_feedforward": 128, "dropout": 0.0, 
+                    "attention_params": { "type": "std" } } ],
+              [ "transformer_encoder_layer", 
+                { "d_model": 64, "nhead": 4, "dim_feedforward": 128, "dropout": 0.0, 
+                    "attention_params": { "type": "std" } } ],
+              [ "transformer_encoder_layer", 
+                { "d_model": 64, "nhead": 4, "dim_feedforward": 128, "dropout": 0.0, 
+                    "attention_params": { "type": "std" } } ]
+
           ]
       }
   },
   "head_params": {
-      "ff_dim": 320,
+      "ff_dim": 128,
       "num_hidden_layers": 1,
       "dropout_p": 0.0,
       "num_classes": 10,
-      "reduction_method": "cls"
+      "reduction_method": "mean"
   },
   "data_module_params": {
       "name": "cifar10",
       "params": {
           "data_path": "datasets/cifar10",
           "max_len": 1025,
-          "batch_size": 32,
+          "batch_size": 64,
           "pin_memory": true,
-          "num_workers": 6
+          "num_workers": 6,
+          "augment": true
       }
   },
   "optimizer_params": {
-      "lr": 0.0005,
-      "betas": [ 0.9, 0.99 ],
+      "lr": 1e-3,
+      "betas": [ 0.9, 0.98 ],
       "weight_decay": 0.01
   },
   "trainer_params": {
-      "max_epochs": 50,
+      "max_epochs": 100,
       "precision": "16-mixed",
-      "gradient_clip_val": 1.0,
       "enable_checkpointing": true,
-      "default_root_dir": "out/cifar10/rotary",
+      "default_root_dir": "out/cifar10/transformer",
       "accelerator": "gpu",
-      "devices": [
-          2
-      ]
+      "devices": [ 0 ]
   },
-  "fit_params": {}
+  "fit_params": { }
 }

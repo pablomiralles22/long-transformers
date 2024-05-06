@@ -2,33 +2,33 @@
   "model_params": {
       "name": "layered",
       "params": {
-          "input_embedding_dim": 160,
-          "output_embedding_dim": 160,
+          "input_embedding_dim": 128,
+          "output_embedding_dim": 128,
           "layers": [
               [ "transformer_encoder_layer", 
-                { "d_model": 160, "nhead": 8, "dim_feedforward": 320, "dropout": 0.0, 
-                    "attention_params": { "type": "rotary", "freq": 10000, "learned_freq": false } } ],
+                { "d_model": 128, "nhead": 8, "dim_feedforward": 256, "dropout": 0.0, 
+                    "attention_params": { "type": "rotary", "freq": 10000, "qk_dim_out": 32, "v_dim_out": 32 } } ],
               [ "transformer_encoder_layer", 
-                { "d_model": 160, "nhead": 8, "dim_feedforward": 320, "dropout": 0.0, 
-                    "attention_params": { "type": "rotary", "freq": 10000, "learned_freq": false } } ],
+                { "d_model": 128, "nhead": 8, "dim_feedforward": 256, "dropout": 0.0, 
+                    "attention_params": { "type": "rotary", "freq": 10000, "qk_dim_out": 32, "v_dim_out": 32 } } ],
               [ "transformer_encoder_layer", 
-                { "d_model": 160, "nhead": 8, "dim_feedforward": 320, "dropout": 0.0, 
-                    "attention_params": { "type": "rotary", "freq": 10000, "learned_freq": false } } ],
+                { "d_model": 128, "nhead": 8, "dim_feedforward": 256, "dropout": 0.0, 
+                    "attention_params": { "type": "rotary", "freq": 10000, "qk_dim_out": 32, "v_dim_out": 32 } } ],
               [ "transformer_encoder_layer", 
-                { "d_model": 160, "nhead": 8, "dim_feedforward": 320, "dropout": 0.0, 
-                    "attention_params": { "type": "rotary", "freq": 10000, "learned_freq": false } } ],
+                { "d_model": 128, "nhead": 8, "dim_feedforward": 256, "dropout": 0.0, 
+                    "attention_params": { "type": "rotary", "freq": 10000, "qk_dim_out": 32, "v_dim_out": 32 } } ],
               [ "transformer_encoder_layer", 
-                { "d_model": 160, "nhead": 8, "dim_feedforward": 320, "dropout": 0.0, 
-                    "attention_params": { "type": "rotary", "freq": 10000, "learned_freq": false } } ],
+                { "d_model": 128, "nhead": 8, "dim_feedforward": 256, "dropout": 0.0, 
+                    "attention_params": { "type": "rotary", "freq": 10000, "qk_dim_out": 32, "v_dim_out": 32 } } ],
               [ "transformer_encoder_layer", 
-                { "d_model": 160, "nhead": 8, "dim_feedforward": 320, "dropout": 0.0, 
-                    "attention_params": { "type": "rotary", "freq": 10000, "learned_freq": false } } ]
+                { "d_model": 128, "nhead": 8, "dim_feedforward": 256, "dropout": 0.0, 
+                    "attention_params": { "type": "rotary", "freq": 10000, "qk_dim_out": 32, "v_dim_out": 32 } } ]
           ]
       }
   },
   "head_params": {
       "ff_dim": 256,
-      "num_hidden_layers": 0,
+      "num_hidden_layers": 1,
       "dropout_p": 0.0,
       "num_classes": 10,
       "reduction_method": "mean"
@@ -45,9 +45,9 @@
       }
   },
   "optimizer_params": {
-      "lr": 0.001,
-      "betas": [ 0.9, 0.99 ],
-      "weight_decay": 0.04
+      "lr": 5e-4,
+      "betas": [ 0.9, 0.98 ],
+      "weight_decay": 0.01
   },
   "trainer_params": {
       "max_epochs": 200,
@@ -58,6 +58,5 @@
       "devices": [ 0 ]
   },
   "fit_params": {
-    "ckpt_path": "out/cifar10/rotary_transformer_augmented/lightning_logs/version_8/checkpoints/epoch=72-val_acc=0.74.ckpt"
   }
 }

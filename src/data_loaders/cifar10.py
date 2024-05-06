@@ -20,6 +20,7 @@ class CIFAR100CollatorFn:
         self.transform = transforms.Compose([
             transforms.RandomHorizontalFlip(),
             transforms.AutoAugment(policy=transforms.AutoAugmentPolicy.CIFAR10),
+            transforms.RandomAffine(degrees=0, translate=(0.1, 0.1), scale=(0.9, 1.1)),
             # transforms.AutoAugment(policy=transforms.AutoAugmentPolicy.CIFAR10),
             # transforms.RandomApply([transforms.AutoAugment(policy=transforms.AutoAugmentPolicy.CIFAR10)], p=0.25),
             transforms.Grayscale(num_output_channels=1),

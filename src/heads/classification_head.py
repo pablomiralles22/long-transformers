@@ -39,7 +39,7 @@ def linear_block(input_dim: int, output_dim: int, dropout_p: float = 0.1):
         nn.Linear(input_dim, output_dim),
         # nn.LayerNorm(output_dim),
         nn.Dropout(dropout_p),
-        nn.GELU(),
+        nn.ReLU(),
     )
 
 
