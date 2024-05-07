@@ -15,7 +15,6 @@ class RotaryMultiheadAttention(nn.Module):
         kdim=None,
         qk_dim_out=None,
         v_dim_out=None,
-        learned_freq=False,
         freq=10000,
     ):
         assert d_model % nhead == 0, "Error: the embedding dimension should be divisible by the number of heads"

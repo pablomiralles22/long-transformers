@@ -41,7 +41,7 @@
           "batch_size": 32,
           "pin_memory": true,
           "num_workers": 6,
-          "augmen": true
+          "augment": false
       }
   },
   "optimizer_params": {
