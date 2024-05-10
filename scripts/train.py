@@ -18,7 +18,7 @@ def load_data_module(data_module_params: dict):
 
 
 ###### Train ######
-def run(config):
+def run(config, initial_model=None):
     # unpack config
     model_params = config["model_params"]
     head_params = config["head_params"]
@@ -38,6 +38,11 @@ def run(config):
         optimizer_params=optimizer_params,
     )
 
+    if initial_model is not None:
+        # this is a bit intrusive, but it is the easiest way to do it
+        trainer_module.model.load_state_dict(initial_model.state_dict())
+        trainer_module.model_with_head.model.load_state_dict(initial_model.state_dict())
+
     # setup trainer and run
     trainer = pl.Trainer(**trainer_params)
 
@@ -49,6 +54,9 @@ def run(config):
 
     # train
     trainer.fit(trainer_module, data_module, **fit_params)
+
+    # returned trained model
+    return trainer_module.model
 
 
 ###### MAIN ######
@@ -73,19 +81,27 @@ def main():
     parser.add_argument(
         "-c", "--config",
         type=str,
-        nargs="+",
         help="Path to the JSON file containing the configuration",
+    )
+    parser.add_argument(
+        "-p", "--pretrain-config",
+        type=str,
+        help="Path to the JSON file containing the configuration for pretraining",
+        required=False,
     )
 
     # Parse the arguments
     args = parser.parse_args()
 
     # Load the model configuration from the provided JSON file
-    configs = [parse_config(config_file_name) for config_file_name in args.config]
+    config = parse_config(args.config)
+    initial_model = None
+
+    if args.pretrain_config is not None:
+        pretrain_config = parse_config(args.pretrain_config)
+        initial_model = run(pretrain_config)
     
-    # create required directories
-    for config in configs:
-        run(config)
+    run(config, initial_model=initial_model)
 
 
 # Run the main function
