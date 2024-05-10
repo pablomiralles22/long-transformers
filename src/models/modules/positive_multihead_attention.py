@@ -13,6 +13,8 @@ class PositiveMultiheadAttention(nn.Module):
         bias=True,
         vdim=None,
         kdim=None,
+        qk_dim_out=None,
+        v_dim_out=None,
     ):
         assert d_model % nhead == 0, "Error: the embedding dimension should be divisible by the number of heads"
 
@@ -23,12 +25,15 @@ class PositiveMultiheadAttention(nn.Module):
         
         vdim = d_model if vdim is None else vdim
         kdim = d_model if kdim is None else kdim
+        qk_dim_out = d_model if qk_dim_out is None else qk_dim_out * nhead
+        v_dim_out = d_model if v_dim_out is None else v_dim_out * nhead
 
-        self.W_Q = nn.Linear(d_model, d_model, bias=bias)
-        self.W_K = nn.Linear(kdim, d_model, bias=bias)
-        self.W_V = nn.Linear(vdim, d_model, bias=bias)
+        self.W_Q = nn.Linear(d_model, qk_dim_out, bias=bias)
+        self.W_K = nn.Linear(kdim, qk_dim_out, bias=bias)
+        self.W_V = nn.Linear(vdim, v_dim_out, bias=bias)
 
-        self.W_O = nn.Linear(d_model, d_model, bias=bias)
+        self.W_O = nn.Linear(v_dim_out, d_model, bias=bias)
+
 
 
     def forward(
@@ -55,16 +60,16 @@ class PositiveMultiheadAttention(nn.Module):
         V_minus, V_plus = torch.min(V, torch.zeros_like(V)), torch.max(V, torch.zeros_like(V))
 
         Q = torch.sigmoid(Q)  # [B, H, L1, D/H]
-        scaled_K = torch.sigmoid(K) / (L2 ** 0.5)  # [B, H, L2, D/H]
+        scaled_K = torch.sigmoid(K) / L2  # [B, H, L2, D/H]
 
         Q, scaled_K = AmplitudeEmbedding.apply(Q, scaled_K)
 
         key_values_plus = torch.einsum("bhld,bhlc,bl->bhdc", scaled_K, V_plus, key_attention_mask)  # [B, H, D/H, D/H]
         heads_plus = torch.einsum("bhld,bhdc->bhlc", Q, key_values_plus)  # [B, H, L1, D/H]
-        heads_plus = heads_plus * torch.softmax(heads_plus, dim=-2)
+        heads_plus = F.normalize(heads_plus, p=2, dim=-1)
 
         key_values_minus = torch.einsum("bhld,bhlc,bl->bhdc", scaled_K, V_minus, key_attention_mask)  # [B, H, D/H, D/H]
         heads_minus = torch.einsum("bhld,bhdc->bhlc", Q, key_values_minus)  # [B, H, L1, D/H]
-        heads_minus = heads_minus * torch.softmax(-heads_minus, dim=-2)
+        heads_minus = F.normalize(heads_minus, p=2, dim=-1)
 
         return self.W_O(AttentionHeadHandler.join_heads(heads_plus + heads_minus))
