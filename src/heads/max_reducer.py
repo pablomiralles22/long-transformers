@@ -10,7 +10,7 @@ class MaxReducer:
             return torch.max(x, dim=-2)
         
         attention_mask = attention_mask.unsqueeze(-1)  # [B, L, 1]
-        x.masked_fill_(attention_mask == 0, float('-inf'))
+        x = x.masked_fill(attention_mask == 0, float('-inf'))
         return torch.max(x, dim=-2).values
 
     @classmethod

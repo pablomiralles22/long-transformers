@@ -101,7 +101,7 @@ class CIFAR10Module(pl.LightningModule):
         # set up scheduler
         train_len = len(self.data_module.train_dataloader())
         max_epochs = self.trainer.max_epochs
-        swap_point = int(0.1 * max_epochs * train_len)
+        swap_point = int(0.25 * max_epochs * train_len)
 
         linear_lr = torch.optim.lr_scheduler.LinearLR(optimizer, start_factor=1., end_factor=1., total_iters=swap_point)
         cosine_anneal_lr = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=10, eta_min=1e-5)
@@ -113,11 +113,11 @@ class CIFAR10Module(pl.LightningModule):
 
         return {
             "optimizer": optimizer,
-            # "lr_scheduler": {
-            #     "scheduler": scheduler,
-            #     "interval": "step",
-            #     "frequency": 1,
-            # },
+            "lr_scheduler": {
+                "scheduler": scheduler,
+                "interval": "step",
+                "frequency": 1,
+            },
         }
     
     def configure_callbacks(self) -> list[Callback]:
@@ -127,10 +127,10 @@ class CIFAR10Module(pl.LightningModule):
                 monitor="val_acc",
                 mode="max",
             ),
-            # EarlyStopping(
-            #     monitor="val_acc",
-            #     patience=10,
-            #     mode="max",
-            # ),
+            EarlyStopping(
+                monitor="val_acc",
+                patience=20,
+                mode="max",
+            ),
         ]
 

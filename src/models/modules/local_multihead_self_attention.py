@@ -80,7 +80,7 @@ class LocalMultiheadSelfAttention(nn.Module):
             queries[..., 0, :],  # [B, H, D]
             keys,  # [B, H, L, D]
         ) / (D ** 0.5)  # [B, H, L]
-        cls_attention_scores.masked_fill_(~attention_mask.bool().unsqueeze(1), float('-inf'))  # [B, H, L]
+        cls_attention_scores = cls_attention_scores.masked_fill(~attention_mask.bool().unsqueeze(1), float('-inf'))  # [B, H, L]
         cls_attention_weights = F.softmax(cls_attention_scores, dim=-1)  # [B, H, L]
         cls_outputs = torch.einsum('b h l , b h l d -> b h d', cls_attention_weights, values)  # [B, H, D]
 

@@ -38,10 +38,10 @@ class EMA(nn.Module):
 
     @torch.no_grad()
     def reset_parameters(self):
-        nn.init.uniform_(self.logit_alpha, -3, 3)
-        nn.init.uniform_(self.logit_delta, -3, 3)
-        # nn.init.xavier_normal_(self.beta)
-        # nn.init.xavier_normal_(self.eta)
+        # nn.init.uniform_(self.logit_alpha, -3, 3)
+        # nn.init.uniform_(self.logit_delta, -3, 3)
+        nn.init.normal_(self.logit_alpha, std=0.2)
+        nn.init.normal_(self.logit_delta, std=0.2)
         # nn.init.xavier_uniform_(self.beta)
         # nn.init.xavier_uniform_(self.eta)
 
@@ -80,7 +80,7 @@ class EMA(nn.Module):
         )  # [1, 1, kernel_size]
 
         kernel = ((self.beta * p) * torch.exp(torch.log(q) * len_range))  # [C, E, kernel_size]
-        kernel = torch.einsum("c e k, c e -> c k", kernel, self.eta)  # [C, kernel_size]
+        kernel = torch.einsum("c e k, c e -> c k", kernel, self.eta / self.edim ** 0.5)  # [C, kernel_size]
 
         # compute output
         u = embeddings  # [B, L, D]

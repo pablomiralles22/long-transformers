@@ -7,7 +7,7 @@ import math
 
 from copy import deepcopy
 from torch.utils.data import Dataset, DataLoader
-from typing import Literal
+from typing import Literal, Optional
 
 NUM_EMBEDDINGS = 2 + 15  # PAD, CLS, tokens
 
@@ -58,6 +58,7 @@ class ListopsCollatorFn:
         self,
         max_len, 
         augment: float = 0.,
+        limit_tree_height: Optional[int] = None,
         pad_token_id: int = 0,
         cls_token_id: int = 1,
         pad_token_type_id: int = 0,
@@ -65,6 +66,7 @@ class ListopsCollatorFn:
     ):
         self.max_len = max_len
         self.augment = augment
+        self.limit_tree_height = limit_tree_height
 
         self.pad_token_id = pad_token_id
         self.cls_token_id = cls_token_id
@@ -84,10 +86,15 @@ class ListopsCollatorFn:
         # token_type_ids = []
         labels = []
 
+        actual_max_len = -1
         for item in batch:
             sequence, label = item["sequence"], item["label"]
 
             tokens = sequence.split()
+
+            if self.limit_tree_height is not None:
+                tokens = self.__limit_tree_height(tokens, self.limit_tree_height)
+
             if random.uniform(0, 1) < self.augment:
                 tokens = self.__augment(tokens)
 
@@ -95,6 +102,7 @@ class ListopsCollatorFn:
             indices = [self.cls_token_id] + [self.__token_to_id[token] for token in tokens]
 
             length = min(len(indices), self.max_len)
+            actual_max_len = max(actual_max_len, length)
             padding_size = self.max_len - length
 
             indices = indices[:length] + [self.pad_token_id] * padding_size
@@ -107,9 +115,9 @@ class ListopsCollatorFn:
             labels.append(label)
 
         return {
-            "input_ids": torch.tensor(input_ids),
-            "attention_mask": torch.tensor(attention_masks),
-            "labels": torch.tensor(labels)
+            "input_ids": torch.tensor(input_ids)[:,:actual_max_len],
+            "attention_mask": torch.tensor(attention_masks)[:,:actual_max_len],
+            "labels": torch.tensor(labels),
         }
 
     @classmethod
@@ -135,6 +143,44 @@ class ListopsCollatorFn:
                 subtokens[-1].append(token)
         
         return subtokens[0][0].split()
+    
+    @classmethod
+    def __limit_tree_height(cls, tree: list[str], max_depth=5):
+        ops: list[callable] = []
+        operands: list[list[int]] = [[]]
+        subtokens: list[list[str]] = [[]]
+        current_depth = 1
+
+        for token in tree:
+            if token.startswith("["):
+                ops.append(token)
+                operands.append([])
+                subtokens.append([])
+                current_depth += 1
+
+            elif token.startswith("]"):
+                result = cls.__OPERATORS[ops[-1]](operands[-1])
+                
+                full_tokens: list[str] = [ops[-1]] + subtokens[-1] + ["]"]
+                result_token: list[str] = [str(result)]
+
+                ops.pop()
+                operands.pop()
+                subtokens.pop()
+
+                if current_depth < max_depth:
+                    subtokens[-1].extend(full_tokens)
+                else:
+                    subtokens[-1].extend(result_token)
+
+                operands[-1].append(result)
+
+                current_depth -= 1
+            else:
+                operands[-1].append(int(token))
+                subtokens[-1].append(token)
+        
+        return subtokens[0]
     
     @classmethod
     def __augment_close_nodes(cls, tree: list[str], a=-8., b=0.5):
@@ -182,7 +228,8 @@ class ListopsDataModule(pl.LightningDataModule):
     def get_default_collator_config(cls):
         return {
             "max_len": 2000,
-            "augment": False,
+            "augment": 0.,
+            "limit_tree_height": None,
         }
 
     @classmethod

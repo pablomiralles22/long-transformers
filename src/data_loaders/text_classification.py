@@ -7,10 +7,11 @@ from copy import deepcopy
 from torch.utils.data import Dataset, DataLoader
 from typing import Literal
 
-NUM_EMBEDDINGS = 256 + 2 # PAD, CLS, MASK, bytes
+NUM_EMBEDDINGS = 256 + 3 # PAD, CLS, MASK, bytes
 PAD_TOKEN = 0
 CLS_TOKEN = 1
-START_BYTE_IDX = 2
+MASK_TOKEN = 2
+START_BYTE_IDX = 3
 
 class TextClassificationDataset(Dataset):
     def __init__(
@@ -72,9 +73,9 @@ class TextClassificationCollatorFn:
         for item in batch:
             text, label = item["text"], item["label"]
 
-            if random.random() < self.augment_prob:
-                # augment_fn = random.choice([augment_shuffle, augment_random_changes])
-                text = augment_shuffle(text)
+            # if random.random() < self.augment_prob:
+            #     # augment_fn = random.choice([augment_shuffle, augment_random_changes])
+            #     text = augment_shuffle(text)
 
             start_idx = 0
             # if self.fixed_start is False and len(text) > self.max_len:
@@ -86,6 +87,10 @@ class TextClassificationCollatorFn:
 
             # build input ids
             text_idxs = [START_BYTE_IDX + int(b) for b in bytes(text, encoding="utf-8")]  # 3 for PAD, CLS, MASK
+
+            for i in range(len(text_idxs)):
+                if random.random() < self.augment_prob:
+                    text_idxs[i] = MASK_TOKEN
 
             indices = [CLS_TOKEN] + text_idxs
             length = min(len(indices), self.max_len)

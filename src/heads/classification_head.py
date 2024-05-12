@@ -133,6 +133,8 @@ class ModelWithClassificationHead(nn.Module):
             return self.reducer(x, attention_mask)
         elif self.reduction_method == "glu":
             return MeanReducer.reduce(self.reducer(x, attention_mask), attention_mask)
+        elif self.reduction_method == "none":
+            return x
         raise ValueError(f"Unknown reduction method: {self.reduction_method}")
 
 

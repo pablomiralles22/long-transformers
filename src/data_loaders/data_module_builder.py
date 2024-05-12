@@ -3,6 +3,7 @@ from src.data_loaders.text_classification import TextClassificationDataModule
 from src.data_loaders.listops import ListopsDataModule
 from src.data_loaders.cifar10 import CIFAR10DataModule
 from src.data_loaders.text_retrieval import TextRetrievalDataModule
+from src.data_loaders.masked_language_modeling import MLMDataModule
 
 
 class DataModuleBuilder:
@@ -19,5 +20,7 @@ class DataModuleBuilder:
                 return PathfinderDataModule.from_joint_config(params)
             case "text-retrieval":
                 return TextRetrievalDataModule.from_joint_config(params)
+            case "mlm":
+                return MLMDataModule.from_joint_config(params)
             case _:
                 raise ValueError(f"Unknown task: {name}")

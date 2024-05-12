@@ -148,7 +148,7 @@ class GMLP(Layer):
         z2 = self.ff_z2(x)  # [B, L, H]
 
         attn_mask = attention_mask.unsqueeze(-1).bool()  # [B, L, 1]
-        z2.masked_fill_(~attn_mask, 0.)
+        z2 = z2.masked_fill(~attn_mask, 0.)
 
         fwb_z2 = self.spatial_layer(z2.transpose(1, 2)).transpose(1, 2)  # [B, L, H]
         s_z = z1 * self.norm_2(fwb_z2)

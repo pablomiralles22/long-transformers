@@ -1,0 +1,54 @@
+{
+  "model_params": {
+    "name": "layered",
+    "params": {
+      "input_embedding_dim": 128,
+      "output_embedding_dim": 128,
+      "layers": [
+        [ "transformer_encoder_layer", 
+          { "d_model": 128, "nhead": 4, "dim_feedforward": 256, "dropout": 0.1,
+              "attention_params": { "type": "rotary", "freq": 10000  } } ],
+        [ "transformer_encoder_layer", 
+          { "d_model": 128, "nhead": 4, "dim_feedforward": 256, "dropout": 0.1,
+              "attention_params": { "type": "rotary", "freq": 10000 } } ],
+        [ "transformer_encoder_layer", 
+          { "d_model": 128, "nhead": 4, "dim_feedforward": 256, "dropout": 0.1,
+              "attention_params": { "type": "rotary", "freq": 10000 } } ],
+        [ "transformer_encoder_layer", 
+          { "d_model": 128, "nhead": 4, "dim_feedforward": 256, "dropout": 0.1,
+              "attention_params": { "type": "rotary", "freq": 10000 } } ]
+      ]
+    }
+  },
+  "head_params": {
+    "ff_dim": 256,
+    "num_hidden_layers": 0,
+    "dropout_p": 0.1
+  },
+  "data_module_params": {
+    "name": "mlm",
+    "params": {
+      "data_path": "datasets/aclImdb",
+      "max_len": 2048,
+      "batch_size": 128,
+      "pin_memory": true,
+      "num_workers": 4
+    }
+  },
+  "optimizer_params": {
+    "lr": 1e-3,
+    "weight_decay": 0.001,
+    "betas": [ 0.9, 0.98 ]
+  },
+  "trainer_params": {
+    "max_epochs": 20,
+    "precision": "16-mixed",
+    "enable_checkpointing": true,
+    "default_root_dir": "out/mlm/rotary_transformer",
+    "accelerator": "gpu",
+    "devices": [ 2 ]
+  },
+  "fit_params": {
+    "ckpt_path": "out/mlm/rotary_transformer/lightning_logs/version_10/checkpoints/epoch=17-val_loss=0.40.ckpt"
+  }
+}

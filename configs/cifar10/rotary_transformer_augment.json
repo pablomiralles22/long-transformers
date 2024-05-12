@@ -7,28 +7,28 @@
           "layers": [
               [ "positional_embedding", { "mode": "learned", "max_seq_len": 1025, "embed_dim": 160 } ],
               [ "transformer_encoder_layer", 
-                { "d_model": 160, "nhead": 8, "dim_feedforward": 320, "dropout": 0.0,
+                { "d_model": 160, "nhead": 16, "dim_feedforward": 320, "dropout": 0.0,
                     "attention_params": { "type": "rotary", "freq": 10000 } } ],
               [ "transformer_encoder_layer", 
-                { "d_model": 160, "nhead": 8, "dim_feedforward": 320, "dropout": 0.0,
+                { "d_model": 160, "nhead": 16, "dim_feedforward": 320, "dropout": 0.0,
                     "attention_params": { "type": "rotary", "freq": 10000 } } ],
               [ "transformer_encoder_layer", 
-                { "d_model": 160, "nhead": 8, "dim_feedforward": 320, "dropout": 0.0,
+                { "d_model": 160, "nhead": 16, "dim_feedforward": 320, "dropout": 0.0,
                     "attention_params": { "type": "rotary", "freq": 10000 } } ],
               [ "transformer_encoder_layer", 
-                { "d_model": 160, "nhead": 8, "dim_feedforward": 320, "dropout": 0.0,
+                { "d_model": 160, "nhead": 16, "dim_feedforward": 320, "dropout": 0.0,
                     "attention_params": { "type": "rotary", "freq": 10000 } } ],
               [ "transformer_encoder_layer", 
-                { "d_model": 160, "nhead": 8, "dim_feedforward": 320, "dropout": 0.0,
+                { "d_model": 160, "nhead": 16, "dim_feedforward": 320, "dropout": 0.0,
                     "attention_params": { "type": "rotary", "freq": 10000 } } ],
               [ "transformer_encoder_layer", 
-                { "d_model": 160, "nhead": 8, "dim_feedforward": 320, "dropout": 0.0,
+                { "d_model": 160, "nhead": 16, "dim_feedforward": 320, "dropout": 0.0,
                     "attention_params": { "type": "rotary", "freq": 10000 } } ],
               [ "transformer_encoder_layer", 
-                { "d_model": 160, "nhead": 8, "dim_feedforward": 320, "dropout": 0.0,
+                { "d_model": 160, "nhead": 16, "dim_feedforward": 320, "dropout": 0.0,
                     "attention_params": { "type": "rotary", "freq": 10000 } } ],
               [ "transformer_encoder_layer", 
-                { "d_model": 160, "nhead": 8, "dim_feedforward": 320, "dropout": 0.0,
+                { "d_model": 160, "nhead": 16, "dim_feedforward": 320, "dropout": 0.0,
                     "attention_params": { "type": "rotary", "freq": 10000 } } ]
           ]
       }
@@ -45,7 +45,7 @@
       "params": {
           "data_path": "datasets/cifar10",
           "max_len": 1025,
-          "batch_size": 64,
+          "batch_size": 32,
           "pin_memory": true,
           "num_workers": 6,
           "augment": true
@@ -57,14 +57,14 @@
       "weight_decay": 0.04
   },
   "trainer_params": {
-      "max_epochs": 400,
+      "max_epochs": 200,
       "precision": "16-mixed",
       "enable_checkpointing": true,
       "default_root_dir": "out/cifar10/rotary_transformer_augment",
       "accelerator": "gpu",
-      "devices": [ 2 ]
+      "devices": [ 0 ]
   },
   "fit_params": { 
-    "ckpt_path": "out/cifar10/rotary_transformer_augment/lightning_logs/version_47/checkpoints/epoch=192-val_acc=0.80.ckpt"
+    "ckpt_path": "out/cifar10/rotary_transformer_augment/lightning_logs/version_50/checkpoints/epoch=169-val_acc=0.83.ckpt"
   }
 }

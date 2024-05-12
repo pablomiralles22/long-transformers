@@ -5,7 +5,7 @@ class AmplitudeEmbedding:
     __CACHE = dict()
 
     @classmethod
-    def apply(cls, Q, K, base_amp=1e-4):
+    def apply(cls, Q, K, base_amp=1e-3):
         # Q: [*, L, D]
         # K: [*, L, D]
         *B, L, D = Q.shape
@@ -21,14 +21,14 @@ class AmplitudeEmbedding:
         if (L, D, base_amp) in cls.__CACHE:
             return cls.__CACHE[(L, D, base_amp)]
 
-        lengths = torch.arange(0, L, requires_grad=False, device=device, dtype=dtype) # (L)
+        lengths = torch.arange(0, L, requires_grad=False, device=device, dtype=dtype) / L # (L)
 
-        amps_inds = torch.arange(0, D, requires_grad=False, device=device, dtype=dtype) # (D)
+        amps_inds = torch.arange(0, D, requires_grad=False, device=device, dtype=dtype) / D # (D)
         amps = base_amp * amps_inds / D # (D)
         amps[::2] = 0
         amps[1::4] = -amps[1::4]
 
-        prod = torch.einsum("a , ...b -> ...ab", lengths, amps) # [L, D]
+        prod = torch.einsum("a , b -> ab", lengths, amps) # [L, D]
         amp_mat_Q = torch.exp(prod)  # [L, D]
         amp_mat_K = torch.exp(-prod)
 

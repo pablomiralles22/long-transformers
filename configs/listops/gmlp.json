@@ -39,7 +39,7 @@
     "weight_decay": 0.01
   },
   "trainer_params": {
-    "max_epochs": 80,
+    "max_epochs": 20,
     "val_check_interval": 0.25,
     "precision": "16-mixed",
     "enable_checkpointing": true,
@@ -47,5 +47,7 @@
     "accelerator": "gpu",
     "devices": [ 2 ]
   },
-  "fit_params": { }
+  "fit_params": {
+    "ckpt_path": "out/listops/gmlp/lightning_logs/version_97/checkpoints/epoch=0-val_acc=0.36.ckpt"
+  }
 }

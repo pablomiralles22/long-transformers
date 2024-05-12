@@ -14,39 +14,21 @@
         [ "layer_norm", { "normalized_shape": 256 } ],
         [ "dropout", { "p": 0.1 } ],
         [ "activation", { "fn": "gelu" } ],
-
+        
         [ "linear", { "in_features": 256, "out_features": 128 } ],
 
-        [ "positional_embedding", { "mode": "", "max_seq_len": 2048, "embed_dim": 128 } ],
-
-        [ 
-          "transformer_encoder_layer", 
-          { 
-              "d_model": 128, "nhead": 8, "dim_feedforward": 256, "dropout": 0.1, "activation_fn": "gelu",
-              "attention_params": { "type": "rotary", "freq": 10000, "_freq": false }
-          } 
-        ],
-        [ 
-          "transformer_encoder_layer", 
-          { 
-              "d_model": 128, "nhead": 8, "dim_feedforward": 256, "dropout": 0.1, "activation_fn": "gelu",
-              "attention_params": { "type": "rotary", "freq": 10000, "_freq": false }
-          } 
-        ],
-        [ 
-          "transformer_encoder_layer", 
-          { 
-              "d_model": 128, "nhead": 8, "dim_feedforward": 256, "dropout": 0.1, "activation_fn": "gelu",
-              "attention_params": { "type": "rotary", "freq": 10000, "_freq": false }
-          } 
-        ],
-        [ 
-          "transformer_encoder_layer", 
-          { 
-              "d_model": 128, "nhead": 8, "dim_feedforward": 256, "dropout": 0.1, "activation_fn": "gelu",
-              "attention_params": { "type": "rotary", "freq": 10000, "_freq": false }
-          } 
-        ]
+        [ "transformer_encoder_layer", 
+          { "d_model": 128, "nhead": 8, "dim_feedforward": 256, "dropout": 0.1,
+              "attention_params": { "type": "rotary", "freq": 10000  } } ],
+        [ "transformer_encoder_layer", 
+          { "d_model": 128, "nhead": 8, "dim_feedforward": 256, "dropout": 0.1,
+              "attention_params": { "type": "rotary", "freq": 10000 } } ],
+        [ "transformer_encoder_layer", 
+          { "d_model": 128, "nhead": 8, "dim_feedforward": 256, "dropout": 0.1,
+              "attention_params": { "type": "rotary", "freq": 10000 } } ],
+        [ "transformer_encoder_layer", 
+          { "d_model": 128, "nhead": 8, "dim_feedforward": 256, "dropout": 0.1,
+              "attention_params": { "type": "rotary", "freq": 10000 } } ]
       ]
     }
   },
@@ -77,8 +59,6 @@
     "enable_checkpointing": true,
     "default_root_dir": "out/text_classification/conv_transformer",
     "accelerator": "gpu",
-    "devices": [ 2 ]
-  },
-  "fit_params": { }
+    "devices": [ 0 ]
+  }
 }
-  

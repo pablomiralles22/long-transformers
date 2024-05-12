@@ -45,6 +45,9 @@ class PositiveMultiheadAttention(nn.Module):
     ):  # -> [B, L1, D]
         B, L1, D = queries.shape
         _, L2, _ = keys.shape
+        dtype = queries.dtype
+
+        # key_attention_mask = key_attention_mask.to(dtype) if key_attention_mask is not None else torch.ones(B, L2, dtype=dtype)
 
         values = queries if values is None else values
         keys = values if keys is None else keys
@@ -57,19 +60,20 @@ class PositiveMultiheadAttention(nn.Module):
         K = AttentionHeadHandler.separate_heads(keys_proj, self.nhead)  # [B, H, L2, D/H]
         V = AttentionHeadHandler.separate_heads(values_proj, self.nhead)  # [B, H, L2, D/H]
 
-        V_minus, V_plus = torch.min(V, torch.zeros_like(V)), torch.max(V, torch.zeros_like(V))
+        Q = F.sigmoid(Q)  # [B, H, L1, D/H]
+        K = F.sigmoid(K)  # [B, H, L2, D/H]
 
-        Q = torch.sigmoid(Q)  # [B, H, L1, D/H]
-        scaled_K = torch.sigmoid(K) / L2  # [B, H, L2, D/H]
+        # Q, K = AmplitudeEmbedding.apply(Q, K)
 
-        Q, scaled_K = AmplitudeEmbedding.apply(Q, scaled_K)
+        if key_attention_mask is not None:
+            K = K.masked_fill(~key_attention_mask.view(B, 1, L2, 1).bool(), 0.)
+            V = V.masked_fill(~key_attention_mask.view(B, 1, L2, 1).bool(), 0.)
 
-        key_values_plus = torch.einsum("bhld,bhlc,bl->bhdc", scaled_K, V_plus, key_attention_mask)  # [B, H, D/H, D/H]
-        heads_plus = torch.einsum("bhld,bhdc->bhlc", Q, key_values_plus)  # [B, H, L1, D/H]
-        heads_plus = F.normalize(heads_plus, p=2, dim=-1)
+        heads_normalizer = torch.einsum("bhld,bhd->bhl", Q, K.sum(dim=-2))  # [B, H, L1]
 
-        key_values_minus = torch.einsum("bhld,bhlc,bl->bhdc", scaled_K, V_minus, key_attention_mask)  # [B, H, D/H, D/H]
-        heads_minus = torch.einsum("bhld,bhdc->bhlc", Q, key_values_minus)  # [B, H, L1, D/H]
-        heads_minus = F.normalize(heads_minus, p=2, dim=-1)
+        scaled_Q = Q / heads_normalizer.unsqueeze(-1)  # [B, H, L1, D/H]
 
-        return self.W_O(AttentionHeadHandler.join_heads(heads_plus + heads_minus))
+        key_values = torch.einsum("bhld,bhlc->bhdc", K, V)  # [B, H, D/H, D/H]
+        heads = torch.einsum("bhld,bhdc->bhlc", scaled_Q, key_values)  # [B, H, L1, D/H]
+
+        return self.W_O(AttentionHeadHandler.join_heads(heads))

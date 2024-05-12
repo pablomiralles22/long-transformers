@@ -138,7 +138,7 @@ class ListopsModule(pl.LightningModule):
             ),
             EarlyStopping(
                 monitor="val_acc",
-                patience=40,
+                patience=80,
                 mode="max",
             ),
         ]

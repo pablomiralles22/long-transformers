@@ -11,7 +11,7 @@ from src.heads.classification_head import get_model_with_classification_head
 from src.utils.l1_regularizer import L1Regularizer
 from src.utils.weight_decay_param_filter import WeightDecayParamFilter
 
-class TextClassificationModule(pl.LightningModule):
+class MLMModule(pl.LightningModule):
     @classmethod
     def get_default_optimizer_config(cls) -> dict:
         return {
@@ -48,51 +48,38 @@ class TextClassificationModule(pl.LightningModule):
             vocab_size=self.data_module.get_vocab_size(),
             padding_idx=self.data_module.get_pad_token_id(),
         )
+        head_params["reduction_method"] = "none"  # just to make sure
+        head_params["num_classes"] = self.data_module.get_vocab_size()
         self.model_with_head = get_model_with_classification_head(
             model=self.model,
             **head_params,
         )
 
-        # create metrics
-        self.accuracy = torchmetrics.Accuracy(task="binary")
-
     def training_step(self, batch, batch_idx):
-        loss, logits, labels = self._step(batch, batch_idx)
-        accuracy = self.accuracy(logits, labels)
-        self.log_dict(
-            {
-                "train_loss": loss,
-                "train_accuracy": accuracy,
-            },
-            on_step=True,
-            on_epoch=True,
-            prog_bar=True,
-        )
-        return {"loss": loss, "logits": logits, "labels": labels}
+        loss, logits = self._step(batch, batch_idx)
+        self.log("train_loss", loss, on_step=True, on_epoch=True, prog_bar=True)
+        return {"loss": loss, "logits": logits}
 
     def validation_step(self, batch, batch_idx):
-        # self.model.train() # dirty fix for pytorch bug
-        loss, logits, labels = self._step(batch, batch_idx)
-        accuracy = self.accuracy(logits, labels)
-        self.log_dict(
-            {
-                "val_loss": loss,
-                "val_accuracy": accuracy,
-            },
-            on_step=False,
-            on_epoch=True,
-            prog_bar=True,
-        )
-        return {"loss": loss, "logits": logits, "labels": labels}
+        loss, logits = self._step(batch, batch_idx)
+        self.log("val_loss", loss, on_step=True, on_epoch=True, prog_bar=True)
+        return {"loss": loss, "logits": logits}
 
     def _step(self, batch, _):
-        input_ids = batch["input_ids"]
-        attention_mask = batch["attention_mask"]
-        labels = batch["labels"].float().reshape(-1, 1)
+        input_ids = batch["input_ids"]  # [B, L]
+        corrupted_input_ids = batch["corrupted_input_ids"]  # [B, L]
+        attention_mask = batch["attention_mask"]  # [B, L]
 
-        logits = self.model_with_head(input_ids, attention_mask)
-        loss = F.binary_cross_entropy_with_logits(logits, labels)
-        return loss, logits, labels
+        B, L = input_ids.shape
+
+        logits = self.model_with_head(corrupted_input_ids, attention_mask)  # [B * L, V]
+        token_loss = F.cross_entropy(
+            logits.view(B * L, -1),
+            input_ids.view(B * L),
+            reduction="none"
+        )  # [B * L]
+        loss = (token_loss * attention_mask.view(-1)).sum() / attention_mask.sum()
+        return loss, logits
 
     def configure_optimizers(self):
         # set up optimizer
@@ -108,13 +95,12 @@ class TextClassificationModule(pl.LightningModule):
         ]
         optimizer = torch.optim.AdamW(optim_groups, **general_optimizer_config)
 
-        if self.l1_lambda > 0.:
-            L1Regularizer.apply(self.model_with_head, l1_lambda=self.l1_lambda)
+        L1Regularizer.apply(self.model_with_head, l1_lambda=self.l1_lambda)
 
         # set up scheduler
         train_len = len(self.data_module.train_dataloader())
         max_epochs = self.trainer.max_epochs
-        swap_point = int(0.9 * max_epochs * train_len)
+        swap_point = int(0.5 * max_epochs * train_len)
 
         linear_lr = torch.optim.lr_scheduler.LinearLR(optimizer, start_factor=1., end_factor=1., total_iters=swap_point)
         cosine_anneal_lr = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=10, eta_min=1e-6)
@@ -136,14 +122,14 @@ class TextClassificationModule(pl.LightningModule):
     def configure_callbacks(self) -> list[Callback]:
         return [
             ModelCheckpoint(
-                filename="{epoch}-{val_accuracy:.2f}",
-                monitor="val_accuracy",
-                mode="max",
+                filename="{epoch}-{val_loss:.2f}",
+                monitor="val_loss",
+                mode="min",
             ),
             EarlyStopping(
-                monitor="val_accuracy",
+                monitor="val_loss",
                 patience=10,
-                mode="max",
+                mode="min",
             ),
         ]
 

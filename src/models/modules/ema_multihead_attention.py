@@ -38,6 +38,7 @@ class EMAMultiheadAttention(nn.Module):
         self.ema = EMA(d_model, ema_dim, ema_kernel_size, direction=direction)
         self.omega = nn.Parameter(torch.Tensor(d_model))
         self.dropout_ema = nn.Dropout(dropout)
+        # self.x_prime_norm = nn.LayerNorm(d_model)
 
         self.W_Z = nn.Linear(d_model, qk_dim_out, bias=bias)
         self.dropout_z = nn.Dropout(dropout)
@@ -61,10 +62,11 @@ class EMAMultiheadAttention(nn.Module):
         self.reset_parameters()
 
     def reset_parameters(self):
-        nn.init.normal_(self.omega, mean=0.0, std=0.2)
-        nn.init.normal_(self.kappa_Q, mean=0.0, std=0.2)
+        std = 0.02
+        nn.init.normal_(self.omega, mean=0.0, std=std)
+        nn.init.normal_(self.kappa_Q, mean=0.0, std=std)
         nn.init.constant_(self.mu_Q, 0.0)
-        nn.init.normal_(self.kappa_K, mean=0.0, std=0.2)
+        nn.init.normal_(self.kappa_K, mean=0.0, std=std)
         nn.init.constant_(self.mu_K, 0.0)
 
     def forward(
@@ -80,7 +82,11 @@ class EMAMultiheadAttention(nn.Module):
         embeddings = queries
 
         x = embeddings * key_attention_mask.unsqueeze(-1)  # [B, L, D] set padding to 0
-        x_prime = F.silu(self.dropout_ema(self.ema(x)) + x * self.omega)  # [B, L, D]
+        x_prime = F.silu(
+            # self.x_prime_norm(
+            self.dropout_ema(self.ema(x)) + x * self.omega
+            # )
+        )  # [B, L, D]
         z = self.dropout_z(F.silu(self.W_Z(x_prime)))  # [B, L, Z]
 
         queries_proj = self.kappa_Q * z + self.mu_Q  # [B, L, D]
