@@ -20,5 +20,17 @@ python scripts/train.py --config configs/<config-file>
 ### Pathfinder
 
 ```bash
+micromamba run -n long-transformers-exp python scripts/train.py  \
+    --config configs/pathfinder/rotary_transformer_augment_pretrain_2.json \
+    --pretrain-config configs/pathfinder/rotary_transformer_augment_pretrain_1.json
 
+micromamba run -n long-transformers-exp python scripts/train.py  \
+    --config configs/pathfinder/rotary_transformer_noaugment_pretrain_2.json \
+    --pretrain-config configs/pathfinder/rotary_transformer_noaugment_pretrain_1.json
+
+micromamba run -n long-transformers-exp python scripts/train.py  \
+    --config configs/pathfinder/rotary_transformer_augment_nopretrain.json
+
+micromamba run -n long-transformers-exp python scripts/train.py  \
+    --config configs/pathfinder/rotary_transformer_noaugment_nopretrain.json 
 ```
