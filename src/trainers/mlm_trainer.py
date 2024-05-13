@@ -72,7 +72,7 @@ class MLMModule(pl.LightningModule):
 
         B, L = input_ids.shape
 
-        logits = self.model_with_head(corrupted_input_ids, attention_mask)  # [B * L, V]
+        logits = self.model_with_head(corrupted_input_ids, attention_mask)
         token_loss = F.cross_entropy(
             logits.view(B * L, -1),
             input_ids.view(B * L),

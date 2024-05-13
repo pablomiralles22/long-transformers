@@ -8,22 +8,22 @@
               [ "positional_embedding", { "mode": "learned", "max_seq_len": 1025, "embed_dim": 128 } ],
               [ "transformer_encoder_layer", 
                 { "d_model": 128, "nhead": 8, "dim_feedforward": 256, "dropout": 0.0, 
-                    "attention_params": { "type": "positive", "qk_dim_out": 32 } } ],
+                    "attention_params": { "type": "positive", "qk_dim_out": 64 } } ],
               [ "transformer_encoder_layer", 
                 { "d_model": 128, "nhead": 8, "dim_feedforward": 256, "dropout": 0.0, 
-                    "attention_params": { "type": "positive", "qk_dim_out": 32 } } ],
+                    "attention_params": { "type": "positive", "qk_dim_out": 64 } } ],
               [ "transformer_encoder_layer", 
                 { "d_model": 128, "nhead": 8, "dim_feedforward": 256, "dropout": 0.0, 
-                    "attention_params": { "type": "positive", "qk_dim_out": 32 } } ],
+                    "attention_params": { "type": "positive", "qk_dim_out": 64 } } ],
               [ "transformer_encoder_layer", 
                 { "d_model": 128, "nhead": 8, "dim_feedforward": 256, "dropout": 0.0, 
-                    "attention_params": { "type": "positive", "qk_dim_out": 32 } } ],
+                    "attention_params": { "type": "positive", "qk_dim_out": 64 } } ],
               [ "transformer_encoder_layer", 
                 { "d_model": 128, "nhead": 8, "dim_feedforward": 256, "dropout": 0.0, 
-                    "attention_params": { "type": "positive", "qk_dim_out": 32 } } ],
+                    "attention_params": { "type": "positive", "qk_dim_out": 64 } } ],
               [ "transformer_encoder_layer", 
                 { "d_model": 128, "nhead": 8, "dim_feedforward": 256, "dropout": 0.0, 
-                    "attention_params": { "type": "positive", "qk_dim_out": 32 } } ]
+                    "attention_params": { "type": "positive", "qk_dim_out": 64 } } ]
           ]
       }
   },
@@ -39,7 +39,7 @@
       "params": {
           "data_path": "datasets/cifar10",
           "max_len": 1025,
-          "batch_size": 32,
+          "batch_size": 8,
           "pin_memory": true,
           "num_workers": 6,
           "augment": true
@@ -47,7 +47,7 @@
   },
   "optimizer_params": {
       "lr": 0.001,
-      "betas": [ 0.9, 0.99 ],
+      "betas": [ 0.9, 0.98 ],
       "weight_decay": 0.01
   },
   "trainer_params": {
@@ -56,7 +56,7 @@
       "enable_checkpointing": true,
       "default_root_dir": "out/cifar10/positive_transformer",
       "accelerator": "gpu",
-      "devices": [ 0 ]
+      "devices": [ 2 ]
   },
   "fit_params": {
   }

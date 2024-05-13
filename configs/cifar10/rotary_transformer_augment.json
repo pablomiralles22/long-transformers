@@ -64,7 +64,5 @@
       "accelerator": "gpu",
       "devices": [ 0 ]
   },
-  "fit_params": { 
-    "ckpt_path": "out/cifar10/rotary_transformer_augment/lightning_logs/version_50/checkpoints/epoch=169-val_acc=0.83.ckpt"
-  }
+  "fit_params": { }
 }

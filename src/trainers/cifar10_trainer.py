@@ -129,7 +129,7 @@ class CIFAR10Module(pl.LightningModule):
             ),
             EarlyStopping(
                 monitor="val_acc",
-                patience=20,
+                patience=50,
                 mode="max",
             ),
         ]

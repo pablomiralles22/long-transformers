@@ -2,26 +2,26 @@
   "model_params": {
     "name": "layered",
     "params": {
-      "input_embedding_dim": 64,
-      "output_embedding_dim": 64,
+      "input_embedding_dim": 128,
+      "output_embedding_dim": 128,
       "layers": [
         [ "transformer_encoder_layer", 
-          { "d_model": 64, "nhead": 4, "dim_feedforward": 128, "dropout": 0.1,
+          { "d_model": 128, "nhead": 8, "dim_feedforward": 256, "dropout": 0.1,
               "attention_params": { "type": "rotary", "freq": 10000  } } ],
         [ "transformer_encoder_layer", 
-          { "d_model": 64, "nhead": 4, "dim_feedforward": 128, "dropout": 0.1,
+          { "d_model": 128, "nhead": 8, "dim_feedforward": 256, "dropout": 0.1,
               "attention_params": { "type": "rotary", "freq": 10000  } } ],
         [ "transformer_encoder_layer", 
-          { "d_model": 64, "nhead": 4, "dim_feedforward": 128, "dropout": 0.1,
+          { "d_model": 128, "nhead": 8, "dim_feedforward": 256, "dropout": 0.1,
               "attention_params": { "type": "rotary", "freq": 10000  } } ],
         [ "transformer_encoder_layer", 
-          { "d_model": 64, "nhead": 4, "dim_feedforward": 128, "dropout": 0.1,
+          { "d_model": 128, "nhead": 8, "dim_feedforward": 256, "dropout": 0.1,
               "attention_params": { "type": "rotary", "freq": 10000  } } ]
       ]
     }
   },
   "head_params": {
-    "ff_dim": 512,
+    "ff_dim": 256,
     "num_hidden_layers": 0,
     "dropout_p": 0.1,
     "reduction_method": "mean"
@@ -30,7 +30,6 @@
     "name": "text-classification",
     "params": {
       "data_path": "datasets/aclImdb",
-      "augment_prob": 0.5,
       "max_len": 2048,
       "batch_size": 32,
       "pin_memory": true,
@@ -40,14 +39,16 @@
   "optimizer_params": {
     "lr": 4e-3,
     "weight_decay": 0.01,
-    "betas": [ 0.9, 0.98 ]
+    "betas": [ 0.9, 0.98 ],
+    "mlm_aux_task": true
   },
   "trainer_params": {
-    "max_epochs": 30,
+    "max_epochs": 60,
     "precision": "16-mixed",
     "enable_checkpointing": true,
-    "default_root_dir": "out/text_classification/rotary_transformer",
+    "default_root_dir": "out/text_classification/rotary_transformer_w_mlm",
     "accelerator": "gpu",
     "devices": [ 2 ]
-  }
+  },
+  "fit_params": { }
 }

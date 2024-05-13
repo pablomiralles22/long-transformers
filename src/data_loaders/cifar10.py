@@ -7,7 +7,6 @@ from torch.utils.data import DataLoader
 from torchvision import transforms
 # from torchvision.transforms import v2
 
-
 NUM_EMBEDDINGS = 256 + 2 # PAD, CLS, bytes
 PAD_TOKEN = 0
 CLS_TOKEN = 1
@@ -17,10 +16,11 @@ class CIFAR100CollatorFn:
     def __init__(self, max_len, augment=True):
         self.max_len = max_len
         self.transform = transforms.Compose([
-            # transforms.RandomHorizontalFlip(),
-            # transforms.RandomAffine(degrees=0, translate=(0.1, 0.1), scale=(0.9, 1.1)),
             # transforms.RandomApply([transforms.AutoAugment(policy=transforms.AutoAugmentPolicy.CIFAR10)], p=0.25),
             transforms.AutoAugment(policy=transforms.AutoAugmentPolicy.CIFAR10),
+            transforms.AutoAugment(policy=transforms.AutoAugmentPolicy.CIFAR10),
+            transforms.RandomHorizontalFlip(),
+            transforms.RandomAffine(degrees=0, translate=(0.1, 0.1), scale=(0.9, 1.1)),
             transforms.Grayscale(num_output_channels=1),
             transforms.PILToTensor(),
         ]) if augment is True else transforms.Compose([

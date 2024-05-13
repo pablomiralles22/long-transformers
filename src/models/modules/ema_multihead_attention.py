@@ -81,7 +81,7 @@ class EMAMultiheadAttention(nn.Module):
         
         embeddings = queries
 
-        x = embeddings * key_attention_mask.unsqueeze(-1)  # [B, L, D] set padding to 0
+        x = embeddings.masked_fill(~key_attention_mask.unsqueeze(-1), 0)  # [B, L, D] set padding to 0
         x_prime = F.silu(
             # self.x_prime_norm(
             self.dropout_ema(self.ema(x)) + x * self.omega
@@ -99,7 +99,7 @@ class EMAMultiheadAttention(nn.Module):
         V = F.silu(values_proj)
         
         if key_attention_mask is not None:
-            key_attention_mask = key_attention_mask.unsqueeze(1).bool()  # [B, 1, 1, L]
+            key_attention_mask = key_attention_mask.unsqueeze(1).bool()  # [B, 1, L]
         
         O = F.scaled_dot_product_attention(Q, K, V, attn_mask=key_attention_mask)  # [B, L, D]
 

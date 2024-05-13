@@ -1,0 +1,59 @@
+{
+    "model_params": {
+      "name": "layered",
+      "params": {
+        "input_embedding_dim": 128,
+        "output_embedding_dim": 128,
+        "layers": [
+            [ "transformer_encoder_layer", 
+            { "d_model": 128, "nhead": 1, "dim_feedforward": 256, "dropout": 0.1, "attention_params":
+            { "type": "ema", "v_dim_out": 256, "qk_dim_out": 64, "ema_dim": 16, "ema_kernel_size": 2048, "direction": "bidirectional" } } ],
+
+            [ "transformer_encoder_layer", 
+            { "d_model": 128, "nhead": 1, "dim_feedforward": 256, "dropout": 0.1, "attention_params":
+            { "type": "ema", "v_dim_out": 256, "qk_dim_out": 64, "ema_dim": 16, "ema_kernel_size": 2048, "direction": "bidirectional" } } ],
+
+            [ "transformer_encoder_layer", 
+            { "d_model": 128, "nhead": 1, "dim_feedforward": 256, "dropout": 0.1, "attention_params":
+            { "type": "ema", "v_dim_out": 256, "qk_dim_out": 64, "ema_dim": 16, "ema_kernel_size": 2048, "direction": "bidirectional" } } ],
+
+            [ "transformer_encoder_layer", 
+            { "d_model": 128, "nhead": 1, "dim_feedforward": 256, "dropout": 0.1, "attention_params":
+            { "type": "ema", "v_dim_out": 256, "qk_dim_out": 64, "ema_dim": 16, "ema_kernel_size": 2048, "direction": "bidirectional" } } ]
+
+        ]
+      }
+    },
+    "head_params": {
+      "ff_dim": 256,
+      "num_hidden_layers": 0,
+      "dropout_p": 0.1,
+      "reduction_method": "mean"
+    },
+    "data_module_params": {
+      "name": "text-classification",
+      "params": {
+        "data_path": "datasets/aclImdb",
+        "max_len": 2048,
+        "batch_size": 50,
+        "pin_memory": true,
+        "num_workers": 4
+      }
+    },
+    "optimizer_params": {
+      "lr": 4e-3,
+      "weight_decay": 0.01,
+      "betas": [ 0.9, 0.98 ],
+      "mlm_aux_task": false
+    },
+    "trainer_params": {
+      "max_epochs": 60,
+      "precision": "16-mixed",
+      "enable_checkpointing": true,
+      "default_root_dir": "out/text_classification/mega_wout_mlm",
+      "accelerator": "gpu",
+      "devices": [ 0 ]
+    },
+    "fit_params": { }
+  }
+  

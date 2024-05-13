@@ -60,52 +60,53 @@ def augment_random_changes(text: str):
     return "".join(text)
 
 class TextClassificationCollatorFn:
-    def __init__(self, max_len, fixed_start=False, augment_prob=0.):
+    def __init__(self, max_len, mask_ratio: float=0.3, random_ratio: float=0.33):
         self.max_len = max_len
-        self.fixed_start = fixed_start
-        self.augment_prob = augment_prob
+        self.mask_ratio = mask_ratio
+        self.random_ratio = random_ratio
 
     def __call__(self, batch):
         input_ids = []
+        corrupted_input_ids = []
         attention_masks = []
         labels = []
 
         for item in batch:
             text, label = item["text"], item["label"]
 
-            # if random.random() < self.augment_prob:
-            #     # augment_fn = random.choice([augment_shuffle, augment_random_changes])
-            #     text = augment_shuffle(text)
+            start_idx = random.randint(0, max(1, len(text) - self.max_len))
 
-            start_idx = 0
-            # if self.fixed_start is False and len(text) > self.max_len:
-            #     start_idx = torch.randint(0, len(text) - self.max_len + 1, (1,)).item()
-            if self.fixed_start is False:
-                start_idx = torch.randint(0, max(1, len(text) - 64), (1,)).item()
-
+            # indices
             text = text[start_idx:start_idx + self.max_len]
-
-            # build input ids
             text_idxs = [START_BYTE_IDX + int(b) for b in bytes(text, encoding="utf-8")]  # 3 for PAD, CLS, MASK
-
-            for i in range(len(text_idxs)):
-                if random.random() < self.augment_prob:
-                    text_idxs[i] = MASK_TOKEN
-
             indices = [CLS_TOKEN] + text_idxs
+
+            # corrupt data
+            corrupt_indices = indices.copy()
+            mask_idxs = random.sample(range(1, len(corrupt_indices)), int(self.mask_ratio * len(corrupt_indices)))
+            for idx in mask_idxs:
+                if random.random() < self.random_ratio:
+                    corrupt_indices[idx] = random.randint(START_BYTE_IDX, NUM_EMBEDDINGS - 1)
+                else:
+                    corrupt_indices[idx] = MASK_TOKEN
+
+            # cut and pad tokens
             length = min(len(indices), self.max_len)
             padding_size = self.max_len - length
             indices = indices[:length] + [PAD_TOKEN] * padding_size
+            corrupt_indices = corrupt_indices[:length] + [PAD_TOKEN] * padding_size
 
             # build attention mask
             attention_mask = [1.] * length + [0.] * padding_size
 
             input_ids.append(indices)
+            corrupted_input_ids.append(corrupt_indices)
             attention_masks.append(attention_mask)
             labels.append(label)
 
         return {
             "input_ids": torch.tensor(input_ids),
+            "corrupted_input_ids": torch.tensor(corrupted_input_ids),
             "attention_mask": torch.tensor(attention_masks, dtype=torch.bool),
             "labels": torch.tensor(labels),
         }
@@ -115,8 +116,8 @@ class TextClassificationDataModule(pl.LightningDataModule):
     def get_default_collator_config(cls):
         return {
             "max_len": 512,
-            "fixed_start": False,
-            "augment_prob": 0.,
+            "mask_ratio": 0.3,
+            "random_ratio": 0.33,
         }
 
     @classmethod
@@ -173,8 +174,7 @@ class TextClassificationDataModule(pl.LightningDataModule):
 
     def val_dataloader(self):
         collator_config = deepcopy(self.collator_config)
-        collator_config["augment_prob"] = 0.
-        collator_config["fixed_start"] = True
+        collator_config["mask_ratio"] = 0.
 
         return DataLoader(
             dataset=self.val_dataset,

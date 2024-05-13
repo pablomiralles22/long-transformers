@@ -60,7 +60,7 @@
         "max_epochs": 200,
         "precision": "16-mixed",
         "enable_checkpointing": true,
-        "default_root_dir": "out/cifar10/rotary_transformer",
+        "default_root_dir": "out/cifar10/rotary_transformer_no_augment",
         "accelerator": "gpu",
         "devices": [ 0 ]
     },

@@ -7,7 +7,7 @@ from torch.nn import functional as F
 from pytorch_lightning.callbacks import Callback, ModelCheckpoint, EarlyStopping
 from src.data_loaders.data_module_builder import DataModuleBuilder
 from src.models.model_builder import ModelBuilder
-from src.heads.classification_head import get_model_with_classification_head
+from src.heads.classification_head import get_classification_head
 from src.utils.l1_regularizer import L1Regularizer
 from src.utils.weight_decay_param_filter import WeightDecayParamFilter
 
@@ -19,6 +19,7 @@ class TextClassificationModule(pl.LightningModule):
             "betas": (0.9, 0.99),
             "weight_decay": 0.0,
             "l1_lambda": 0.0,
+            "mlm_aux_task": False,
         }
 
     def __init__(
@@ -37,6 +38,10 @@ class TextClassificationModule(pl.LightningModule):
             **optimizer_params,
         }
         self.l1_lambda = self.optimizer_config.pop("l1_lambda")
+        self.mlm_aux_task = self.optimizer_config.pop("mlm_aux_task")
+
+        if self.mlm_aux_task is False:
+            data_module_params["params"]["mask_ratio"] = 0.0
 
         # build data module
         self.data_module = DataModuleBuilder.build_data_module(
@@ -48,8 +53,15 @@ class TextClassificationModule(pl.LightningModule):
             vocab_size=self.data_module.get_vocab_size(),
             padding_idx=self.data_module.get_pad_token_id(),
         )
-        self.model_with_head = get_model_with_classification_head(
-            model=self.model,
+        self.head = get_classification_head(
+            input_dim=self.model.get_output_embedding_dim(),
+            **head_params,
+        )
+        # auxiliar task
+        head_params["reduction_method"] = "none"  # just to make sure
+        head_params["num_classes"] = self.data_module.get_vocab_size()
+        self.head_aux_task = get_classification_head(
+            input_dim=self.model.get_output_embedding_dim(),
             **head_params,
         )
 
@@ -57,46 +69,55 @@ class TextClassificationModule(pl.LightningModule):
         self.accuracy = torchmetrics.Accuracy(task="binary")
 
     def training_step(self, batch, batch_idx):
-        loss, logits, labels = self._step(batch, batch_idx)
-        accuracy = self.accuracy(logits, labels)
+        loss, loss_1, loss_2, logits_1, labels = self._step(batch, batch_idx)
+        accuracy = self.accuracy(logits_1, labels)
         self.log_dict(
-            {
-                "train_loss": loss,
-                "train_accuracy": accuracy,
-            },
-            on_step=True,
-            on_epoch=True,
-            prog_bar=True,
+            { "train_loss_1": loss_1, "train_loss_2": loss_2, "train_accuracy": accuracy },
+            on_step=False, on_epoch=True, prog_bar=False, logger=True,
         )
-        return {"loss": loss, "logits": logits, "labels": labels}
+        self.log_dict(
+            { "train_loss_1_step": loss_1, "train_loss_2_step": loss_2 },
+            on_step=True, on_epoch=False, prog_bar=True, logger=False,
+        )
+        return loss if self.mlm_aux_task else loss_1
 
     def validation_step(self, batch, batch_idx):
-        # self.model.train() # dirty fix for pytorch bug
-        loss, logits, labels = self._step(batch, batch_idx)
-        accuracy = self.accuracy(logits, labels)
+        loss, loss_1, loss_2, logits_1, labels = self._step(batch, batch_idx)
+        accuracy = self.accuracy(logits_1, labels)
         self.log_dict(
-            {
-                "val_loss": loss,
-                "val_accuracy": accuracy,
-            },
-            on_step=False,
-            on_epoch=True,
-            prog_bar=True,
+            { "val_loss_1": loss_1, "val_loss_2": loss_2, "val_accuracy": accuracy, },
+            on_step=False, on_epoch=True, prog_bar=True, logger=True,
         )
-        return {"loss": loss, "logits": logits, "labels": labels}
+        return loss if self.mlm_aux_task else loss_1
 
     def _step(self, batch, _):
         input_ids = batch["input_ids"]
+        corrupted_input_ids = batch["corrupted_input_ids"]  # [B, L]
         attention_mask = batch["attention_mask"]
         labels = batch["labels"].float().reshape(-1, 1)
 
-        logits = self.model_with_head(input_ids, attention_mask)
-        loss = F.binary_cross_entropy_with_logits(logits, labels)
-        return loss, logits, labels
+        x = self.model(corrupted_input_ids, attention_mask)  # [B, L, D]
+        B, L, D = x.shape
+
+        logits_1 = self.head(x, attention_mask)  # [B, 1]
+        logits_2 = self.head_aux_task(x, attention_mask)  # [B, L, V]
+
+        loss_1 = F.binary_cross_entropy_with_logits(logits_1, labels)
+
+        token_loss_2 = F.cross_entropy(
+            logits_2.view(B * L, -1),
+            input_ids.view(B * L),
+            reduction="none"
+        )  # [B * L]
+        loss_2 = (token_loss_2 * attention_mask.view(-1)).sum() / attention_mask.sum()
+
+        loss = loss_1 + loss_2
+
+        return loss, loss_1, loss_2, logits_1, labels
 
     def configure_optimizers(self):
         # set up optimizer
-        weight_decay_params, no_weight_decay_params = WeightDecayParamFilter.filter(self.model_with_head)
+        weight_decay_params, no_weight_decay_params = WeightDecayParamFilter.filter(self)
 
         general_optimizer_config = deepcopy(self.optimizer_config)
         weight_decay = general_optimizer_config.pop("weight_decay")
@@ -109,7 +130,7 @@ class TextClassificationModule(pl.LightningModule):
         optimizer = torch.optim.AdamW(optim_groups, **general_optimizer_config)
 
         if self.l1_lambda > 0.:
-            L1Regularizer.apply(self.model_with_head, l1_lambda=self.l1_lambda)
+            L1Regularizer.apply(self, l1_lambda=self.l1_lambda)
 
         # set up scheduler
         train_len = len(self.data_module.train_dataloader())
