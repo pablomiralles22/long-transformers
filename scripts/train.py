@@ -43,10 +43,6 @@ def run(config, initial_model=None):
         trainer_module.model.load_state_dict(initial_model.state_dict())
         trainer_module.model_with_head.model.load_state_dict(initial_model.state_dict())
 
-        # freeze params
-        for name, param in trainer_module.model_with_head.model.named_parameters():
-            param.requires_grad = False
-
     # setup trainer and run
     trainer = pl.Trainer(**trainer_params)
 
