@@ -58,8 +58,9 @@ class TextClassificationModule(pl.LightningModule):
             **head_params,
         )
         # auxiliar task
-        head_params["reduction_method"] = "none"  # just to make sure
+        head_params["reduction_method"] = "none"
         head_params["num_classes"] = self.data_module.get_vocab_size()
+        head_params["concat_consecutive"] = False
         self.head_aux_task = get_classification_head(
             input_dim=self.model.get_output_embedding_dim(),
             **head_params,
