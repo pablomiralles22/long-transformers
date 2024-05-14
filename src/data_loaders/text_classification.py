@@ -47,17 +47,6 @@ class TextClassificationDataset(Dataset):
             label = 0
         return {"text": text, "label": label}
 
-def augment_shuffle(text: str):
-    words = text.split()
-    random.shuffle(words)
-    return " ".join(words)
-
-def augment_random_changes(text: str):
-    idxs = random.sample(range(len(text)), int(0.2 * len(text)))
-    text = list(text)
-    for idx in idxs:
-        text[idx] = chr(random.randint(0, 255))
-    return "".join(text)
 
 class TextClassificationCollatorFn:
     def __init__(self, max_len, mask_ratio: float=0.3, random_ratio: float=0.33):

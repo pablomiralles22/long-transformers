@@ -8,10 +8,11 @@ from copy import deepcopy
 from torch.utils.data import Dataset, DataLoader
 from typing import Literal
 
-NUM_EMBEDDINGS = 256 + 2 # PAD, CLS, MASK, bytes
+NUM_EMBEDDINGS = 256 + 3 # PAD, CLS, MASK, bytes
 PAD_TOKEN = 0
 CLS_TOKEN = 1
-START_BYTE_IDX = 2
+MASK_TOKEN = 2
+START_BYTE_IDX = 3
 
 class TextRetrievalDataset(Dataset):
     def __init__(
@@ -37,26 +38,17 @@ class TextRetrievalDataset(Dataset):
             item = json.load(f)
         return item
 
-def augment_shuffle(text: str):
-    words = text.split()
-    random.shuffle(words)
-    return " ".join(words)
-
-def augment_random_changes(text: str):
-    idxs = random.sample(range(len(text)), int(0.2 * len(text)))
-    text = list(text)
-    for idx in idxs:
-        text[idx] = chr(random.randint(0, 255))
-    return "".join(text)
 
 class TextRetrievalCollatorFn:
-    def __init__(self, max_len, fixed_start=False, augment_prob=0.):
+    def __init__(self, max_len, mask_ratio: float=0.3, random_ratio: float=0.33):
         self.max_len = max_len
-        self.fixed_start = fixed_start
-        self.augment_prob = augment_prob
+        self.mask_ratio = mask_ratio
+        self.random_ratio = random_ratio
+
 
     def __call__(self, batch):
         input_ids = []
+        corrupted_input_ids = []
         attention_masks = []
         labels = []
 
@@ -65,33 +57,40 @@ class TextRetrievalCollatorFn:
             texts = (text1, text2)
 
             for text in texts:
-                if random.random() < self.augment_prob:
-                    text = augment_shuffle(text)
+                start_idx = random.randint(0, max(1, len(text) - self.max_len))
 
-                start_idx = 0
-                if self.fixed_start is False:
-                    start_idx = torch.randint(0, max(1, len(text) - 64), (1,)).item()
-
+                # indices
                 text = text[start_idx:start_idx + self.max_len]
-
-                # build input ids
                 text_idxs = [START_BYTE_IDX + int(b) for b in bytes(text, encoding="utf-8")]  # 3 for PAD, CLS, MASK
-
                 indices = [CLS_TOKEN] + text_idxs
+
+                # corrupt data
+                corrupt_indices = indices.copy()
+                mask_idxs = random.sample(range(1, len(corrupt_indices)), int(self.mask_ratio * len(corrupt_indices)))
+                for idx in mask_idxs:
+                    if random.random() < self.random_ratio:
+                        corrupt_indices[idx] = random.randint(START_BYTE_IDX, NUM_EMBEDDINGS - 1)
+                    else:
+                        corrupt_indices[idx] = MASK_TOKEN
+
+                # cut and pad tokens
                 length = min(len(indices), self.max_len)
                 padding_size = self.max_len - length
                 indices = indices[:length] + [PAD_TOKEN] * padding_size
+                corrupt_indices = corrupt_indices[:length] + [PAD_TOKEN] * padding_size
 
                 # build attention mask
                 attention_mask = [1.] * length + [0.] * padding_size
 
                 input_ids.append(indices)
+                corrupted_input_ids.append(corrupt_indices)
                 attention_masks.append(attention_mask)
 
             labels.append(label)
 
         return {
             "input_ids": torch.tensor(input_ids),
+            "corrupted_input_ids": torch.tensor(corrupted_input_ids),
             "attention_mask": torch.tensor(attention_masks, dtype=torch.bool),
             "labels": torch.tensor(labels),
         }
@@ -102,8 +101,8 @@ class TextRetrievalDataModule(pl.LightningDataModule):
     def get_default_collator_config(cls):
         return {
             "max_len": 512,
-            "fixed_start": False,
-            "augment_prob": 0.,
+            "mask_ratio": 0.3,
+            "random_ratio": 0.33,
         }
 
     @classmethod
@@ -161,8 +160,7 @@ class TextRetrievalDataModule(pl.LightningDataModule):
 
     def val_dataloader(self):
         collator_config = deepcopy(self.collator_config)
-        collator_config["augment_prob"] = 0.
-        collator_config["fixed_start"] = True
+        collator_config["mask_ratio"] = 0.
 
         return DataLoader(
             dataset=self.val_dataset,
@@ -175,8 +173,7 @@ class TextRetrievalDataModule(pl.LightningDataModule):
     
     def test_dataloader(self):
         collator_config = deepcopy(self.collator_config)
-        collator_config["augment_prob"] = 0.
-        collator_config["fixed_start"] = True
+        collator_config["mask_ratio"] = 0.
 
         return DataLoader(
             dataset=self.test_dataset,
