@@ -7,22 +7,22 @@
             "layers": [
                 [ "transformer_encoder_layer", 
                   { "d_model": 128, "nhead": 8, "dim_feedforward": 256, "dropout": 0.0,
-                      "attention_params": { "type": "rotary", "freq": 10000, "learned_freq": false } } ],
+                      "attention_params": { "type": "rotary", "freq": 10000 } } ],
                 [ "transformer_encoder_layer", 
                   { "d_model": 128, "nhead": 8, "dim_feedforward": 256, "dropout": 0.0,
-                      "attention_params": { "type": "rotary", "freq": 10000, "learned_freq": false } } ],
+                      "attention_params": { "type": "rotary", "freq": 10000 } } ],
                 [ "transformer_encoder_layer", 
                   { "d_model": 128, "nhead": 8, "dim_feedforward": 256, "dropout": 0.0,
-                      "attention_params": { "type": "rotary", "freq": 10000, "learned_freq": false } } ],
+                      "attention_params": { "type": "rotary", "freq": 10000 } } ],
                 [ "transformer_encoder_layer", 
                   { "d_model": 128, "nhead": 8, "dim_feedforward": 256, "dropout": 0.0,
-                      "attention_params": { "type": "rotary", "freq": 10000, "learned_freq": false } } ],
+                      "attention_params": { "type": "rotary", "freq": 10000 } } ],
                 [ "transformer_encoder_layer", 
                   { "d_model": 128, "nhead": 8, "dim_feedforward": 256, "dropout": 0.0,
-                      "attention_params": { "type": "rotary", "freq": 10000, "learned_freq": false } } ],
+                      "attention_params": { "type": "rotary", "freq": 10000 } } ],
                 [ "transformer_encoder_layer", 
                   { "d_model": 128, "nhead": 8, "dim_feedforward": 256, "dropout": 0.0,
-                      "attention_params": { "type": "rotary", "freq": 10000, "learned_freq": false } } ]
+                      "attention_params": { "type": "rotary", "freq": 10000 } } ]
             ]
         }
     },
