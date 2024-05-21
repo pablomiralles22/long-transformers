@@ -6,29 +6,29 @@
       "output_embedding_dim": 128,
       "layers": [
         [ "transformer_encoder_layer", 
-          { "d_model": 128, "nhead": 8, "dim_feedforward": 256, "dropout": 0.1, "activation": "gelu",
+          { "d_model": 128, "nhead": 4, "dim_feedforward": 256, "dropout": 0.1, "activation_fn": "gelu",
               "attention_params": { "type": "rotary", "freq": 10000 } } ],
         [ "transformer_encoder_layer", 
-          { "d_model": 128, "nhead": 8, "dim_feedforward": 256, "dropout": 0.1, "activation": "gelu",
+          { "d_model": 128, "nhead": 4, "dim_feedforward": 256, "dropout": 0.1, "activation_fn": "gelu",
               "attention_params": { "type": "rotary", "freq": 10000 } } ],
         [ "transformer_encoder_layer", 
-          { "d_model": 128, "nhead": 8, "dim_feedforward": 256, "dropout": 0.1, "activation": "gelu",
+          { "d_model": 128, "nhead": 4, "dim_feedforward": 256, "dropout": 0.1, "activation_fn": "gelu",
               "attention_params": { "type": "rotary", "freq": 10000 } } ],
         [ "transformer_encoder_layer", 
-          { "d_model": 128, "nhead": 8, "dim_feedforward": 256, "dropout": 0.1, "activation": "gelu",
+          { "d_model": 128, "nhead": 4, "dim_feedforward": 256, "dropout": 0.1, "activation_fn": "gelu",
               "attention_params": { "type": "rotary", "freq": 10000 } } ],
         [ "transformer_encoder_layer", 
-          { "d_model": 128, "nhead": 8, "dim_feedforward": 256, "dropout": 0.1, "activation": "gelu",
+          { "d_model": 128, "nhead": 4, "dim_feedforward": 256, "dropout": 0.1, "activation_fn": "gelu",
               "attention_params": { "type": "rotary", "freq": 10000 } } ],
         [ "transformer_encoder_layer", 
-          { "d_model": 128, "nhead": 8, "dim_feedforward": 256, "dropout": 0.1, "activation": "gelu",
+          { "d_model": 128, "nhead": 4, "dim_feedforward": 256, "dropout": 0.1, "activation_fn": "gelu",
               "attention_params": { "type": "rotary", "freq": 10000 } } ]
       ]
     }
   },
   "head_params": {
     "ff_dim": 512,
-    "num_hidden_layers": 0,
+    "num_hidden_layers": 1,
     "dropout_p": 0.1,
     "reduction_method": "mean",
     "concat_consecutive": true
@@ -37,15 +37,15 @@
     "name": "text-retrieval",
     "params": {
       "data_path": "datasets/text_retrieval",
-      "max_len": 2048,
+      "max_len": 1024,
       "batch_size": 64,
       "pin_memory": true,
       "num_workers": 4
     }
   },
   "optimizer_params": {
-    "lr": 3e-3,
-    "weight_decay": 0.04,
+    "lr": 1e-3,
+    "weight_decay": 0.01,
     "betas": [ 0.9, 0.98 ],
     "mlm_aux_task": true
   },

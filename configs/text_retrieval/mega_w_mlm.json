@@ -1,0 +1,62 @@
+{
+  "model_params": {
+    "name": "layered",
+    "params": {
+      "input_embedding_dim": 128,
+      "output_embedding_dim": 128,
+      "layers": [
+        [ "transformer_encoder_layer", 
+          { "d_model": 128, "nhead": 1, "dim_feedforward": 256, "dropout": 0.1, "attention_params":
+          { "type": "ema", "v_dim_out": 256, "qk_dim_out": 64, "ema_dim": 16, "ema_kernel_size": 1024, "direction": "bidirectional" } } ],
+        [ "transformer_encoder_layer", 
+          { "d_model": 128, "nhead": 1, "dim_feedforward": 256, "dropout": 0.1, "attention_params":
+          { "type": "ema", "v_dim_out": 256, "qk_dim_out": 64, "ema_dim": 16, "ema_kernel_size": 1024, "direction": "bidirectional" } } ],
+        [ "transformer_encoder_layer", 
+          { "d_model": 128, "nhead": 1, "dim_feedforward": 256, "dropout": 0.1, "attention_params":
+          { "type": "ema", "v_dim_out": 256, "qk_dim_out": 64, "ema_dim": 16, "ema_kernel_size": 1024, "direction": "bidirectional" } } ],
+        [ "transformer_encoder_layer", 
+          { "d_model": 128, "nhead": 1, "dim_feedforward": 256, "dropout": 0.1, "attention_params":
+          { "type": "ema", "v_dim_out": 256, "qk_dim_out": 64, "ema_dim": 16, "ema_kernel_size": 1024, "direction": "bidirectional" } } ],
+        [ "transformer_encoder_layer", 
+          { "d_model": 128, "nhead": 1, "dim_feedforward": 256, "dropout": 0.1, "attention_params":
+          { "type": "ema", "v_dim_out": 256, "qk_dim_out": 64, "ema_dim": 16, "ema_kernel_size": 1024, "direction": "bidirectional" } } ],
+        [ "transformer_encoder_layer", 
+          { "d_model": 128, "nhead": 1, "dim_feedforward": 256, "dropout": 0.1, "attention_params":
+          { "type": "ema", "v_dim_out": 256, "qk_dim_out": 64, "ema_dim": 16, "ema_kernel_size": 1024, "direction": "bidirectional" } } ]
+      ]
+    }
+  },
+  "head_params": {
+    "ff_dim": 512,
+    "num_hidden_layers": 1,
+    "dropout_p": 0.1,
+    "reduction_method": "mean",
+    "concat_consecutive": true
+  },
+  "data_module_params": {
+    "name": "text-retrieval",
+    "params": {
+      "data_path": "datasets/text_retrieval",
+      "max_len": 1024,
+      "batch_size": 32,
+      "pin_memory": true,
+      "num_workers": 4
+    }
+  },
+  "optimizer_params": {
+    "lr": 3e-3,
+    "weight_decay": 0.04,
+    "betas": [ 0.9, 0.98 ],
+    "mlm_aux_task": true
+  },
+  "trainer_params": {
+    "max_epochs": 40,
+    "precision": "16-mixed",
+    "enable_checkpointing": true,
+    "default_root_dir": "out/text_retrieval/mega_w_mlm",
+    "accelerator": "gpu",
+    "devices": [ 0 ]
+  },
+  "fit_params": { }
+}
+  

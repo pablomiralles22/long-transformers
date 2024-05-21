@@ -59,6 +59,7 @@ class TextClassificationModule(pl.LightningModule):
         )
         # auxiliar task
         head_params["reduction_method"] = "none"
+        head_params["num_hidden_layers"] = 0
         head_params["num_classes"] = self.data_module.get_vocab_size()
         head_params["concat_consecutive"] = False
         self.head_aux_task = get_classification_head(

@@ -81,7 +81,7 @@ class EMAMultiheadAttention(nn.Module):
         
         embeddings = queries
 
-        x = embeddings.masked_fill(~key_attention_mask.unsqueeze(-1), 0)  # [B, L, D] set padding to 0
+        x = embeddings.masked_fill(~key_attention_mask.unsqueeze(-1).bool(), 0)  # [B, L, D] set padding to 0
         x_prime = F.silu(
             # self.x_prime_norm(
             self.dropout_ema(self.ema(x)) + x * self.omega

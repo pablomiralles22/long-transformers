@@ -2,42 +2,43 @@
   "model_params": {
     "name": "layered",
     "params": {
-      "input_embedding_dim": 128,
-      "output_embedding_dim": 128,
+      "input_embedding_dim": 80,
+      "output_embedding_dim": 80,
       "layers": [
         [ "transformer_encoder_layer", 
-          { "d_model": 128, "nhead": 4, "dim_feedforward": 256, "dropout": 0.1, "activation_fn": "gelu",
+          { "d_model": 80, "nhead": 4, "dim_feedforward": 160, "dropout": 0.0,
               "attention_params": { "type": "rotary", "freq": 10000 } } ],
         [ "transformer_encoder_layer", 
-          { "d_model": 128, "nhead": 4, "dim_feedforward": 256, "dropout": 0.1, "activation_fn": "gelu",
+          { "d_model": 80, "nhead": 4, "dim_feedforward": 160, "dropout": 0.0,
               "attention_params": { "type": "rotary", "freq": 10000 } } ],
         [ "transformer_encoder_layer", 
-          { "d_model": 128, "nhead": 4, "dim_feedforward": 256, "dropout": 0.1, "activation_fn": "gelu",
+          { "d_model": 80, "nhead": 4, "dim_feedforward": 160, "dropout": 0.0,
               "attention_params": { "type": "rotary", "freq": 10000 } } ],
         [ "transformer_encoder_layer", 
-          { "d_model": 128, "nhead": 4, "dim_feedforward": 256, "dropout": 0.1, "activation_fn": "gelu",
+          { "d_model": 80, "nhead": 4, "dim_feedforward": 160, "dropout": 0.0,
               "attention_params": { "type": "rotary", "freq": 10000 } } ],
         [ "transformer_encoder_layer", 
-          { "d_model": 128, "nhead": 4, "dim_feedforward": 256, "dropout": 0.1, "activation_fn": "gelu",
+          { "d_model": 80, "nhead": 4, "dim_feedforward": 160, "dropout": 0.0,
               "attention_params": { "type": "rotary", "freq": 10000 } } ],
         [ "transformer_encoder_layer", 
-          { "d_model": 128, "nhead": 4, "dim_feedforward": 256, "dropout": 0.1, "activation_fn": "gelu",
+          { "d_model": 80, "nhead": 4, "dim_feedforward": 160, "dropout": 0.0,
               "attention_params": { "type": "rotary", "freq": 10000 } } ]
       ]
     }
   },
   "head_params": {
-    "ff_dim": 512,
-    "num_hidden_layers": 1,
-    "dropout_p": 0.1,
-    "reduction_method": "mean",
-    "concat_consecutive": true
+    "ff_dim": 128,
+    "num_hidden_layers": 0,
+    "dropout_p": 0.0,
+    "reduction_method": "mean"
   },
   "data_module_params": {
-    "name": "text-retrieval",
+    "name": "listops",
     "params": {
-      "data_path": "datasets/text_retrieval",
-      "max_len": 1024,
+      "data_path": "datasets/lra_release/listops-1000",
+      "max_len": 2001,
+      "augment": 1.0,
+      "limit_tree_height": 5,
       "batch_size": 64,
       "pin_memory": true,
       "num_workers": 4
@@ -45,18 +46,17 @@
   },
   "optimizer_params": {
     "lr": 1e-3,
-    "weight_decay": 0.01,
     "betas": [ 0.9, 0.98 ],
-    "mlm_aux_task": false
+    "weight_decay": 0.01
   },
   "trainer_params": {
-    "max_epochs": 40,
+    "max_epochs": 20,
+    "val_check_interval": 0.25,
     "precision": "16-mixed",
     "enable_checkpointing": true,
-    "default_root_dir": "out/text_retrieval/rotary_transformer_wout_mlm",
+    "default_root_dir": "out/listops/rotary_transformer_augment_pretrain_1",
     "accelerator": "gpu",
-    "devices": [ 0 ]
+    "devices": [ 2 ]
   },
   "fit_params": { }
 }
-  
