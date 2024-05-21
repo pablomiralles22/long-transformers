@@ -49,12 +49,14 @@
         "weight_decay": 0.01
     },
     "trainer_params": {
-        "max_epochs": 150,
+        "max_epochs": 100,
         "precision": "16-mixed",
         "enable_checkpointing": true,
         "default_root_dir": "out/pathfinder/rotary_transformer_noaugment_pretrain_2",
         "accelerator": "gpu",
         "devices": [ 0 ]
     },
-    "fit_params": { }
+    "fit_params": {
+        "ckpt_path": "out/pathfinder/rotary_transformer_noaugment_pretrain_2/lightning_logs/version_2/checkpoints/epoch=54-val_acc=0.88.ckpt"
+    }
   }
