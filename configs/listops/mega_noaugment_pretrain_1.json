@@ -52,7 +52,7 @@
   "trainer_params": {
     "max_epochs": 20,
     "val_check_interval": 0.25,
-    "precision": "bf16-mixed",
+    "precision": "16-mixed",
     "enable_checkpointing": true,
     "default_root_dir": "out/listops/mega_noaugment_pretrain_1",
     "accelerator": "gpu",

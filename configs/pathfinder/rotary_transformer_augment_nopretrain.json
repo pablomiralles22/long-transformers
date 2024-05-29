@@ -50,7 +50,7 @@
     },
     "trainer_params": {
         "max_epochs": 100,
-        "precision": "bf16-mixed",
+        "precision": "16-mixed",
         "enable_checkpointing": true,
         "default_root_dir": "out/pathfinder/rotary_transformer_augment_nopretrain",
         "accelerator": "gpu",

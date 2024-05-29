@@ -55,7 +55,7 @@
   },
   "trainer_params": {
     "max_epochs": 50,
-    "precision": "bf16-mixed",
+    "precision": "16-mixed",
     "enable_checkpointing": true,
     "default_root_dir": "out/text_classification/conv_transformer",
     "accelerator": "gpu",

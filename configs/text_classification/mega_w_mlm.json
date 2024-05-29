@@ -48,7 +48,7 @@
     },
     "trainer_params": {
       "max_epochs": 60,
-      "precision": "bf16-mixed",
+      "precision": "16-mixed",
       "enable_checkpointing": true,
       "default_root_dir": "out/text_classification/mega_w_mlm",
       "accelerator": "gpu",

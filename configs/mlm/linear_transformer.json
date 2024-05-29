@@ -43,7 +43,7 @@
     },
     "trainer_params": {
       "max_epochs": 20,
-      "precision": "bf16-mixed",
+      "precision": "16-mixed",
       "enable_checkpointing": true,
       "default_root_dir": "out/mlm/linear_transformer",
       "accelerator": "gpu",

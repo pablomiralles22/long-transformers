@@ -75,7 +75,7 @@
   },
   "trainer_params": {
       "max_epochs": 60,
-      "precision": "bf16-mixed",
+      "precision": "16-mixed",
       "gradient_clip_val": 1.0,
       "enable_checkpointing": true,
       "default_root_dir": "out/cifar10/aft",

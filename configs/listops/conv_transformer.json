@@ -54,7 +54,7 @@
   },
   "trainer_params": {
     "max_epochs": 40,
-    "precision": "bf16-mixed",
+    "precision": "16-mixed",
     "val_check_interval": 0.25,
     "gradient_clip_val": 1.0,
     "enable_checkpointing": true,
