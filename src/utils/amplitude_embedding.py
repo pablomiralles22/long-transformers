@@ -1,5 +1,4 @@
 import torch
-import math
 
 class AmplitudeEmbedding:
     __CACHE = dict()
@@ -26,7 +25,6 @@ class AmplitudeEmbedding:
         amps_inds = torch.arange(0, D, requires_grad=False, device=device, dtype=dtype) / D # (D)
         amps = base_amp * amps_inds / D # (D)
         amps[::2] = 0
-        amps[1::4] = -amps[1::4]
 
         prod = torch.einsum("a , b -> ab", lengths, amps) # [L, D]
         amp_mat_Q = torch.exp(prod)  # [L, D]

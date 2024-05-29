@@ -4,17 +4,19 @@ from typing import Optional, Literal
 from torch import nn
 from src.models.layers.layer import Layer
 from src.utils.sinusoidal_positional_embedding import sinusoidal_positional_embedding
+from src.utils.hyperbolic_positional_embedding import hyperbolic_positional_embedding
+from src.utils.log_positional_embedding import log_positional_embedding
 
 
 class PositionalEmbeddingLayer(Layer):
     def __init__(
         self,
-        mode: Literal["sinusoidal", "learned"],
+        mode: Literal["sinusoidal", "hyperbolic", "log", "learned"],
         max_seq_len: Optional[int] = None,
         embed_dim: Optional[int] = None,
     ):
         super(PositionalEmbeddingLayer, self).__init__()
-        assert mode == "sinusoidal" or (
+        assert mode in ["sinusoidal", "hyperbolic", "log"] or (
             max_seq_len is not None and embed_dim is not None
         ), "max_seq_len and embed_dim must be provided for learned positional embeddings"
 
@@ -43,6 +45,18 @@ class PositionalEmbeddingLayer(Layer):
             dtype, device = embeddings.dtype, embeddings.device
             idxs = torch.arange(seq_len, dtype=dtype, device=device)
             pe = sinusoidal_positional_embedding(idxs, embed_dim, device=device)
+            return embeddings + pe
+        elif self.mode == "hyperbolic":
+            _, seq_len, embed_dim = embeddings.shape
+            dtype, device = embeddings.dtype, embeddings.device
+            idxs = torch.arange(seq_len, dtype=dtype, device=device)
+            pe = hyperbolic_positional_embedding(idxs, embed_dim, device=device)
+            return embeddings + pe
+        elif self.mode == "log":
+            _, seq_len, embed_dim = embeddings.shape
+            dtype, device = embeddings.dtype, embeddings.device
+            idxs = torch.arange(seq_len, dtype=dtype, device=device)
+            pe = log_positional_embedding(idxs, embed_dim, device=device)
             return embeddings + pe
 
 class TokenTypeEmbeddingLayer(Layer):
