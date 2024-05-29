@@ -48,7 +48,7 @@
   },
   "trainer_params": {
     "max_epochs": 60,
-    "precision": "16-mixed",
+    "precision": "bf16-mixed",
     "gradient_clip_val": 1.0,
     "enable_checkpointing": true,
     "default_root_dir": "out/text_classification/compressor",

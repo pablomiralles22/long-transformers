@@ -2,50 +2,57 @@
     "model_params": {
       "name": "layered",
       "params": {
-        "input_embedding_dim": 32,
+        "input_embedding_dim": 16,
         "output_embedding_dim": 256,
         "layers": [
+          [ "conv", { "in_channels": 16, "out_channels": 32, "kernel_size": 5, "padding": "same" } ],
+          [ "layer_norm", { "normalized_shape": 32 } ],
+          [ "dropout", { "p": 0.1 } ],
+          [ "activation", { "fn": "gelu" } ],
+
           [ "conv", { "in_channels": 32, "out_channels": 64, "kernel_size": 5, "padding": "same" } ],
           [ "layer_norm", { "normalized_shape": 64 } ],
           [ "dropout", { "p": 0.1 } ],
           [ "activation", { "fn": "gelu" } ],
   
-          [ "conv", { "in_channels": 64, "out_channels": 256, "kernel_size": 3, "padding": "same" } ],
+          [ "conv", { "in_channels": 64, "out_channels": 256, "kernel_size": 5, "padding": "same" } ],
           [ "layer_norm", { "normalized_shape": 256 } ],
           [ "dropout", { "p": 0.1 } ],
           [ "activation", { "fn": "gelu" } ]
-  
         ]
       }
     },
     "head_params": {
-      "ff_dim": 256,
-      "num_hidden_layers": 0,
+      "ff_dim": 512,
+      "num_hidden_layers": 1,
       "dropout_p": 0.1,
-      "reduction_method": "mean"
+      "reduction_method": "mean",
+      "concat_consecutive": true
     },
     "data_module_params": {
-      "name": "text-classification",
+      "name": "text-retrieval",
       "params": {
-        "data_path": "datasets/aclImdb",
-        "max_len": 2048,
-        "batch_size": 32,
+        "data_path": "datasets/text_retrieval",
+        "max_len": 1024,
+        "batch_size": 64,
         "pin_memory": true,
         "num_workers": 4
       }
     },
     "optimizer_params": {
-      "lr": 4e-3,
+      "lr": 1e-3,
       "weight_decay": 0.01,
-      "betas": [ 0.9, 0.98 ]
+      "betas": [ 0.9, 0.98 ],
+      "mlm_aux_task": false
     },
     "trainer_params": {
-      "max_epochs": 50,
+      "max_epochs": 40,
       "precision": "bf16-mixed",
       "enable_checkpointing": true,
-      "default_root_dir": "out/text_classification/conv",
+      "default_root_dir": "out/text_retrieval/conv_wout_mlm",
       "accelerator": "gpu",
       "devices": [ 0 ]
-    }
+    },
+    "fit_params": { }
   }
   

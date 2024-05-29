@@ -42,7 +42,7 @@
   },
   "trainer_params": {
     "max_epochs": 20,
-    "precision": "16-mixed",
+    "precision": "bf16-mixed",
     "enable_checkpointing": true,
     "default_root_dir": "out/mlm/rotary_transformer",
     "accelerator": "gpu",

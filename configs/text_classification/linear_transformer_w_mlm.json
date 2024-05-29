@@ -5,18 +5,19 @@
       "input_embedding_dim": 128,
       "output_embedding_dim": 128,
       "layers": [
+        [ "positional_embedding", { "mode": "sinusoidal", "embed_dim": 128 } ],
         [ "transformer_encoder_layer", 
-          { "d_model": 128, "nhead": 8, "dim_feedforward": 256, "dropout": 0.1,
-              "attention_params": { "type": "rotary", "freq": 10000  } } ],
+          { "d_model": 128, "nhead": 8, "dim_feedforward": 256, "dropout": 0.0, 
+              "attention_params": { "type": "linear" } } ],
         [ "transformer_encoder_layer", 
-          { "d_model": 128, "nhead": 8, "dim_feedforward": 256, "dropout": 0.1,
-              "attention_params": { "type": "rotary", "freq": 10000  } } ],
+          { "d_model": 128, "nhead": 8, "dim_feedforward": 256, "dropout": 0.0, 
+              "attention_params": { "type": "linear" } } ],
         [ "transformer_encoder_layer", 
-          { "d_model": 128, "nhead": 8, "dim_feedforward": 256, "dropout": 0.1,
-              "attention_params": { "type": "rotary", "freq": 10000  } } ],
+          { "d_model": 128, "nhead": 8, "dim_feedforward": 256, "dropout": 0.0, 
+              "attention_params": { "type": "linear" } } ],
         [ "transformer_encoder_layer", 
-          { "d_model": 128, "nhead": 8, "dim_feedforward": 256, "dropout": 0.1,
-              "attention_params": { "type": "rotary", "freq": 10000  } } ]
+          { "d_model": 128, "nhead": 8, "dim_feedforward": 256, "dropout": 0.0, 
+              "attention_params": { "type": "linear" } } ]
       ]
     }
   },
@@ -40,15 +41,15 @@
     "lr": 4e-3,
     "weight_decay": 0.01,
     "betas": [ 0.9, 0.98 ],
-    "mlm_aux_task": false
+    "mlm_aux_task": true
   },
   "trainer_params": {
     "max_epochs": 60,
     "precision": "bf16-mixed",
     "enable_checkpointing": true,
-    "default_root_dir": "out/text_classification/rotary_transformer_wout_mlm",
+    "default_root_dir": "out/text_classification/linear_transformer_w_mlm",
     "accelerator": "gpu",
-    "devices": [ 0 ]
+    "devices": [ 2 ]
   },
   "fit_params": { }
 }

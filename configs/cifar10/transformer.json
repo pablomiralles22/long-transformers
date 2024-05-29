@@ -2,27 +2,33 @@
   "model_params": {
       "name": "layered",
       "params": {
-          "input_embedding_dim": 64,
-          "output_embedding_dim": 64,
+          "input_embedding_dim": 160,
+          "output_embedding_dim": 160,
           "layers": [
-              [ "positional_embedding", { "mode": "learned", "max_seq_len": 1025, "embed_dim": 64 } ],
+              [ "positional_embedding", { "mode": "sinusoidal", "embed_dim": 160 } ],
               [ "transformer_encoder_layer", 
-                { "d_model": 64, "nhead": 4, "dim_feedforward": 128, "dropout": 0.0, 
+                { "d_model": 160, "nhead": 8, "dim_feedforward": 160, "dropout": 0.0, 
                     "attention_params": { "type": "std" } } ],
               [ "transformer_encoder_layer", 
-                { "d_model": 64, "nhead": 4, "dim_feedforward": 128, "dropout": 0.0, 
+                { "d_model": 160, "nhead": 8, "dim_feedforward": 160, "dropout": 0.0, 
                     "attention_params": { "type": "std" } } ],
               [ "transformer_encoder_layer", 
-                { "d_model": 64, "nhead": 4, "dim_feedforward": 128, "dropout": 0.0, 
+                { "d_model": 160, "nhead": 8, "dim_feedforward": 160, "dropout": 0.0, 
                     "attention_params": { "type": "std" } } ],
               [ "transformer_encoder_layer", 
-                { "d_model": 64, "nhead": 4, "dim_feedforward": 128, "dropout": 0.0, 
+                { "d_model": 160, "nhead": 8, "dim_feedforward": 160, "dropout": 0.0, 
                     "attention_params": { "type": "std" } } ],
               [ "transformer_encoder_layer", 
-                { "d_model": 64, "nhead": 4, "dim_feedforward": 128, "dropout": 0.0, 
+                { "d_model": 160, "nhead": 8, "dim_feedforward": 160, "dropout": 0.0, 
                     "attention_params": { "type": "std" } } ],
               [ "transformer_encoder_layer", 
-                { "d_model": 64, "nhead": 4, "dim_feedforward": 128, "dropout": 0.0, 
+                { "d_model": 160, "nhead": 8, "dim_feedforward": 160, "dropout": 0.0, 
+                    "attention_params": { "type": "std" } } ],
+              [ "transformer_encoder_layer", 
+                { "d_model": 160, "nhead": 8, "dim_feedforward": 160, "dropout": 0.0, 
+                    "attention_params": { "type": "std" } } ],
+              [ "transformer_encoder_layer", 
+                { "d_model": 160, "nhead": 8, "dim_feedforward": 160, "dropout": 0.0, 
                     "attention_params": { "type": "std" } } ]
 
           ]
@@ -47,17 +53,17 @@
       }
   },
   "optimizer_params": {
-      "lr": 1e-3,
+      "lr": 5e-4,
       "betas": [ 0.9, 0.98 ],
       "weight_decay": 0.01
   },
   "trainer_params": {
-      "max_epochs": 100,
-      "precision": "16-mixed",
+      "max_epochs": 200,
+      "precision": "bf16-mixed",
       "enable_checkpointing": true,
-      "default_root_dir": "out/cifar10/transformer",
+      "default_root_dir": "out/cifar10/transformer_augment",
       "accelerator": "gpu",
-      "devices": [ 0 ]
+      "devices": [ 2 ]
   },
   "fit_params": { }
 }
