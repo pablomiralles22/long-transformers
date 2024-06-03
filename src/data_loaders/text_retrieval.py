@@ -40,8 +40,9 @@ class TextRetrievalDataset(Dataset):
 
 
 class TextRetrievalCollatorFn:
-    def __init__(self, max_len, mask_ratio: float=0.3, random_ratio: float=0.33):
+    def __init__(self, max_len, random_start=True, mask_ratio: float=0.3, random_ratio: float=0.33):
         self.max_len = max_len
+        self.random_start = random_start
         self.mask_ratio = mask_ratio
         self.random_ratio = random_ratio
 
@@ -57,7 +58,11 @@ class TextRetrievalCollatorFn:
             texts = (text1, text2)
 
             for text in texts:
-                start_idx = random.randint(0, max(1, len(text) - self.max_len))
+                start_idx = (
+                    random.randint(0, max(1, len(text) - self.max_len))
+                    if self.random_start is True
+                    else 0
+                )
 
                 # indices
                 text = text[start_idx:start_idx + self.max_len]
@@ -101,6 +106,7 @@ class TextRetrievalDataModule(pl.LightningDataModule):
     def get_default_collator_config(cls):
         return {
             "max_len": 512,
+            "random_start": True,
             "mask_ratio": 0.3,
             "random_ratio": 0.33,
         }
@@ -161,6 +167,7 @@ class TextRetrievalDataModule(pl.LightningDataModule):
     def val_dataloader(self):
         collator_config = deepcopy(self.collator_config)
         collator_config["mask_ratio"] = 0.
+        collator_config["random_start"] = False
 
         return DataLoader(
             dataset=self.val_dataset,
@@ -174,6 +181,7 @@ class TextRetrievalDataModule(pl.LightningDataModule):
     def test_dataloader(self):
         collator_config = deepcopy(self.collator_config)
         collator_config["mask_ratio"] = 0.
+        collator_config["random_start"] = False
 
         return DataLoader(
             dataset=self.test_dataset,

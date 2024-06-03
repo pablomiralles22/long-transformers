@@ -136,7 +136,7 @@ class PathfinderModule(pl.LightningModule):
             ),
             EarlyStopping(
                 monitor="val_acc",
-                patience=20,
+                patience=10,
                 mode="max",
             ),
         ]

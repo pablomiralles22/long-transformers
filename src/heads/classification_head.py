@@ -5,6 +5,7 @@ from src.heads.attention_reducer import AttentionReducer
 from src.heads.mean_reducer import MeanReducer
 from src.heads.max_reducer import MaxReducer
 from src.heads.glu_reducer import GLUReducer
+from src.heads.feature_applier import FeatureApplier, Feature
 
 
 def get_model_with_classification_head(
@@ -15,6 +16,7 @@ def get_model_with_classification_head(
     num_classes: int = 2,
     reduction_method: ReductionMethod = "cls",
     concat_consecutive: bool = False,
+    features: list[Feature] = ["dot"],
 ):
     """
     Builds a model with a classification head on top of the base model.
@@ -31,6 +33,7 @@ def get_model_with_classification_head(
         dropout_p=dropout_p,
         reduction_method=reduction_method,
         concat_consecutive=concat_consecutive,
+        features=features
     )
 
 
@@ -67,15 +70,14 @@ class ModelWithClassificationHead(nn.Module):
         dropout_p: float = 0.1,
         reduction_method: ReductionMethod = "cls",
         concat_consecutive: bool = False,
+        features: list[Feature] = ["dot"],
     ):
         super(ModelWithClassificationHead, self).__init__()
 
         self.model = model
 
-        self.concat_consecutive = concat_consecutive
-
-        if concat_consecutive is True:
-            input_dim *= 2
+        self.feature_applier = FeatureApplier(concat_consecutive, features)
+        input_dim = self.feature_applier.get_output_dim(input_dim)
         output_dim = 1 if num_classes == 2 else num_classes
 
         # build the feed-forward layers
@@ -112,11 +114,8 @@ class ModelWithClassificationHead(nn.Module):
         x = self.model(embeddings, attention_mask, token_type_ids)  # [B, L, D]
         *B, L, D = x.size()
 
-        reduced_x = self._reduce(x, attention_mask)  # [B, D]
-
-        if self.concat_consecutive is True:
-            # first dimension was actually 2 * B
-            reduced_x = reduced_x.view(-1, 2 * D)  # [B, 2 * D]
+        reduced_x = self._reduce(x, attention_mask)  # [B, D] or [B, L, D]
+        reduced_x = self.feature_applier(reduced_x)
         logits = self.ff(reduced_x)
         return logits
 
@@ -137,30 +136,6 @@ class ModelWithClassificationHead(nn.Module):
             return x
         raise ValueError(f"Unknown reduction method: {self.reduction_method}")
 
-def get_classification_head(
-    input_dim: int,
-    ff_dim: int,
-    dropout_p: float = 0.1,
-    num_hidden_layers: int = 1,
-    num_classes: int = 2,
-    reduction_method: ReductionMethod = "cls",
-    concat_consecutive: bool = False,
-):
-    """
-    Builds a model with a classification head on top of the base model.
-    For this, it uses the output embedding dimension of the base model,
-    which is given by the `get_out_embedding_dim` method.
-    """
-    return ClassificationHead(
-        input_dim=input_dim,
-        ff_dim=ff_dim,
-        num_hidden_layers=num_hidden_layers,
-        num_classes=num_classes,
-        dropout_p=dropout_p,
-        reduction_method=reduction_method,
-        concat_consecutive=concat_consecutive,
-    )
-
 class ClassificationHead(nn.Module):
     def __init__(
         self,
@@ -171,12 +146,12 @@ class ClassificationHead(nn.Module):
         dropout_p: float = 0.1,
         reduction_method: ReductionMethod = "cls",
         concat_consecutive: bool = False,
+        features: tuple[Feature] = ("dot",),
     ):
         super(ClassificationHead, self).__init__()
-        self.concat_consecutive = concat_consecutive
 
-        if concat_consecutive is True:
-            input_dim *= 2
+        self.feature_applier = FeatureApplier(concat_consecutive, features)
+        input_dim = self.feature_applier.get_output_dim(input_dim)
         output_dim = 1 if num_classes == 2 else num_classes
 
         # build the feed-forward layers
@@ -212,11 +187,8 @@ class ClassificationHead(nn.Module):
         """
         *B, L, D = embeddings.size()
 
-        reduced_x = self._reduce(embeddings, attention_mask)  # [B, D]
-
-        if self.concat_consecutive is True:
-            # first dimension was actually 2 * B
-            reduced_x = reduced_x.view(-1, 2 * D)  # [B, 2 * D]
+        reduced_x = self._reduce(embeddings, attention_mask)  # [B, D] or [B, L, D]
+        reduced_x = self.feature_applier(reduced_x)
         logits = self.ff(reduced_x)
         return logits
 

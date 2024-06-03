@@ -7,7 +7,7 @@ from torch.nn import functional as F
 from pytorch_lightning.callbacks import Callback, ModelCheckpoint, EarlyStopping
 from src.data_loaders.data_module_builder import DataModuleBuilder
 from src.models.model_builder import ModelBuilder
-from src.heads.classification_head import get_classification_head
+from src.heads.classification_head import ClassificationHead
 from src.utils.l1_regularizer import L1Regularizer
 from src.utils.weight_decay_param_filter import WeightDecayParamFilter
 
@@ -53,7 +53,7 @@ class TextClassificationModule(pl.LightningModule):
             vocab_size=self.data_module.get_vocab_size(),
             padding_idx=self.data_module.get_pad_token_id(),
         )
-        self.head = get_classification_head(
+        self.head = ClassificationHead(
             input_dim=self.model.get_output_embedding_dim(),
             **head_params,
         )
@@ -62,7 +62,7 @@ class TextClassificationModule(pl.LightningModule):
         head_params["num_hidden_layers"] = 0
         head_params["num_classes"] = self.data_module.get_vocab_size()
         head_params["concat_consecutive"] = False
-        self.head_aux_task = get_classification_head(
+        self.head_aux_task = ClassificationHead(
             input_dim=self.model.get_output_embedding_dim(),
             **head_params,
         )
@@ -137,7 +137,7 @@ class TextClassificationModule(pl.LightningModule):
         # set up scheduler
         train_len = len(self.data_module.train_dataloader())
         max_epochs = self.trainer.max_epochs
-        swap_point = int(0.9 * max_epochs * train_len)
+        swap_point = int(0.5 * max_epochs * train_len)
 
         linear_lr = torch.optim.lr_scheduler.LinearLR(optimizer, start_factor=1., end_factor=1., total_iters=swap_point)
         cosine_anneal_lr = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=10, eta_min=1e-6)

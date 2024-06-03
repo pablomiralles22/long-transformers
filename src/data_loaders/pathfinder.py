@@ -39,10 +39,15 @@ class PathfinderSubdataset(Dataset):
 
 
 def build_dataset(data_path):
-    num_dirs = len(glob.glob(os.path.join(data_path, "metadata", "*.npy")))
-    return ConcatDataset(
-        [PathfinderSubdataset(data_path, dir_id) for dir_id in range(num_dirs)]
-    )
+    if not isinstance(data_path, list):
+        data_path = [data_path]
+
+    datasets = []
+    for path in data_path:
+        num_dirs = len(glob.glob(os.path.join(path, "metadata", "*.npy")))
+        datasets.extend(PathfinderSubdataset(path, dir_id) for dir_id in range(num_dirs))
+
+    return ConcatDataset(datasets)
 
 
 class PathfinderCollatorFn:
@@ -56,11 +61,17 @@ class PathfinderCollatorFn:
                     transforms.RandomHorizontalFlip(p=0.5),
                     transforms.RandomVerticalFlip(p=0.5),
                     transforms.RandomAffine(degrees=10, translate=(0.1, 0.1), scale=(0.9, 0.9)),
-                    transforms.ToTensor(),
+                    transforms.Grayscale(num_output_channels=1),
+                    transforms.PILToTensor(),
                 ]
             )
         else:
-            self.transform = transforms.ToTensor()
+            self.transform = transforms.Compose(
+                [
+                    transforms.Grayscale(num_output_channels=1),
+                    transforms.PILToTensor(),
+                ]
+            )
 
     def __call__(self, batch):
         input_ids = []
@@ -71,7 +82,7 @@ class PathfinderCollatorFn:
             if image is None:
                 continue
             image = self.transform(image)
-            image = (image.mean(dim=0) * 255).long().flatten().tolist()
+            image = torch.flatten(image).long()  # Important to prevent overflow
 
             # build input ids
             idxs = [self.cls_token] + [2 + pixel for pixel in image]  # 2 for PAD, CLS
