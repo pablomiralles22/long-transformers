@@ -54,7 +54,7 @@
   "optimizer_params": {
       "lr": 5e-4,
       "betas": [ 0.9, 0.98 ],
-      "weight_decay": 0.01
+      "weight_decay": 0.04
   },
   "trainer_params": {
       "max_epochs": 200,
@@ -64,7 +64,5 @@
       "accelerator": "gpu",
       "devices": [ 0 ]
   },
-  "fit_params": {
-    "ckpt_path": "out/cifar10/rotary_transformer_augment/lightning_logs/version_1/checkpoints/epoch=180-val_acc=0.82.ckpt"
-  }
+  "fit_params": { }
 }

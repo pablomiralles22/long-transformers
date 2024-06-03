@@ -6,22 +6,22 @@
             "output_embedding_dim": 128,
             "layers": [
                 [ "transformer_encoder_layer", 
-                  { "d_model": 128, "nhead": 8, "dim_feedforward": 256, "dropout": 0.0,
+                  { "d_model": 128, "nhead": 4, "dim_feedforward": 256, "dropout": 0.0,
                       "attention_params": { "type": "rotary", "freq": 10000 } } ],
                 [ "transformer_encoder_layer", 
-                  { "d_model": 128, "nhead": 8, "dim_feedforward": 256, "dropout": 0.0,
+                  { "d_model": 128, "nhead": 4, "dim_feedforward": 256, "dropout": 0.0,
                       "attention_params": { "type": "rotary", "freq": 10000 } } ],
                 [ "transformer_encoder_layer", 
-                  { "d_model": 128, "nhead": 8, "dim_feedforward": 256, "dropout": 0.0,
+                  { "d_model": 128, "nhead": 4, "dim_feedforward": 256, "dropout": 0.0,
                       "attention_params": { "type": "rotary", "freq": 10000 } } ],
                 [ "transformer_encoder_layer", 
-                  { "d_model": 128, "nhead": 8, "dim_feedforward": 256, "dropout": 0.0,
+                  { "d_model": 128, "nhead": 4, "dim_feedforward": 256, "dropout": 0.0,
                       "attention_params": { "type": "rotary", "freq": 10000 } } ],
                 [ "transformer_encoder_layer", 
-                  { "d_model": 128, "nhead": 8, "dim_feedforward": 256, "dropout": 0.0,
+                  { "d_model": 128, "nhead": 4, "dim_feedforward": 256, "dropout": 0.0,
                       "attention_params": { "type": "rotary", "freq": 10000 } } ],
                 [ "transformer_encoder_layer", 
-                  { "d_model": 128, "nhead": 8, "dim_feedforward": 256, "dropout": 0.0,
+                  { "d_model": 128, "nhead": 4, "dim_feedforward": 256, "dropout": 0.0,
                       "attention_params": { "type": "rotary", "freq": 10000 } } ]
             ]
         }
@@ -35,7 +35,11 @@
     "data_module_params": {
         "name": "pathfinder",
         "params": {
-            "data_path": "datasets/lra_release/pathfinder32/curv_contour_length_14",
+            "data_path": [
+                "datasets/lra_release/pathfinder32/curv_baseline",
+                "datasets/lra_release/pathfinder32/curv_contour_length_9",
+                "datasets/lra_release/pathfinder32/curv_contour_length_14"
+            ],
             "max_len": 1025,
             "batch_size": 128,
             "pin_memory": true,
@@ -54,7 +58,7 @@
         "enable_checkpointing": true,
         "default_root_dir": "out/pathfinder/rotary_transformer_noaugment_nopretrain",
         "accelerator": "gpu",
-        "devices": [ 0 ]
+        "devices": [ 1 ]
     },
     "fit_params": { }
   }

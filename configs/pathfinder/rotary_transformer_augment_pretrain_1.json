@@ -49,7 +49,7 @@
         "weight_decay": 0.01
     },
     "trainer_params": {
-        "max_epochs": 50,
+        "max_epochs": 25,
         "precision": "16-mixed",
         "enable_checkpointing": true,
         "default_root_dir": "out/pathfinder/rotary_transformer_augment_pretrain_1",

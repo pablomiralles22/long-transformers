@@ -6,22 +6,22 @@
       "output_embedding_dim": 128,
       "layers": [
         [ "transformer_encoder_layer", 
-          { "d_model": 128, "nhead": 4, "dim_feedforward": 256, "dropout": 0.1, "activation_fn": "gelu",
+          { "d_model": 128, "nhead": 4, "dim_feedforward": 256, "dropout": 0.1,
               "attention_params": { "type": "rotary", "freq": 10000 } } ],
         [ "transformer_encoder_layer", 
-          { "d_model": 128, "nhead": 4, "dim_feedforward": 256, "dropout": 0.1, "activation_fn": "gelu",
+          { "d_model": 128, "nhead": 4, "dim_feedforward": 256, "dropout": 0.1,
               "attention_params": { "type": "rotary", "freq": 10000 } } ],
         [ "transformer_encoder_layer", 
-          { "d_model": 128, "nhead": 4, "dim_feedforward": 256, "dropout": 0.1, "activation_fn": "gelu",
+          { "d_model": 128, "nhead": 4, "dim_feedforward": 256, "dropout": 0.1,
               "attention_params": { "type": "rotary", "freq": 10000 } } ],
         [ "transformer_encoder_layer", 
-          { "d_model": 128, "nhead": 4, "dim_feedforward": 256, "dropout": 0.1, "activation_fn": "gelu",
+          { "d_model": 128, "nhead": 4, "dim_feedforward": 256, "dropout": 0.1,
               "attention_params": { "type": "rotary", "freq": 10000 } } ],
         [ "transformer_encoder_layer", 
-          { "d_model": 128, "nhead": 4, "dim_feedforward": 256, "dropout": 0.1, "activation_fn": "gelu",
+          { "d_model": 128, "nhead": 4, "dim_feedforward": 256, "dropout": 0.1,
               "attention_params": { "type": "rotary", "freq": 10000 } } ],
         [ "transformer_encoder_layer", 
-          { "d_model": 128, "nhead": 4, "dim_feedforward": 256, "dropout": 0.1, "activation_fn": "gelu",
+          { "d_model": 128, "nhead": 4, "dim_feedforward": 256, "dropout": 0.1,
               "attention_params": { "type": "rotary", "freq": 10000 } } ]
       ]
     }
@@ -55,7 +55,7 @@
     "enable_checkpointing": true,
     "default_root_dir": "out/text_retrieval/rotary_transformer_w_mlm",
     "accelerator": "gpu",
-    "devices": [ 0 ]
+    "devices": [ 2 ]
   },
   "fit_params": { }
 }

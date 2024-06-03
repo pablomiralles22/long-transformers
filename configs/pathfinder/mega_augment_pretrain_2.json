@@ -52,7 +52,7 @@
         "weight_decay": 0.01
     },
     "trainer_params": {
-        "max_epochs": 100,
+        "max_epochs": 75,
         "precision": "16-mixed",
         "enable_checkpointing": true,
         "default_root_dir": "out/pathfinder/mega_augment_pretrain_2",

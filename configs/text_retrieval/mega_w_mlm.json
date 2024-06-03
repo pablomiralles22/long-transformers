@@ -55,7 +55,7 @@
     "enable_checkpointing": true,
     "default_root_dir": "out/text_retrieval/mega_w_mlm",
     "accelerator": "gpu",
-    "devices": [ 0 ]
+    "devices": [ 2 ]
   },
   "fit_params": { }
 }

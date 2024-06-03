@@ -38,7 +38,11 @@
     "data_module_params": {
         "name": "pathfinder",
         "params": {
-            "data_path": "datasets/lra_release/pathfinder32/curv_contour_length_14",
+            "data_path": [
+                "datasets/lra_release/pathfinder32/curv_baseline",
+                "datasets/lra_release/pathfinder32/curv_contour_length_9",
+                "datasets/lra_release/pathfinder32/curv_contour_length_14"
+            ],
             "max_len": 1025,
             "batch_size": 64,
             "pin_memory": true,
@@ -57,7 +61,9 @@
         "enable_checkpointing": true,
         "default_root_dir": "out/pathfinder/mega_noaugment_nopretrain",
         "accelerator": "gpu",
-        "devices": [ 0 ]
+        "devices": [ 1 ]
     },
-    "fit_params": { }
+    "fit_params": {
+        "ckpt_path": "out/pathfinder/mega_noaugment_nopretrain/lightning_logs/version_0/checkpoints/epoch=2-val_acc=0.53.ckpt"
+    }
   }

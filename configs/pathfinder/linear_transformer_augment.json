@@ -5,24 +5,25 @@
             "input_embedding_dim": 128,
             "output_embedding_dim": 128,
             "layers": [
+                [ "positional_embedding", { "mode": "sinusoidal", "embed_dim": 128 } ],
                 [ "transformer_encoder_layer", 
                   { "d_model": 128, "nhead": 8, "dim_feedforward": 256, "dropout": 0.0,
-                      "attention_params": { "type": "rotary", "freq": 10000 } } ],
+                      "attention_params": { "type": "linear" } } ],
                 [ "transformer_encoder_layer", 
                   { "d_model": 128, "nhead": 8, "dim_feedforward": 256, "dropout": 0.0,
-                      "attention_params": { "type": "rotary", "freq": 10000 } } ],
+                      "attention_params": { "type": "linear" } } ],
                 [ "transformer_encoder_layer", 
                   { "d_model": 128, "nhead": 8, "dim_feedforward": 256, "dropout": 0.0,
-                      "attention_params": { "type": "rotary", "freq": 10000 } } ],
+                      "attention_params": { "type": "linear" } } ],
                 [ "transformer_encoder_layer", 
                   { "d_model": 128, "nhead": 8, "dim_feedforward": 256, "dropout": 0.0,
-                      "attention_params": { "type": "rotary", "freq": 10000 } } ],
+                      "attention_params": { "type": "linear" } } ],
                 [ "transformer_encoder_layer", 
                   { "d_model": 128, "nhead": 8, "dim_feedforward": 256, "dropout": 0.0,
-                      "attention_params": { "type": "rotary", "freq": 10000 } } ],
+                      "attention_params": { "type": "linear" } } ],
                 [ "transformer_encoder_layer", 
                   { "d_model": 128, "nhead": 8, "dim_feedforward": 256, "dropout": 0.0,
-                      "attention_params": { "type": "rotary", "freq": 10000 } } ]
+                      "attention_params": { "type": "linear" } } ]
             ]
         }
     },
@@ -35,11 +36,15 @@
     "data_module_params": {
         "name": "pathfinder",
         "params": {
-            "data_path": "datasets/lra_release/pathfinder32/curv_contour_length_14",
+            "data_path": [
+                "datasets/lra_release/pathfinder32/curv_baseline",
+                "datasets/lra_release/pathfinder32/curv_contour_length_9",
+                "datasets/lra_release/pathfinder32/curv_contour_length_14"
+            ],
             "max_len": 1025,
             "batch_size": 128,
             "pin_memory": true,
-            "enable_augment": false,
+            "enable_augment": true,
             "num_workers": 6
         }
     },
@@ -49,14 +54,12 @@
         "weight_decay": 0.01
     },
     "trainer_params": {
-        "max_epochs": 75,
+        "max_epochs": 100,
         "precision": "16-mixed",
         "enable_checkpointing": true,
-        "default_root_dir": "out/pathfinder/rotary_transformer_noaugment_pretrain_2",
+        "default_root_dir": "out/pathfinder/linear_transformer_augment",
         "accelerator": "gpu",
-        "devices": [ 0 ]
+        "devices": [ 2 ]
     },
-    "fit_params": {
-        "ckpt_path": "out/pathfinder/rotary_transformer_noaugment_pretrain_2/lightning_logs/version_2/checkpoints/epoch=54-val_acc=0.88.ckpt"
-    }
+    "fit_params": { }
   }

@@ -8,28 +8,28 @@
                 [ "positional_embedding", { "mode": "sinusoidal", "embed_dim": 160 } ],
                 [ "transformer_encoder_layer", 
                   { "d_model": 160, "nhead": 8, "dim_feedforward": 160, "dropout": 0.0, 
-                      "attention_params": { "type": "std" } } ],
+                      "attention_params": { "type": "linear" } } ],
                 [ "transformer_encoder_layer", 
                   { "d_model": 160, "nhead": 8, "dim_feedforward": 160, "dropout": 0.0, 
-                      "attention_params": { "type": "std" } } ],
+                      "attention_params": { "type": "linear" } } ],
                 [ "transformer_encoder_layer", 
                   { "d_model": 160, "nhead": 8, "dim_feedforward": 160, "dropout": 0.0, 
-                      "attention_params": { "type": "std" } } ],
+                      "attention_params": { "type": "linear" } } ],
                 [ "transformer_encoder_layer", 
                   { "d_model": 160, "nhead": 8, "dim_feedforward": 160, "dropout": 0.0, 
-                      "attention_params": { "type": "std" } } ],
+                      "attention_params": { "type": "linear" } } ],
                 [ "transformer_encoder_layer", 
                   { "d_model": 160, "nhead": 8, "dim_feedforward": 160, "dropout": 0.0, 
-                      "attention_params": { "type": "std" } } ],
+                      "attention_params": { "type": "linear" } } ],
                 [ "transformer_encoder_layer", 
                   { "d_model": 160, "nhead": 8, "dim_feedforward": 160, "dropout": 0.0, 
-                      "attention_params": { "type": "std" } } ],
+                      "attention_params": { "type": "linear" } } ],
                 [ "transformer_encoder_layer", 
                   { "d_model": 160, "nhead": 8, "dim_feedforward": 160, "dropout": 0.0, 
-                      "attention_params": { "type": "std" } } ],
+                      "attention_params": { "type": "linear" } } ],
                 [ "transformer_encoder_layer", 
                   { "d_model": 160, "nhead": 8, "dim_feedforward": 160, "dropout": 0.0, 
-                      "attention_params": { "type": "std" } } ]
+                      "attention_params": { "type": "linear" } } ]
   
             ]
         }
@@ -46,7 +46,7 @@
         "params": {
             "data_path": "datasets/cifar10",
             "max_len": 1025,
-            "batch_size": 64,
+            "batch_size": 32,
             "pin_memory": true,
             "num_workers": 6,
             "augment": true
@@ -55,7 +55,7 @@
     "optimizer_params": {
         "lr": 5e-4,
         "betas": [ 0.9, 0.98 ],
-        "weight_decay": 0.01
+        "weight_decay": 0.04
     },
     "trainer_params": {
         "max_epochs": 200,
