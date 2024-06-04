@@ -75,11 +75,11 @@ class TextClassificationModule(pl.LightningModule):
         accuracy = self.accuracy(logits_1, labels)
         self.log_dict(
             { "train_loss_1": loss_1, "train_loss_2": loss_2, "train_accuracy": accuracy },
-            on_step=False, on_epoch=True, prog_bar=False, logger=True,
+            on_step=False, on_epoch=True, prog_bar=False, logger=True, batch_size=labels.size(0),
         )
         self.log_dict(
             { "train_loss_1_step": loss_1, "train_loss_2_step": loss_2 },
-            on_step=True, on_epoch=False, prog_bar=True, logger=False,
+            on_step=True, on_epoch=False, prog_bar=True, logger=False, batch_size=labels.size(0),
         )
         return loss if self.mlm_aux_task else loss_1
 
@@ -88,7 +88,7 @@ class TextClassificationModule(pl.LightningModule):
         accuracy = self.accuracy(logits_1, labels)
         self.log_dict(
             { "val_loss_1": loss_1, "val_loss_2": loss_2, "val_accuracy": accuracy, },
-            on_step=False, on_epoch=True, prog_bar=True, logger=True,
+            on_step=False, on_epoch=True, prog_bar=True, logger=True, batch_size=labels.size(0),
         )
         return loss if self.mlm_aux_task else loss_1
 
