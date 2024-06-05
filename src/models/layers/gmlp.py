@@ -77,6 +77,28 @@ class SpatialLinear(nn.Module):
         for layer in self.hidden_layers:
             y = layer(y) + y
         return self.linear_2(y)
+    
+class LinearBlock(nn.Module):
+    def __init__(
+        self,
+        input_dim: int,
+        hidden_dim: int,
+        dropout=0.1,
+        activation: ActivationFn = "gelu",
+        norm_eps=1e-05,
+    ):
+        super().__init__()
+        self.norm = nn.LayerNorm(input_dim, norm_eps)
+        self.ff = nn.Sequential(
+            nn.Linear(input_dim, hidden_dim),
+            build_activation(activation),
+            nn.Dropout(dropout),
+            nn.Linear(hidden_dim, input_dim),
+            nn.Dropout(dropout),
+        )
+    
+    def forward(self, x):
+        return self.ff(self.norm(x)) + x
         
 
 class GMLP(Layer):
@@ -98,6 +120,8 @@ class GMLP(Layer):
         # linear mode params
         bottleneck_dim: int = -1,
         num_hidden_layers: int = 3,
+        # ff block params
+        ff_hidden_dim: int = None,
     ):
         super().__init__()
 
@@ -136,11 +160,23 @@ class GMLP(Layer):
             nn.Dropout(dropout),
         )
 
+        if ff_hidden_dim is not None:
+            self.ff_block = LinearBlock(d_model, ff_hidden_dim, dropout, activation, norm_eps)
+
     def forward(
         self,
         embeddings,  # [B, L, D]
         attention_mask=None,  # [B, L]
         token_type_ids=None,  # [B, L]
+    ):
+        x = self._forward_gmlp_block(embeddings, attention_mask)
+        x = self._forward_ff_block(x)
+        return x
+    
+    def _forward_gmlp_block(
+        self,
+        embeddings,  # [B, L, D]
+        attention_mask=None,  # [B, L]
     ):
         x = self.norm_1(embeddings)
 
@@ -156,3 +192,10 @@ class GMLP(Layer):
         if self.residual is True:
             return self.proj_out(s_z) + embeddings
         return self.proj_out(s_z)
+    
+    def _forward_ff_block(self, x):
+        if self.ff_block is None:
+            return x
+        if self.residual is True:
+            return self.ff_block(x) + x
+        return self.ff_block(x)

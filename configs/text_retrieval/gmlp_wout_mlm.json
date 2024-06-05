@@ -1,0 +1,52 @@
+{
+  "model_params": {
+    "name": "layered",
+    "params": {
+      "input_embedding_dim": 256,
+      "output_embedding_dim": 256,
+      "layers": [
+        [ "gmlp", { "d_model": 256, "hidden_dim": 64, "seq_len": 1024, "dropout": 0.0, "mode": "conv", "num_channels": 1 } ],
+        [ "gmlp", { "d_model": 256, "hidden_dim": 64, "seq_len": 1024, "dropout": 0.0, "mode": "conv", "num_channels": 1 } ],
+        [ "gmlp", { "d_model": 256, "hidden_dim": 64, "seq_len": 1024, "dropout": 0.0, "mode": "conv", "num_channels": 1 } ],
+        [ "gmlp", { "d_model": 256, "hidden_dim": 64, "seq_len": 1024, "dropout": 0.0, "mode": "conv", "num_channels": 1 } ],
+        [ "gmlp", { "d_model": 256, "hidden_dim": 64, "seq_len": 1024, "dropout": 0.0, "mode": "conv", "num_channels": 1 } ],
+        [ "gmlp", { "d_model": 256, "hidden_dim": 64, "seq_len": 1024, "dropout": 0.0, "mode": "conv", "num_channels": 1 } ]
+      ]
+    }
+  },
+  "head_params": {
+    "ff_dim": 512,
+    "num_hidden_layers": 1,
+    "dropout_p": 0.1,
+    "reduction_method": "mean",
+    "concat_consecutive": true
+  },
+  "data_module_params": {
+    "name": "text-retrieval",
+    "params": {
+      "data_path": "datasets/text_retrieval",
+      "max_len": 1024,
+      "batch_size": 64,
+      "pin_memory": true,
+      "num_workers": 4
+    }
+  },
+  "optimizer_params": {
+    "lr": 2e-3,
+    "weight_decay": 0.01,
+    "betas": [ 0.9, 0.98 ],
+    "mlm_aux_task": false
+  },
+  "trainer_params": {
+    "max_epochs": 40,
+    "precision": "32",
+    "gradient_clip_val": 1.0,
+    "gradient_clip_algorithm": "value",
+    "enable_checkpointing": true,
+    "default_root_dir": "out/text_retrieval/gmlp_wout_mlm",
+    "accelerator": "gpu",
+    "devices": [ 0 ]
+  },
+  "fit_params": { }
+}
+  
