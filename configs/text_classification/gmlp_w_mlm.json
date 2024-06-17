@@ -2,13 +2,15 @@
     "model_params": {
         "name": "layered",
         "params": {
-            "input_embedding_dim": 64,
-            "output_embedding_dim": 64,
+            "input_embedding_dim": 128,
+            "output_embedding_dim": 128,
             "layers": [
-                [ "gmlp", { "d_model": 64, "hidden_dim": 64, "seq_len": 2048, "dropout": 0.0, "mode": "conv", "num_channels": 2 } ],
-                [ "gmlp", { "d_model": 64, "hidden_dim": 64, "seq_len": 2048, "dropout": 0.0, "mode": "conv", "num_channels": 2 } ],
-                [ "gmlp", { "d_model": 64, "hidden_dim": 64, "seq_len": 2048, "dropout": 0.0, "mode": "conv", "num_channels": 2 } ],
-                [ "gmlp", { "d_model": 64, "hidden_dim": 64, "seq_len": 2048, "dropout": 0.0, "mode": "conv", "num_channels": 2 } ]
+                [ "gmlp", { "d_model": 128, "hidden_dim": 64, "seq_len": 4096, "dropout": 0.1, "mode": "conv", "num_channels": 16 } ],
+                [ "gmlp", { "d_model": 128, "hidden_dim": 64, "seq_len": 4096, "dropout": 0.1, "mode": "conv", "num_channels": 16 } ],
+                [ "gmlp", { "d_model": 128, "hidden_dim": 64, "seq_len": 4096, "dropout": 0.1, "mode": "conv", "num_channels": 16 } ],
+                [ "gmlp", { "d_model": 128, "hidden_dim": 64, "seq_len": 4096, "dropout": 0.1, "mode": "conv", "num_channels": 16 } ],
+                [ "gmlp", { "d_model": 128, "hidden_dim": 64, "seq_len": 4096, "dropout": 0.1, "mode": "conv", "num_channels": 16 } ],
+                [ "gmlp", { "d_model": 128, "hidden_dim": 64, "seq_len": 4096, "dropout": 0.1, "mode": "conv", "num_channels": 16 } ]
             ]
         }
     },
@@ -22,8 +24,8 @@
     "name": "text-classification",
     "params": {
       "data_path": "datasets/aclImdb",
-      "max_len": 2048,
-      "batch_size": 50,
+      "max_len": 4096,
+      "batch_size": 32,
       "augment_prob": 0.0,
       "pin_memory": true,
       "num_workers": 4
@@ -32,7 +34,7 @@
   "optimizer_params": {
     "lr": 1e-3,
     "betas": [ 0.9, 0.98 ],
-    "weight_decay": 0.01,
+    "weight_decay": 0.05,
     "mlm_aux_task": true
   },
   "trainer_params": {
@@ -41,7 +43,7 @@
     "enable_checkpointing": true,
     "default_root_dir": "out/text_classification/gmlp_w_mlm",
     "accelerator": "gpu",
-    "devices": [ 0 ]
+    "devices": [ 2 ]
   },
   "fit_params": {}
 }

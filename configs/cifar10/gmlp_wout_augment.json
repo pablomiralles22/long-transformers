@@ -5,12 +5,12 @@
             "input_embedding_dim": 512,
             "output_embedding_dim": 512,
             "layers": [
-                [ "gmlp", { "d_model": 512, "hidden_dim": 64, "seq_len": 1024, "dropout": 0.2, "mode": "conv", "num_channels": 1 } ],
-                [ "gmlp", { "d_model": 512, "hidden_dim": 64, "seq_len": 1024, "dropout": 0.2, "mode": "conv", "num_channels": 1 } ],
-                [ "gmlp", { "d_model": 512, "hidden_dim": 64, "seq_len": 1024, "dropout": 0.2, "mode": "conv", "num_channels": 1 } ],
-                [ "gmlp", { "d_model": 512, "hidden_dim": 64, "seq_len": 1024, "dropout": 0.2, "mode": "conv", "num_channels": 1 } ],
-                [ "gmlp", { "d_model": 512, "hidden_dim": 64, "seq_len": 1024, "dropout": 0.2, "mode": "conv", "num_channels": 1 } ],
-                [ "gmlp", { "d_model": 512, "hidden_dim": 64, "seq_len": 1024, "dropout": 0.2, "mode": "conv", "num_channels": 1 } ]
+                [ "gmlp", { "d_model": 512, "hidden_dim": 64, "seq_len": 1024, "dropout": 0.1, "mode": "conv", "num_channels": 1 } ],
+                [ "gmlp", { "d_model": 512, "hidden_dim": 64, "seq_len": 1024, "dropout": 0.1, "mode": "conv", "num_channels": 1 } ],
+                [ "gmlp", { "d_model": 512, "hidden_dim": 64, "seq_len": 1024, "dropout": 0.1, "mode": "conv", "num_channels": 1 } ],
+                [ "gmlp", { "d_model": 512, "hidden_dim": 64, "seq_len": 1024, "dropout": 0.1, "mode": "conv", "num_channels": 1 } ],
+                [ "gmlp", { "d_model": 512, "hidden_dim": 64, "seq_len": 1024, "dropout": 0.1, "mode": "conv", "num_channels": 1 } ],
+                [ "gmlp", { "d_model": 512, "hidden_dim": 64, "seq_len": 1024, "dropout": 0.1, "mode": "conv", "num_channels": 1 } ]
             ]
         }
     },

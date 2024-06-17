@@ -55,7 +55,7 @@
         "enable_checkpointing": true,
         "default_root_dir": "out/pathfinder/linear_transformer_noaugment_pretrain_2",
         "accelerator": "gpu",
-        "devices": [ 2 ]
+        "devices": [ 1 ]
     },
     "fit_params": { }
   }

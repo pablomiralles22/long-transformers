@@ -53,12 +53,13 @@
   "trainer_params": {
     "max_epochs": 40,
     "precision": "16-mixed",
-    "gradient_clip_val": 1.0,
     "enable_checkpointing": true,
     "default_root_dir": "out/text_retrieval/linear_transformer_w_mlm",
     "accelerator": "gpu",
-    "devices": [ 2 ]
+    "devices": [ 1 ]
   },
-  "fit_params": { }
+  "fit_params": {
+
+  }
 }
   

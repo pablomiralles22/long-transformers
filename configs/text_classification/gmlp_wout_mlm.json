@@ -1,47 +1,49 @@
 {
-    "model_params": {
-        "name": "layered",
-        "params": {
-            "input_embedding_dim": 64,
-            "output_embedding_dim": 64,
-            "layers": [
-                [ "gmlp", { "d_model": 64, "hidden_dim": 64, "seq_len": 2048, "dropout": 0.0, "mode": "conv", "num_channels": 1 } ],
-                [ "gmlp", { "d_model": 64, "hidden_dim": 64, "seq_len": 2048, "dropout": 0.0, "mode": "conv", "num_channels": 1 } ],
-                [ "gmlp", { "d_model": 64, "hidden_dim": 64, "seq_len": 2048, "dropout": 0.0, "mode": "conv", "num_channels": 1 } ],
-                [ "gmlp", { "d_model": 64, "hidden_dim": 64, "seq_len": 2048, "dropout": 0.0, "mode": "conv", "num_channels": 1 } ]
-            ]
-        }
-    },
-  "head_params": {
-    "ff_dim": 256,
-    "num_hidden_layers": 0,
-    "dropout_p": 0.0,
-    "reduction_method": "mean"
+  "model_params": {
+      "name": "layered",
+      "params": {
+          "input_embedding_dim": 64,
+          "output_embedding_dim": 64,
+          "layers": [
+              [ "gmlp", { "d_model": 64, "hidden_dim": 64, "seq_len": 2048, "dropout": 0.0, "mode": "conv", "num_channels": 1 } ],
+              [ "gmlp", { "d_model": 64, "hidden_dim": 64, "seq_len": 2048, "dropout": 0.0, "mode": "conv", "num_channels": 1 } ],
+              [ "gmlp", { "d_model": 64, "hidden_dim": 64, "seq_len": 2048, "dropout": 0.0, "mode": "conv", "num_channels": 1 } ],
+              [ "gmlp", { "d_model": 64, "hidden_dim": 64, "seq_len": 2048, "dropout": 0.0, "mode": "conv", "num_channels": 1 } ],
+              [ "gmlp", { "d_model": 64, "hidden_dim": 64, "seq_len": 2048, "dropout": 0.0, "mode": "conv", "num_channels": 1 } ],
+              [ "gmlp", { "d_model": 64, "hidden_dim": 64, "seq_len": 2048, "dropout": 0.0, "mode": "conv", "num_channels": 1 } ]
+          ]
+      }
   },
-  "data_module_params": {
-    "name": "text-classification",
-    "params": {
-      "data_path": "datasets/aclImdb",
-      "max_len": 2048,
-      "batch_size": 50,
-      "augment_prob": 0.0,
-      "pin_memory": true,
-      "num_workers": 4
-    }
-  },
-  "optimizer_params": {
-    "lr": 1e-3,
-    "betas": [ 0.9, 0.98 ],
-    "weight_decay": 0.01,
-    "mlm_aux_task": false
-  },
-  "trainer_params": {
-    "max_epochs": 60,
-    "precision": "32",
-    "enable_checkpointing": true,
-    "default_root_dir": "out/text_classification/gmlp_wout_mlm",
-    "accelerator": "gpu",
-    "devices": [ 0 ]
-  },
-  "fit_params": {}
+"head_params": {
+  "ff_dim": 256,
+  "num_hidden_layers": 0,
+  "dropout_p": 0.0,
+  "reduction_method": "mean"
+},
+"data_module_params": {
+  "name": "text-classification",
+  "params": {
+    "data_path": "datasets/aclImdb",
+    "max_len": 2048,
+    "batch_size": 32,
+    "augment_prob": 0.0,
+    "pin_memory": true,
+    "num_workers": 4
+  }
+},
+"optimizer_params": {
+  "lr": 1e-3,
+  "betas": [ 0.9, 0.98 ],
+  "weight_decay": 0.01,
+  "mlm_aux_task": false
+},
+"trainer_params": {
+  "max_epochs": 60,
+  "precision": "32",
+  "enable_checkpointing": true,
+  "default_root_dir": "out/text_classification/gmlp_wout_mlm",
+  "accelerator": "gpu",
+  "devices": [ 0 ]
+},
+"fit_params": {}
 }

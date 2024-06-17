@@ -61,7 +61,7 @@
         "enable_checkpointing": true,
         "default_root_dir": "out/pathfinder/mega_augment_nopretrain",
         "accelerator": "gpu",
-        "devices": [ 1 ]
+        "devices": [ 0 ]
     },
     "fit_params": { }
   }

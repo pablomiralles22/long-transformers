@@ -63,7 +63,7 @@
         "enable_checkpointing": true,
         "default_root_dir": "out/cifar10/linear_transformer_augment",
         "accelerator": "gpu",
-        "devices": [ 2 ]
+        "devices": [ 1 ]
     },
     "fit_params": { }
   }
