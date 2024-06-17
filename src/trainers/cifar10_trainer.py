@@ -84,7 +84,7 @@ class CIFAR10Module(pl.LightningModule):
 
     def configure_optimizers(self):
         # set up optimizer
-        weight_decay_params, no_weight_decay_params = WeightDecayParamFilter.filter(self.model_with_head)
+        weight_decay_params, no_weight_decay_params = WeightDecayParamFilter.filter(self)
 
         general_optimizer_config = deepcopy(self.optimizer_config)
         weight_decay = general_optimizer_config.pop("weight_decay")
@@ -96,12 +96,12 @@ class CIFAR10Module(pl.LightningModule):
         ]
         optimizer = torch.optim.AdamW(optim_groups, **general_optimizer_config)
 
-        L1Regularizer.apply(self.model_with_head, l1_lambda=self.l1_lambda)
+        # L1Regularizer.apply(self, l1_lambda=self.l1_lambda)
 
         # set up scheduler
         train_len = len(self.data_module.train_dataloader())
         max_epochs = self.trainer.max_epochs
-        swap_point = int(0.25 * max_epochs * train_len)
+        swap_point = int(0.125 * max_epochs * train_len)
 
         linear_lr = torch.optim.lr_scheduler.LinearLR(optimizer, start_factor=1., end_factor=1., total_iters=swap_point)
         cosine_anneal_lr = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=10, eta_min=1e-5)

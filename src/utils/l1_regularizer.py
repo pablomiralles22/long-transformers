@@ -30,11 +30,11 @@ class L1Regularizer:
                 no_l1_names.append(name)
 
         if debug is True:
-            print("Adding weight decay")
+            print("Adding l1 reg")
             for name in l1_names:
                 print(f"\t{name}")
             print()
-            print("Skipping weight decay")
+            print("Skipping l1 reg")
             for name in no_l1_names:
                 print(f"\t{name}")
 

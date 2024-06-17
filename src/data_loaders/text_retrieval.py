@@ -53,19 +53,24 @@ class TextRetrievalCollatorFn:
         attention_masks = []
         labels = []
 
+        batch_lengths = [
+            len(bytes(item[label], encoding="utf-8"))
+            for item in batch for label in ["text1", "text2"]
+        ]
+        batch_max_len = min(self.max_len, max(batch_lengths))
         for item in batch:
             text1, text2, label = item["text1"], item["text2"], item["label"]
             texts = (text1, text2)
 
             for text in texts:
                 start_idx = (
-                    random.randint(0, max(1, len(text) - self.max_len))
+                    random.randint(0, max(1, len(text) - batch_max_len))
                     if self.random_start is True
                     else 0
                 )
 
                 # indices
-                text = text[start_idx:start_idx + self.max_len]
+                text = text[start_idx:start_idx + batch_max_len]
                 text_idxs = [START_BYTE_IDX + int(b) for b in bytes(text, encoding="utf-8")]  # 3 for PAD, CLS, MASK
                 indices = [CLS_TOKEN] + text_idxs
 
@@ -79,8 +84,8 @@ class TextRetrievalCollatorFn:
                         corrupt_indices[idx] = MASK_TOKEN
 
                 # cut and pad tokens
-                length = min(len(indices), self.max_len)
-                padding_size = self.max_len - length
+                length = min(len(indices), batch_max_len)
+                padding_size = batch_max_len - length
                 indices = indices[:length] + [PAD_TOKEN] * padding_size
                 corrupt_indices = corrupt_indices[:length] + [PAD_TOKEN] * padding_size
 

@@ -4,9 +4,10 @@ import torch.nn.functional as F
 
 from typing import Literal
 from src.utils.attention_head_handler import AttentionHeadHandler
-# from src.models.functional.absdiff_attention_triton import AbsdiffAttention
+from src.models.functional.absdiff_attention_triton import AbsdiffAttention
+# from src.models.functional.absdiff_attention import AbsdiffAttention
 
-EPS = 1e-5
+EPS = 1e-4
 
 class LinearMultiheadAttention(nn.Module):
     def __init__(
@@ -44,10 +45,10 @@ class LinearMultiheadAttention(nn.Module):
             self.attn = causal_linear_attention
         elif impl == "rel_pos":
             self.attn = RelPosAttention(nhead)
-        # elif impl == "absdiff":
-        #     self.attn = AbsdiffAttention()
-        #     # make W_Q the identity function, as we won't use its output
-        #     self.W_Q = nn.Identity()
+        elif impl == "absdiff":
+            self.attn = AbsdiffAttention()
+            # make W_Q the identity function, as we won't use its output
+            self.W_Q = nn.Identity()
         else:
             raise ValueError(f"Error: unknown implementation {impl}")
 
@@ -79,17 +80,17 @@ def std_linear_attention(
     V, # [B, H, L2, Dv/H]
     key_attention_mask=None,  # [B, L2]
 ):
-    B, _, L2, _ = K.shape
+    B, _, L2, Dqk = K.shape
 
     original_dtype = Q.dtype
     K = K.to(torch.float32)
     V = V.to(torch.float32)
     Q = Q.to(torch.float32)
 
-    feature_map_Q = torch.sigmoid
-    feature_map_K = torch.sigmoid
-    # feature_map_Q = F.softplus
-    # feature_map_K = F.softplus
+    # feature_map_Q = torch.sigmoid
+    # feature_map_K = lambda x: torch.sigmoid(x) / Dqk
+    feature_map_Q = lambda x: F.softmax(x, dim=-1)
+    feature_map_K = lambda x: F.softmax(x, dim=-2)
 
     Q = feature_map_Q(Q)  # [B, H, L1, Dqk/H]
     K = feature_map_K(K)  # [B, H, L2, Dqk/H]
@@ -98,9 +99,10 @@ def std_linear_attention(
         K = K.masked_fill(~key_attention_mask.view(B, 1, L2, 1).bool(), 0.)
         V = V.masked_fill(~key_attention_mask.view(B, 1, L2, 1).bool(), 0.)
 
-    normalizer = 1. / (torch.einsum("bhld,bhd->bhl", Q, K.sum(dim=-2)) + EPS)  # [B, H, L1]
+    # normalizer = 1. / (torch.einsum("bhld,bhd->bhl", Q, K.sum(dim=-2)) + EPS)  # [B, H, L1]
     KV = torch.einsum("bhld,bhle->bhde", K, V)  # [B, H, Dqk/H, Dv/H]
-    O = torch.einsum("bhld,bhl,bhde->bhle", Q, normalizer, KV)
+    # O = torch.einsum("bhld,bhl,bhde->bhle", Q, normalizer, KV)
+    O = torch.einsum("bhld,bhde->bhle", Q, KV)
     return O.to(original_dtype)
 
 def causal_linear_attention(

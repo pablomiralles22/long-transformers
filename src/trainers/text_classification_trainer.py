@@ -58,6 +58,7 @@ class TextClassificationModule(pl.LightningModule):
             **head_params,
         )
         # auxiliar task
+        head_params = deepcopy(head_params)
         head_params["reduction_method"] = "none"
         head_params["num_hidden_layers"] = 0
         head_params["num_classes"] = self.data_module.get_vocab_size()
@@ -137,7 +138,7 @@ class TextClassificationModule(pl.LightningModule):
         # set up scheduler
         train_len = len(self.data_module.train_dataloader())
         max_epochs = self.trainer.max_epochs
-        swap_point = int(0.5 * max_epochs * train_len)
+        swap_point = int(0.125 * max_epochs * train_len)
 
         linear_lr = torch.optim.lr_scheduler.LinearLR(optimizer, start_factor=1., end_factor=1., total_iters=swap_point)
         cosine_anneal_lr = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=10, eta_min=1e-6)

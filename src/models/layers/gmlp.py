@@ -194,7 +194,7 @@ class GMLP(Layer):
         return self.proj_out(s_z)
     
     def _forward_ff_block(self, x):
-        if self.ff_block is None:
+        if hasattr(self, "ff_block") is False:
             return x
         if self.residual is True:
             return self.ff_block(x) + x

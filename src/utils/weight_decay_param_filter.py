@@ -20,7 +20,7 @@ class WeightDecayParamFilter:
             else:
                 no_weight_decay_params.append(param)
                 no_weight_decay_names.append(name)
-
+            
         if debug is True:
             print("Adding weight decay")
             for name in weight_decay_names:

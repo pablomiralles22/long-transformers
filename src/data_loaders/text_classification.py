@@ -60,13 +60,14 @@ class TextClassificationCollatorFn:
         attention_masks = []
         labels = []
 
+        batch_max_len = min(self.max_len, max(len(bytes(item["text"], encoding="utf-8")) for item in batch))
         for item in batch:
             text, label = item["text"], item["label"]
 
-            start_idx = random.randint(0, max(1, len(text) - self.max_len))
+            start_idx = random.randint(0, max(1, len(text) - batch_max_len))
 
             # indices
-            text = text[start_idx:start_idx + self.max_len]
+            text = text[start_idx:start_idx + batch_max_len]
             text_idxs = [START_BYTE_IDX + int(b) for b in bytes(text, encoding="utf-8")]  # 3 for PAD, CLS, MASK
             indices = [CLS_TOKEN] + text_idxs
 
@@ -80,8 +81,8 @@ class TextClassificationCollatorFn:
                     corrupt_indices[idx] = MASK_TOKEN
 
             # cut and pad tokens
-            length = min(len(indices), self.max_len)
-            padding_size = self.max_len - length
+            length = min(len(indices), batch_max_len)
+            padding_size = batch_max_len - length
             indices = indices[:length] + [PAD_TOKEN] * padding_size
             corrupt_indices = corrupt_indices[:length] + [PAD_TOKEN] * padding_size
 
