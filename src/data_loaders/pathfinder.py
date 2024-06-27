@@ -56,6 +56,7 @@ class PathfinderCollatorFn:
         self.pad_token = pad_token
         self.cls_token = cls_token
         if enable_augment is True:
+            print("Augmentation activated")
             self.transform = transforms.Compose(
                 [
                     transforms.RandomHorizontalFlip(p=0.5),
@@ -66,6 +67,7 @@ class PathfinderCollatorFn:
                 ]
             )
         else:
+            print("Augmentation deactivated")
             self.transform = transforms.Compose(
                 [
                     transforms.Grayscale(num_output_channels=1),
@@ -111,6 +113,7 @@ class PathfinderDataModule(pl.LightningDataModule):
     def get_default_collator_config(cls):
         return {
             "max_len": 512,
+            "enable_augment": False,
         }
 
     @classmethod
@@ -164,18 +167,18 @@ class PathfinderDataModule(pl.LightningDataModule):
             **self.loader_config,
             collate_fn=PathfinderCollatorFn(
                 **self.collator_config,
-                enable_augment=True,
             ),
             shuffle=True,
         )
 
     def val_dataloader(self):
+        collator_config = deepcopy(self.collator_config)
+        collator_config["enable_augment"] = False
         return DataLoader(
             dataset=self.val_dataset,
             **self.loader_config,
             collate_fn=PathfinderCollatorFn(
-                **self.collator_config,
-                enable_augment=False,
+                **collator_config,
             ),
             shuffle=False,
         )

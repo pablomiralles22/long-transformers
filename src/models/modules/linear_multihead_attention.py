@@ -4,8 +4,15 @@ import torch.nn.functional as F
 
 from typing import Literal
 from src.utils.attention_head_handler import AttentionHeadHandler
-from src.models.functional.absdiff_attention_triton import AbsdiffAttention
-# from src.models.functional.absdiff_attention import AbsdiffAttention
+from src.utils.rotary_embedding import RotaryEmbedding
+# from src.models.functional.absdiff_attention_triton import AbsdiffAttention
+# from src.models.functional.absdiff_attention_cuda import AbsdiffAttention
+from src.models.functional.absdiff_attention import AbsdiffAttention
+
+try:
+    from src.models.functional.absdiff_attention_asym_cuda import AbsdiffAttentionAsym
+except ImportError:
+    AbsdiffAttentionAsym = None
 
 EPS = 1e-4
 
@@ -19,7 +26,7 @@ class LinearMultiheadAttention(nn.Module):
         kdim=None,
         qk_dim_out=None,
         v_dim_out=None,
-        impl: Literal["std", "causal", "rel_pos", "absdiff"] = "std",
+        impl: Literal["std", "causal", "rel_pos", "absdiff", "absdiff_asym"] = "std",
     ):
         assert d_model % nhead == 0, "Error: the embedding dimension should be divisible by the number of heads"
 
@@ -49,6 +56,8 @@ class LinearMultiheadAttention(nn.Module):
             self.attn = AbsdiffAttention()
             # make W_Q the identity function, as we won't use its output
             self.W_Q = nn.Identity()
+        elif impl == "absdiff_asym" and AbsdiffAttentionAsym is not None:
+            self.attn = AbsdiffAttentionAsym()
         else:
             raise ValueError(f"Error: unknown implementation {impl}")
 
@@ -65,6 +74,9 @@ class LinearMultiheadAttention(nn.Module):
         Q = self.W_Q(queries)  # [B, L1, D]
         K = self.W_K(keys)  # [B, L2, D]
         V = self.W_V(values)  # [B, L2, D]
+
+        Q = RotaryEmbedding.apply(Q)
+        K = RotaryEmbedding.apply(K)
 
         Q = AttentionHeadHandler.separate_heads(Q, self.nhead)  # [B, H, L1, Dqk/H]
         K = AttentionHeadHandler.separate_heads(K, self.nhead)  # [B, H, L2, Dqk/H]

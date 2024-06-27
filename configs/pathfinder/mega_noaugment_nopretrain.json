@@ -61,9 +61,9 @@
         "enable_checkpointing": true,
         "default_root_dir": "out/pathfinder/mega_noaugment_nopretrain",
         "accelerator": "gpu",
-        "devices": [ 1 ]
+        "devices": [ 2 ]
     },
     "fit_params": {
-        "ckpt_path": "out/pathfinder/mega_noaugment_nopretrain/lightning_logs/version_0/checkpoints/epoch=2-val_acc=0.53.ckpt"
+        "ckpt_path": "out/pathfinder/mega_noaugment_nopretrain/lightning_logs/version_4/checkpoints/epoch=28-val_acc=0.89.ckpt"
     }
   }
