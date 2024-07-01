@@ -1,0 +1,8 @@
+# @package _global_
+defaults:
+  - /trainer: default
+  - /dataset: cifar10
+  - /optimizer: adamw
+  - /scheduler: plateau
+
+experiment_name: ???

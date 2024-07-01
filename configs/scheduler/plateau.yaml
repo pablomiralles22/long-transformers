@@ -1,0 +1,4 @@
+_name_: plateau
+factor: 0.2  # Decay factor when ReduceLROnPlateau is used
+patience: 10
+min_lr: 0.0000001  # Minimum learning rate during annealing

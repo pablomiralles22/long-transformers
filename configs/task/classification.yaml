@@ -1,0 +1,8 @@
+classification:
+  _name_: classification
+  num_classes: 2
+  head_params:
+    ff_dim: 0
+    num_hidden_layers: 0
+    dropout_p: 0.0
+    reduction_method: mean

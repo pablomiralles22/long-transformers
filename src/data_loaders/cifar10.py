@@ -1,4 +1,6 @@
 import torch
+import torch.nn as nn
+import random
 import pytorch_lightning as pl
 import torchvision
 
@@ -6,6 +8,25 @@ from copy import deepcopy
 from torch.utils.data import DataLoader
 from torchvision import transforms
 # from torchvision.transforms import v2
+
+class RandomCifar10Augmentator(nn.Module):
+    __AUGMENTATIONS = [
+        # transforms.RandomPosterize(bits=4, p=1.0),
+        transforms.RandomSolarize(threshold=128.0, p=1.0),
+        transforms.RandomEqualize(p=1.0),
+        transforms.RandomInvert(p=1.0),
+        # transforms.ColorJitter(brightness=0, contrast=0, saturation=0, hue=0),
+        # transforms.RandomAdjustSharpness(sharpness_factor=2, p=1.0),
+        # transforms.RandomAutocontrast(p=1.0),
+        transforms.ColorJitter(brightness=0.5, contrast=0.5, saturation=0.5, hue=0.5),
+        transforms.RandomAutocontrast(p=0.0),  # identity
+    ]
+
+    # Function to apply a random augmentation
+    def forward(self, img):
+        augmentation = random.choice(self.__AUGMENTATIONS)
+        return augmentation(img)
+
 
 NUM_EMBEDDINGS = 256 + 2 # PAD, CLS, bytes
 PAD_TOKEN = 0
@@ -16,11 +37,10 @@ class CIFAR100CollatorFn:
     def __init__(self, max_len, augment=True):
         self.max_len = max_len
         self.transform = transforms.Compose([
-            # transforms.RandomApply([transforms.AutoAugment(policy=transforms.AutoAugmentPolicy.CIFAR10)], p=0.25),
-            transforms.AutoAugment(policy=transforms.AutoAugmentPolicy.CIFAR10),
-            # transforms.AutoAugment(policy=transforms.AutoAugmentPolicy.CIFAR10),
             transforms.RandomHorizontalFlip(),
-            transforms.RandomAffine(degrees=0, translate=(0.1, 0.1), scale=(0.9, 1.1)),
+            # RandomCifar10Augmentator(),
+            transforms.AutoAugment(transforms.AutoAugmentPolicy.CIFAR10),
+            # transforms.RandomAffine(degrees=10, translate=(0.1, 0.1), scale=(0.9, 1.1)),
             transforms.Grayscale(num_output_channels=1),
             transforms.PILToTensor(),
         ]) if augment is True else transforms.Compose([
@@ -39,11 +59,12 @@ class CIFAR100CollatorFn:
             image = torch.flatten(image).long()  # Important to prevent overflow
 
             # build list of indexes
-            pixels = (START_TOKEN + image).tolist()  # 2 for PAD, CLS
+            pixels = (START_TOKEN + image).tolist()
             assert all([2 <= pixel <= 257 for pixel in pixels]), f"pixels={pixels}"
 
-            idxs = [CLS_TOKEN] + pixels  # 2 for PAD, CLS
-            assert len(idxs) == 32 * 32 + 1, f"len(idxs)={len(idxs)}"
+            # idxs = [CLS_TOKEN] + pixels  # 2 for PAD, CLS
+            idxs = pixels  # 2 for PAD, CLS
+            # assert len(idxs) == 32 * 32 + 1, f"len(idxs)={len(idxs)}"
 
             length = min(len(idxs), self.max_len)
             padding_size = self.max_len - length

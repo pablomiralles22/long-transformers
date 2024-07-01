@@ -1,0 +1,17 @@
+# @package _global_
+defaults:
+  - /task:
+    - classification
+
+task:
+  classification:
+    num_classes: 10
+
+dataset:
+  _name_: cifar10
+  data_path: false
+  batch_size: 32
+  max_len: 1024
+  augment: true
+  pin_memory: true
+  num_workers: 6

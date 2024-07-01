@@ -1,0 +1,15 @@
+_name_: rotary_transformer
+type: single_layer
+layer:
+  type: transformer_encoder_layer
+  params:
+    d_model: 128
+    nhead: 4
+    dim_feedforward: 256
+    dropout: 0.0
+    attention_params:
+      type: rotary
+      freq: 10000
+num_layers: 4
+input_embedding_dim: ${.layer.params.d_model}
+output_embedding_dim: ${.layer.params.d_model}

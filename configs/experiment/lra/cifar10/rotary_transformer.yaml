@@ -1,0 +1,16 @@
+# @package _global_
+defaults:
+  - /experiment/lra/cifar10/base@_here_
+  - /model: rotary_transformer
+
+model:
+  params:
+    d_model: 160
+    nhead: 4
+    dim_feedforward: 320
+    dropout: 0.0
+    attention_params:
+      type: rotary
+      freq: 10000
+
+experiment_name: base

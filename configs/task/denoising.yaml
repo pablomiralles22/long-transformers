@@ -1,0 +1,6 @@
+denoising:
+  _name_: denoising
+  head_params:
+    ff_dim: 0
+    num_hidden_layers: 0
+    dropout_p: 0.0
