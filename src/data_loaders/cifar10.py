@@ -9,23 +9,23 @@ from torch.utils.data import DataLoader
 from torchvision import transforms
 # from torchvision.transforms import v2
 
-class RandomCifar10Augmentator(nn.Module):
-    __AUGMENTATIONS = [
-        # transforms.RandomPosterize(bits=4, p=1.0),
-        transforms.RandomSolarize(threshold=128.0, p=1.0),
-        transforms.RandomEqualize(p=1.0),
-        transforms.RandomInvert(p=1.0),
-        # transforms.ColorJitter(brightness=0, contrast=0, saturation=0, hue=0),
-        # transforms.RandomAdjustSharpness(sharpness_factor=2, p=1.0),
-        # transforms.RandomAutocontrast(p=1.0),
-        transforms.ColorJitter(brightness=0.5, contrast=0.5, saturation=0.5, hue=0.5),
-        transforms.RandomAutocontrast(p=0.0),  # identity
-    ]
+# class RandomCifar10Augmentator(nn.Module):
+#     __AUGMENTATIONS = [
+#         # transforms.RandomPosterize(bits=4, p=1.0),
+#         transforms.RandomSolarize(threshold=128.0, p=1.0),
+#         transforms.RandomEqualize(p=1.0),
+#         transforms.RandomInvert(p=1.0),
+#         # transforms.ColorJitter(brightness=0, contrast=0, saturation=0, hue=0),
+#         # transforms.RandomAdjustSharpness(sharpness_factor=2, p=1.0),
+#         # transforms.RandomAutocontrast(p=1.0),
+#         transforms.ColorJitter(brightness=0.5, contrast=0.5, saturation=0.5, hue=0.5),
+#         transforms.RandomAutocontrast(p=0.0),  # identity
+#     ]
 
-    # Function to apply a random augmentation
-    def forward(self, img):
-        augmentation = random.choice(self.__AUGMENTATIONS)
-        return augmentation(img)
+#     # Function to apply a random augmentation
+#     def forward(self, img):
+#         augmentation = random.choice(self.__AUGMENTATIONS)
+#         return augmentation(img)
 
 
 NUM_EMBEDDINGS = 256 + 2 # PAD, CLS, bytes
@@ -34,19 +34,19 @@ CLS_TOKEN = 1
 START_TOKEN = 2
 
 class CIFAR100CollatorFn:
-    def __init__(self, max_len, augment=True):
+    def __init__(self, max_len, augment=True, add_cls_token=False):
         self.max_len = max_len
         self.transform = transforms.Compose([
             transforms.RandomHorizontalFlip(),
-            # RandomCifar10Augmentator(),
             transforms.AutoAugment(transforms.AutoAugmentPolicy.CIFAR10),
-            # transforms.RandomAffine(degrees=10, translate=(0.1, 0.1), scale=(0.9, 1.1)),
+            transforms.RandomAffine(degrees=0, translate=(0.1, 0.1), scale=(0.9, 1.1)),
             transforms.Grayscale(num_output_channels=1),
             transforms.PILToTensor(),
         ]) if augment is True else transforms.Compose([
             transforms.Grayscale(num_output_channels=1),
             transforms.PILToTensor(),
         ])
+        self.add_cls_token = add_cls_token
 
     def __call__(self, batch):
         input_ids = []
@@ -62,8 +62,10 @@ class CIFAR100CollatorFn:
             pixels = (START_TOKEN + image).tolist()
             assert all([2 <= pixel <= 257 for pixel in pixels]), f"pixels={pixels}"
 
-            # idxs = [CLS_TOKEN] + pixels  # 2 for PAD, CLS
-            idxs = pixels  # 2 for PAD, CLS
+            if self.add_cls_token:
+                idxs = [CLS_TOKEN] + pixels
+            else:
+                idxs = pixels
             # assert len(idxs) == 32 * 32 + 1, f"len(idxs)={len(idxs)}"
 
             length = min(len(idxs), self.max_len)
@@ -89,6 +91,7 @@ class CIFAR10DataModule(pl.LightningDataModule):
     def get_default_collator_config(cls):
         return {
             "max_len": 512,
+            "add_cls_token": False,
             "augment": True,
         }
 

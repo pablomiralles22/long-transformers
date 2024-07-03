@@ -1,13 +1,10 @@
 accumulate_grad_batches: 1 # Gradient accumulation every n batches
 max_epochs: 200
                            # accelerator: ddp # Automatically set if gpus > 1
-gradient_clip_val: 0.0
-gradient_clip_algorithm: 'norm'
 log_every_n_steps: 50
 limit_train_batches: 1.0   # train on full dataset, can be used to toggle quick run
 limit_val_batches: 1.0     # validate on full dataset, can be used to toggle quick run
-progress_bar_refresh_rate: 1
-track_grad_norm: -1        # Set to 2 to track norms of gradients
 accelerator: 'gpu'
-devices: [0]
-default_root_dir: out/${dataset._name_}/${model._name_}/${experiment_name}/${now:%Y-%m-%d}_${now:%H-%M-%S-%f}
+devices: [ 0 ]
+precision: '16-mixed'
+default_root_dir: out/${dataset._name_}/${model._name_}/${experiment_name}/

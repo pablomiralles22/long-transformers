@@ -7,12 +7,12 @@ from src.utils.attention_head_handler import AttentionHeadHandler
 from src.utils.rotary_embedding import RotaryEmbedding
 # from src.models.functional.absdiff_attention_triton import AbsdiffAttention
 # from src.models.functional.absdiff_attention_cuda import AbsdiffAttention
-from src.models.functional.absdiff_attention import AbsdiffAttention
+# from src.models.functional.absdiff_attention import AbsdiffAttention
 
-try:
-    from src.models.functional.absdiff_attention_asym_cuda import AbsdiffAttentionAsym
-except ImportError:
-    AbsdiffAttentionAsym = None
+# try:
+#     from src.models.functional.absdiff_attention_asym_cuda import AbsdiffAttentionAsym
+# except ImportError:
+#     AbsdiffAttentionAsym = None
 
 EPS = 1e-4
 
@@ -52,12 +52,12 @@ class LinearMultiheadAttention(nn.Module):
             self.attn = causal_linear_attention
         elif impl == "rel_pos":
             self.attn = RelPosAttention(nhead)
-        elif impl == "absdiff":
-            self.attn = AbsdiffAttention()
-            # make W_Q the identity function, as we won't use its output
-            self.W_Q = nn.Identity()
-        elif impl == "absdiff_asym" and AbsdiffAttentionAsym is not None:
-            self.attn = AbsdiffAttentionAsym()
+        # elif impl == "absdiff":
+        #     self.attn = AbsdiffAttention()
+        #     # make W_Q the identity function, as we won't use its output
+        #     self.W_Q = nn.Identity()
+        # elif impl == "absdiff_asym" and AbsdiffAttentionAsym is not None:
+        #     self.attn = AbsdiffAttentionAsym()
         else:
             raise ValueError(f"Error: unknown implementation {impl}")
 

@@ -3,14 +3,26 @@ defaults:
   - /experiment/lra/cifar10/base@_here_
   - /model: rotary_transformer
 
-model:
-  params:
-    d_model: 160
-    nhead: 4
-    dim_feedforward: 320
-    dropout: 0.0
-    attention_params:
-      type: rotary
-      freq: 10000
+experiment_name: augment
 
-experiment_name: base
+model:
+  layer:
+    params:
+      d_model: 160
+      nhead: 4
+      dim_feedforward: 320
+      dropout: 0.0
+      attention_params:
+        type: rotary
+        freq: 10000
+  num_layers: 8
+
+optimizer:
+  lr: 0.001
+
+dataset:
+  batch_size: 64
+  augment: true
+
+trainer:
+  devices: [ 0 ]

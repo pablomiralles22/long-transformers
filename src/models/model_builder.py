@@ -13,18 +13,18 @@ class ModelBuilder:
     @classmethod
     def build_model(
         cls,
-        name: str,
+        type: str,
         params: dict,
         vocab_size: int,
         padding_idx: int,
     ) -> ModelWithEmbedding:
-        match name:
+        match type:
             case "layered":
                 model = cls._build_layered_model(params)
             case "single_layer":
                 model = cls._build_single_layer_model(params)
             case _:
-                raise ValueError(f"Unknown model: {name}")
+                raise ValueError(f"Unknown model: {type}")
         return ModelWithEmbedding(model, vocab_size, padding_idx)
 
     @classmethod
@@ -42,8 +42,10 @@ class ModelBuilder:
         params = deepcopy(params)
 
         num_layers = params.pop("num_layers")
-        layer_name, layer_params = params.pop("layer")
+        layer = params.pop("layer")
+        layer_type = layer.pop("type")
+        layer_params = layer.pop("params")
 
-        layer = LayerBuilder.build(layer_name, layer_params)
+        layer = LayerBuilder.build(layer_type, layer_params)
         layers = [deepcopy(layer) for _ in range(num_layers)]
         return LayeredModel(**params, layers=layers)

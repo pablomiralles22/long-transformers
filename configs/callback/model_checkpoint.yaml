@@ -1,0 +1,2 @@
+model_checkpoint:
+  _name_: model_checkpoint

@@ -1,0 +1,5 @@
+_name_: linear_decay_warmup
+ratio_warmup_steps: 0.1
+start_factor: 1.0e-6
+middle_factor: 1.
+end_factor: 0.

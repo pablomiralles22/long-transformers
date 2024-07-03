@@ -1,0 +1,3 @@
+early_stopping:
+  _name_: early_stopping
+  patience: 10

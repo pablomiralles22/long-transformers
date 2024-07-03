@@ -9,9 +9,10 @@ task:
 
 dataset:
   _name_: cifar10
-  data_path: false
+  data_path: datasets/cifar10
   batch_size: 32
   max_len: 1024
+  add_cls_token: false
   augment: true
   pin_memory: true
   num_workers: 6

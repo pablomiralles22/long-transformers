@@ -29,13 +29,13 @@ class ClassificationTask(Task):
         #   attention_mask: [B, L]
         #   labels: [B]
         # outputs: [B, L, D]
-        logits = self.head(outputs)  # [B, num_classes]
+        logits = self.head(outputs, inputs["attention_mask"])  # [B, num_classes]
         labels = inputs["labels"]
 
         loss = self.loss_fn(logits, labels)
         acc = self.accuracy(logits, labels)
 
-        return {"loss": loss, "logits": logits, "accuracy": acc}
+        return {"loss": loss, "accuracy": acc}
 
     def get_metric_to_track(self) -> tuple[str, str]:
         return "classification_accuracy", "max"

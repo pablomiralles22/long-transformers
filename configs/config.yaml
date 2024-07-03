@@ -1,6 +1,10 @@
 # @package _global_
 defaults:
   - _self_
+  - /callback:
+    - model_checkpoint
+    - early_stopping
+    - learning_rate_monitor
 
 # Set `~wandb` or `wandb=null` or `wandb.mode=disabled` to disable logging
 wandb:
@@ -11,13 +15,11 @@ wandb:
   save_dir: null
   id: null # pass correct id to resume experiment!
   # Below options should not need to be specified
-  entity: ''  # set to name of your wandb team or just remove it
   name: ''
   # log_model: False
   # prefix: ""
-  # job_type: "train"
   # tags: []
 
-# hydra:
-#   run:
-#     dir: ./out/${now:%Y-%m-%d}/${now:%H-%M-%S-%f}
+hydra:
+  run:
+    dir: ./out/hydra_log/${now:%Y-%m-%d}/${now:%H-%M-%S-%f}
