@@ -113,7 +113,7 @@ class PathfinderDataModule(pl.LightningDataModule):
     def get_default_collator_config(cls):
         return {
             "max_len": 512,
-            "enable_augment": False,
+            "enable_augment": True,
         }
 
     @classmethod
