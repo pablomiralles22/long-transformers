@@ -64,6 +64,7 @@ class TrainerModule(pl.LightningModule):
         
 
     def training_step(self, batch, batch_idx):
+        batch = self._preprocess_batch(batch, train=True)
         step_output = self._step(batch, batch_idx)
         self.log("train_step_loss", step_output["loss"], on_step=True, on_epoch=False, prog_bar=True)
         self.log_dict(
@@ -73,12 +74,18 @@ class TrainerModule(pl.LightningModule):
         return step_output
 
     def validation_step(self, batch, batch_idx):
+        batch = self._preprocess_batch(batch, train=False)
         step_output = self._step(batch, batch_idx)
         self.log_dict(
             {f"val_{k}": v for k, v in step_output.items()},
             on_step=False, on_epoch=True, prog_bar=True
         )
         return step_output
+
+    def _preprocess_batch(self, batch, train: bool):
+        for _, task in self.tasks.items():
+            batch = task.preprocess_input(batch, train=train)
+        return batch
 
     def _step(self, batch, _):
         outputs = self.model(batch["input_ids"], batch["attention_mask"])

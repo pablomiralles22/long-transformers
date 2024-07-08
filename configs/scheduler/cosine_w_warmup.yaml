@@ -1,7 +1,13 @@
-_name_: cosine_warmup
-ratio_warmup_steps: 0.1
-start_factor: 1.
-end_factor: 1.
-T_0: 1
-T_mult: 2
-eta_min: 0.0
+_name_: sequential
+schedulers:
+  warmup:
+    _name_: linear
+    step_ratio: 0.1
+    start_factor: 1.0e-8
+    end_factor: 1.0
+  cosine:
+    _name_: cosine
+    step_ratio: 0.9
+    T_0: 1
+    T_mult: 2
+    eta_min: 0.0

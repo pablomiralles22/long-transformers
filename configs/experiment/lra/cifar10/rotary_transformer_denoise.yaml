@@ -2,27 +2,35 @@
 defaults:
   - /experiment/lra/cifar10/base@_here_
   - /model: rotary_transformer
+  - /task:
+    - denoise
 
-experiment_name: augment
+experiment_name: denoise
 
 model:
   layer:
     params:
-      d_model: 160
+      d_model: 256
       nhead: 4
-      dim_feedforward: 320
+      dim_feedforward: 512
       dropout: 0.0
       attention_params:
         type: rotary
         freq: 10000
-  num_layers: 8
+  num_layers: 6
 
 optimizer:
   lr: 0.001
+  weight_decay: 0.05
 
 dataset:
   batch_size: 64
-  augment: true
+  augment: false
+
+task:
+  denoise:
+    num_embeddings: 259
+    mask_token_id: 2
 
 trainer:
   devices: [ 0 ]

@@ -1,3 +1,5 @@
+import numpy as np
+
 from torch.optim import lr_scheduler
 
 
@@ -16,10 +18,10 @@ class SchedulerBuilder:
             return cls.__build_plateau(optimizer, scheduler_config)
         elif scheduler_name == "cosine":
             return cls.__build_cosine(optimizer, scheduler_config)
-        elif scheduler_name == "cosine_warmup":
-            return cls.__build_cosine_warmup(optimizer, scheduler_config, train_steps)
-        elif scheduler_name == "linear_decay_warmup":
-            return cls.__build_linear_decay_warmup(optimizer, scheduler_config, train_steps)
+        elif scheduler_name == "linear":
+            return cls.__build_linear(optimizer, scheduler_config, train_steps)
+        elif scheduler_name == "sequential":
+            return cls.__build_sequential(optimizer, scheduler_config, metric_to_track, train_steps)
         else:
             raise ValueError(f"Unknown scheduler: {scheduler_name}")
 
@@ -36,7 +38,7 @@ class SchedulerBuilder:
 
     @classmethod
     def __build_cosine(cls, optimizer, scheduler_config):
-        scheduler = lr_scheduler.CosineAnnealingLR(optimizer, **scheduler_config)
+        scheduler = lr_scheduler.CosineAnnealingWarmRestarts(optimizer, **scheduler_config)
         return {
             "scheduler": scheduler,
             "interval": "step",
@@ -44,52 +46,40 @@ class SchedulerBuilder:
         }
 
     @classmethod
-    def __build_cosine_warmup(cls, optimizer, scheduler_config, train_steps):
-        ratio_warmup_steps = scheduler_config.pop("ratio_warmup_steps")
-        warmup_steps = int(train_steps * ratio_warmup_steps)
-
-        linear_params = {
-            "start_factor": scheduler_config.pop("start_factor"),
-            "end_factor": scheduler_config.pop("end_factor"),
-            "total_iters": warmup_steps,
-        }
-
-        linear_lr = lr_scheduler.LinearLR(optimizer, **linear_params)
-        cosine_anneal_lr = lr_scheduler.CosineAnnealingWarmRestarts(optimizer, **scheduler_config)
-
-        scheduler = lr_scheduler.SequentialLR(
-            optimizer,
-            [linear_lr, cosine_anneal_lr],
-            [warmup_steps],
-        )
-
+    def __build_linear(cls, optimizer, scheduler_config, train_steps):
+        scheduler_config["total_iters"] = train_steps
+        scheduler = lr_scheduler.LinearLR(optimizer, **scheduler_config)
         return {
             "scheduler": scheduler,
             "interval": "step",
             "frequency": 1,
         }
 
-
     @classmethod
-    def __build_linear_decay_warmup(cls, optimizer, scheduler_config, train_steps):
-        ratio_warmup_steps = scheduler_config.pop("ratio_warmup_steps")
-        warmup_steps = int(train_steps * ratio_warmup_steps)
+    def __build_sequential(cls, optimizer, scheduler_config, metric_to_track, train_steps):
+        schedulers_params = scheduler_config["schedulers"].values()
 
-        start_factor = scheduler_config.pop("start_factor")
-        middle_factor = scheduler_config.pop("middle_factor")
-        end_factor = scheduler_config.pop("end_factor")
+        train_steps_per_schedulers = [
+            int(train_steps * scheduler_params.pop("step_ratio"))
+            for scheduler_params in schedulers_params
+        ]
+        train_steps_per_schedulers[-1] = train_steps - sum(train_steps_per_schedulers[:-1])
 
-        linear_warmup_lr = lr_scheduler.LinearLR(optimizer, start_factor=start_factor, end_factor=middle_factor, total_iters=warmup_steps)
-        linear_decay_lr = lr_scheduler.LinearLR(optimizer, start_factor=middle_factor, end_factor=end_factor, total_iters=train_steps-warmup_steps)
+        milestones = np.cumsum(train_steps_per_schedulers).tolist()[:-1]
+        schedulers = []
+        intervals = set()
 
-        scheduler = lr_scheduler.SequentialLR(
-            optimizer,
-            [linear_warmup_lr, linear_decay_lr],
-            [warmup_steps],
-        )
+        for scheduler, num_steps in zip(schedulers_params, train_steps_per_schedulers):
+            scheduler_dict = cls.build(optimizer, scheduler, metric_to_track, num_steps)
+            intervals.add(scheduler_dict["interval"])
+            schedulers.append(scheduler_dict["scheduler"])
+        
+        assert len(intervals) == 1, "All schedulers must have the same interval"
+
+        sequential_scheduler = lr_scheduler.SequentialLR(optimizer, schedulers, milestones)
 
         return {
-            "scheduler": scheduler,
-            "interval": "step",
+            "scheduler": sequential_scheduler,
+            "interval": intervals.pop(),
             "frequency": 1,
         }

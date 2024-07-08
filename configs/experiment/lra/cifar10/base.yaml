@@ -3,12 +3,9 @@ defaults:
   - /trainer: default
   - /dataset: cifar10
   - /optimizer: adamw
-  - /scheduler: linear_decay_w_warmup
+  - /scheduler: plateau
 
 experiment_name: ???
-
-scheduler:
-  ratio_warmup_steps: 0.05
 
 callback:
   early_stopping:

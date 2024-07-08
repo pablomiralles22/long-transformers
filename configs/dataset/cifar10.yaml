@@ -6,6 +6,8 @@ defaults:
 task:
   classification:
     num_classes: 10
+    head_params:
+      reduction_method: mean
 
 dataset:
   _name_: cifar10

@@ -10,13 +10,14 @@ class RotaryEmbedding:
         X,  # [B, H, L, D]
         thetas=None,  # [D // 2] or [H, D // 2] or None
         freq=10000,
+        disable_half=False,
     ):
         *B, H, L, D = X.shape
         assert D % 2 == 0, "Error: the embedding dimension should be divisible by 2"
 
         device, dtype = X.device, X.dtype
 
-        rotation_mat = cls.__build_rotation_matrix(thetas, L, D, freq, device=device, dtype=dtype) # [H, L, D // 2, 2, 2] or [1, L, D // 2, 2, 2]
+        rotation_mat = cls.__build_rotation_matrix(thetas, L, D, freq, disable_half, device=device, dtype=dtype) # [H, L, D // 2, 2, 2] or [1, L, D // 2, 2, 2]
         X_reshaped = X.view(*B, H, L, D // 2, 1, 2) # (...B, H, L, D // 2, 1, 2)
 
         return (
@@ -26,7 +27,7 @@ class RotaryEmbedding:
         )
     
     @classmethod
-    def __build_rotation_matrix(cls, thetas, L, D, freq, device, dtype):
+    def __build_rotation_matrix(cls, thetas, L, D, freq, disable_falf, device, dtype):
         should_cache = thetas is None
         # try to retrieve from cache
         if should_cache is True and (L, D, freq) in cls.__CACHE:
@@ -38,7 +39,8 @@ class RotaryEmbedding:
             thetas_inds = torch.arange(0, D // 2, requires_grad=False, device=device, dtype=dtype) # (D // 2)
             # thetas = torch.exp(-2 * math.log(freq) * (thetas_inds // 2) / D) # (D // 2)
             thetas = torch.exp(-2 * math.log(freq) * thetas_inds / D) # (D // 2)
-            thetas[::2] = 0
+            if disable_falf:
+                thetas[::2] = 0
         else:
             thetas = thetas.unsqueeze(-2) / L  # [H, 1, D // 2] or [1, D // 2]
 

@@ -16,6 +16,7 @@ class RotaryMultiheadAttention(nn.Module):
         qk_dim_out=None,
         v_dim_out=None,
         freq=10000,
+        disable_half=False,
     ):
         assert d_model % nhead == 0, "Error: the embedding dimension should be divisible by the number of heads"
 
@@ -36,6 +37,7 @@ class RotaryMultiheadAttention(nn.Module):
         self.W_O = nn.Linear(v_dim_out, d_model, bias=bias)
 
         self.freq = freq
+        self.disable_half = disable_half
 
     def forward(
         self,
@@ -52,8 +54,8 @@ class RotaryMultiheadAttention(nn.Module):
         keys_proj = self.W_K(keys)  # [B, L2, D]
         values_proj = self.W_V(values)  # [B, L2, D]
 
-        Q = RotaryEmbedding.apply(queries_proj, thetas=None, freq=self.freq)  # [B, L, D]
-        K = RotaryEmbedding.apply(keys_proj, thetas=None, freq=self.freq)  # [B, L, D]
+        Q = RotaryEmbedding.apply(queries_proj, thetas=None, freq=self.freq, disable_half=self.disable_half)  # [B, L, D]
+        K = RotaryEmbedding.apply(keys_proj, thetas=None, freq=self.freq, disable_half=self.disable_half)  # [B, L, D]
 
         Q = AttentionHeadHandler.separate_heads(Q, self.nhead)  # [B, H, L, D/H]
         K = AttentionHeadHandler.separate_heads(K, self.nhead)  # [B, H, L, D/H]
