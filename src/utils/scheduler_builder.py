@@ -9,7 +9,6 @@ class SchedulerBuilder:
         cls,
         optimizer,
         scheduler_config: dict,
-        metric_to_track: tuple[str, str],
         train_steps: int = None,
     ):
         scheduler_name = scheduler_config.pop("_name_")
@@ -21,7 +20,7 @@ class SchedulerBuilder:
         elif scheduler_name == "linear":
             return cls.__build_linear(optimizer, scheduler_config, train_steps)
         elif scheduler_name == "sequential":
-            return cls.__build_sequential(optimizer, scheduler_config, metric_to_track, train_steps)
+            return cls.__build_sequential(optimizer, scheduler_config, train_steps)
         else:
             raise ValueError(f"Unknown scheduler: {scheduler_name}")
 
@@ -56,7 +55,7 @@ class SchedulerBuilder:
         }
 
     @classmethod
-    def __build_sequential(cls, optimizer, scheduler_config, metric_to_track, train_steps):
+    def __build_sequential(cls, optimizer, scheduler_config, train_steps):
         schedulers_params = scheduler_config["schedulers"].values()
 
         train_steps_per_schedulers = [
@@ -70,7 +69,7 @@ class SchedulerBuilder:
         intervals = set()
 
         for scheduler, num_steps in zip(schedulers_params, train_steps_per_schedulers):
-            scheduler_dict = cls.build(optimizer, scheduler, metric_to_track, num_steps)
+            scheduler_dict = cls.build(optimizer, scheduler, num_steps)
             intervals.add(scheduler_dict["interval"])
             schedulers.append(scheduler_dict["scheduler"])
         

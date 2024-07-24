@@ -1,0 +1,23 @@
+# @package _global_
+defaults:
+  - /trainer: default
+  - /dataset: text_retrieval
+  - /optimizer: adamw
+  - /scheduler: plateau
+
+experiment_name: ???
+
+callback:
+  early_stopping:
+    patience: 20
+
+trainer:
+  max_epochs: 60
+
+task:
+  classification:
+    head_params:
+      ff_dim: 512
+      num_hidden_layers: 1
+      dropout_p: 0.0
+      reduction_method: mean

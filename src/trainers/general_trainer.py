@@ -1,5 +1,6 @@
 import pytorch_lightning as pl
 
+from copy import deepcopy
 from pytorch_lightning.callbacks import Callback
 from src.data_loaders.data_module_builder import DataModuleBuilder
 from src.models.model_builder import ModelBuilder
@@ -19,7 +20,7 @@ class TrainerModule(pl.LightningModule):
         callbacks_params: list[dict],
     ):
         super().__init__()
-        self.save_hyperparameters()
+        # self.save_hyperparameters()  # no need, it is saved in train.py
 
         # optimizer config
         self.optimizer_config = optimizer_params
@@ -38,9 +39,9 @@ class TrainerModule(pl.LightningModule):
 
         # build model
         del model_params["_name_"]
-        type = model_params.pop("type")
+        model_type = model_params.pop("type")
         self.model = ModelBuilder.build_model(
-            type, model_params,
+            model_type, model_params,
             vocab_size=self.data_module.get_vocab_size(),
             padding_idx=self.data_module.get_pad_token_id(),
         )
@@ -64,21 +65,33 @@ class TrainerModule(pl.LightningModule):
         
 
     def training_step(self, batch, batch_idx):
+        batch_size = self.__get_batch_size(self.data_module.train_dataloader())
         batch = self._preprocess_batch(batch, train=True)
         step_output = self._step(batch, batch_idx)
-        self.log("train_step_loss", step_output["loss"], on_step=True, on_epoch=False, prog_bar=True)
+        self.log("train_step_loss", step_output["loss"], on_step=True, on_epoch=False, prog_bar=True, batch_size=batch_size)
         self.log_dict(
             {f"train_{k}": v for k, v in step_output.items()},
-            on_step=False, on_epoch=True, prog_bar=True
+            on_step=False, on_epoch=True, prog_bar=True, batch_size=batch_size
         )
         return step_output
 
     def validation_step(self, batch, batch_idx):
+        batch_size = self.__get_batch_size(self.data_module.val_dataloader())
         batch = self._preprocess_batch(batch, train=False)
         step_output = self._step(batch, batch_idx)
         self.log_dict(
             {f"val_{k}": v for k, v in step_output.items()},
-            on_step=False, on_epoch=True, prog_bar=True
+            on_step=False, on_epoch=True, prog_bar=True, batch_size=batch_size
+        )
+        return step_output
+    
+    def test_step(self, batch, batch_idx):
+        batch_size = self.__get_batch_size(self.data_module.test_dataloader())
+        batch = self._preprocess_batch(batch, train=False)
+        step_output = self._step(batch, batch_idx)
+        self.log_dict(
+            {f"test_{k}": v for k, v in step_output.items()},
+            on_step=False, on_epoch=True, prog_bar=True, batch_size=batch_size
         )
         return step_output
 
@@ -96,10 +109,15 @@ class TrainerModule(pl.LightningModule):
                 step_output[f"{task_name}_{key}"] = value
         step_output["loss"] = sum([v for k, v in step_output.items() if "loss" in k])
         return step_output
-
+    
+    def __get_batch_size(self, dataloader):
+        return dataloader.batch_size
 
     def configure_optimizers(self):
-        optimizer = OptimizerBuilder.build(self, self.optimizer_config)
+        scheduler_config = deepcopy(self.scheduler_config)
+        optimizer_config = deepcopy(self.optimizer_config)
+
+        optimizer = OptimizerBuilder.build(self, optimizer_config)
 
         # set up scheduler
         train_len = len(self.data_module.train_dataloader())
@@ -108,8 +126,7 @@ class TrainerModule(pl.LightningModule):
 
         scheduler: dict = SchedulerBuilder.build(
             optimizer,
-            self.scheduler_config,
-            self.metric_to_track,
+            scheduler_config,
             train_steps,
         )
 
@@ -120,10 +137,11 @@ class TrainerModule(pl.LightningModule):
     
 
     def configure_callbacks(self) -> list[Callback]:
+        callbacks_config = deepcopy(self.callbacks_config)
         metric_to_track, mode = self.metric_to_track
         metric_to_track = f"val_{metric_to_track}"
         return [
             CallbackBuilder.build_callback(config, metric_to_track, mode)
-            for config in self.callbacks_config
+            for config in callbacks_config
         ]
 

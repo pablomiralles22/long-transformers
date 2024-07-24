@@ -27,7 +27,7 @@ class CIFAR100CollatorFn:
                     transforms.RandomAffine(
                         degrees=10,
                         translate=(0.1, 0.1),
-                        scale=(1.0, 1.0),
+                        scale=(0.9, 1.1),
                         shear=10,
                         fill=0,
                         interpolation=InterpolationMode.BILINEAR,

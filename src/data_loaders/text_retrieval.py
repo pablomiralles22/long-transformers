@@ -40,16 +40,13 @@ class TextRetrievalDataset(Dataset):
 
 
 class TextRetrievalCollatorFn:
-    def __init__(self, max_len, random_start=True, mask_ratio: float=0.3, random_ratio: float=0.33):
+    def __init__(self, max_len, random_start=True, add_cls_token=False):
         self.max_len = max_len
         self.random_start = random_start
-        self.mask_ratio = mask_ratio
-        self.random_ratio = random_ratio
-
+        self.add_cls_token = add_cls_token
 
     def __call__(self, batch):
         input_ids = []
-        corrupted_input_ids = []
         attention_masks = []
         labels = []
 
@@ -63,44 +60,33 @@ class TextRetrievalCollatorFn:
             texts = (text1, text2)
 
             for text in texts:
+                text_idxs = [START_BYTE_IDX + int(b) for b in bytes(text, encoding="utf-8")]
+
                 start_idx = (
-                    random.randint(0, max(1, len(text) - batch_max_len))
+                    random.randint(0, max(1, len(text_idxs) - batch_max_len))
                     if self.random_start is True
                     else 0
                 )
 
-                # indices
-                text = text[start_idx:start_idx + batch_max_len]
-                text_idxs = [START_BYTE_IDX + int(b) for b in bytes(text, encoding="utf-8")]  # 3 for PAD, CLS, MASK
-                indices = [CLS_TOKEN] + text_idxs
-
-                # corrupt data
-                corrupt_indices = indices.copy()
-                mask_idxs = random.sample(range(1, len(corrupt_indices)), int(self.mask_ratio * len(corrupt_indices)))
-                for idx in mask_idxs:
-                    if random.random() < self.random_ratio:
-                        corrupt_indices[idx] = random.randint(START_BYTE_IDX, NUM_EMBEDDINGS - 1)
-                    else:
-                        corrupt_indices[idx] = MASK_TOKEN
+                indices = text_idxs[start_idx:start_idx + batch_max_len]
+                if self.add_cls_token:
+                    indices = [CLS_TOKEN] + indices[:-1]
 
                 # cut and pad tokens
                 length = min(len(indices), batch_max_len)
                 padding_size = batch_max_len - length
                 indices = indices[:length] + [PAD_TOKEN] * padding_size
-                corrupt_indices = corrupt_indices[:length] + [PAD_TOKEN] * padding_size
 
                 # build attention mask
                 attention_mask = [1.] * length + [0.] * padding_size
 
                 input_ids.append(indices)
-                corrupted_input_ids.append(corrupt_indices)
                 attention_masks.append(attention_mask)
 
             labels.append(label)
 
         return {
             "input_ids": torch.tensor(input_ids),
-            "corrupted_input_ids": torch.tensor(corrupted_input_ids),
             "attention_mask": torch.tensor(attention_masks, dtype=torch.bool),
             "labels": torch.tensor(labels),
         }
@@ -112,8 +98,7 @@ class TextRetrievalDataModule(pl.LightningDataModule):
         return {
             "max_len": 512,
             "random_start": True,
-            "mask_ratio": 0.3,
-            "random_ratio": 0.33,
+            "add_cls_token": False,
         }
 
     @classmethod
@@ -170,29 +155,21 @@ class TextRetrievalDataModule(pl.LightningDataModule):
         )
 
     def val_dataloader(self):
-        collator_config = deepcopy(self.collator_config)
-        collator_config["mask_ratio"] = 0.
-        collator_config["random_start"] = False
-
         return DataLoader(
             dataset=self.val_dataset,
             **self.loader_config,
             collate_fn=TextRetrievalCollatorFn(
-                **collator_config,
+                **self.collator_config,
             ),
             shuffle=False,
         )
     
     def test_dataloader(self):
-        collator_config = deepcopy(self.collator_config)
-        collator_config["mask_ratio"] = 0.
-        collator_config["random_start"] = False
-
         return DataLoader(
             dataset=self.test_dataset,
             **self.loader_config,
             collate_fn=TextRetrievalCollatorFn(
-                **collator_config,
+                **self.collator_config,
             ),
             shuffle=False,
         )

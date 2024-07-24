@@ -13,18 +13,18 @@ class ModelBuilder:
     @classmethod
     def build_model(
         cls,
-        type: str,
+        model_type: str,
         params: dict,
         vocab_size: int,
         padding_idx: int,
     ) -> ModelWithEmbedding:
-        match type:
+        match model_type:
             case "layered":
                 model = cls._build_layered_model(params)
             case "single_layer":
                 model = cls._build_single_layer_model(params)
             case _:
-                raise ValueError(f"Unknown model: {type}")
+                raise ValueError(f"Unknown model: {model_type}")
         return ModelWithEmbedding(model, vocab_size, padding_idx)
 
     @classmethod

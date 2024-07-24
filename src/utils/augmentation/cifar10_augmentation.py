@@ -32,11 +32,11 @@ class RandomCifar10Augmentator(nn.Module):
     __AUGMENTATIONS = [
         ('Invert', 0.008),
         ('Contrast', 0.032),
-        ('Sharpness', 0.11200000000000002),
+        ('Sharpness', 0.112),
         ('AutoContrast', 0.2),
         ('Equalize', 0.188),
         ('Posterize', 0.012),
-        ('Color', 0.11599999999999999),
+        ('Color', 0.116),
         ('Brightness', 0.092),
         ('Solarize', 0.076),
     ]

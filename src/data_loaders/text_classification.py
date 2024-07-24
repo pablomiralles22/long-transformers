@@ -7,23 +7,26 @@ from copy import deepcopy
 from torch.utils.data import Dataset, DataLoader
 from typing import Literal
 
-NUM_EMBEDDINGS = 256 + 3 # PAD, CLS, MASK, bytes
+NUM_EMBEDDINGS = 256 + 3  # PAD, CLS, MASK, bytes
 PAD_TOKEN = 0
 CLS_TOKEN = 1
 MASK_TOKEN = 2
 START_BYTE_IDX = 3
 
+
 class TextClassificationDataset(Dataset):
     def __init__(
         self,
         root_dir: str,
-        split: Literal["train", "val"],
+        split: Literal["train", "test"],
     ):
         """
         Args:
             root_dir (string): Directory with all the data.
             split (string): One of "train" or "val" to specify the split.
         """
+        if split == "test":
+            split = "val"
         self.root_dir = os.path.join(root_dir, split)
         pos_dir = os.path.join(self.root_dir, "pos")
         self.pos_files = os.listdir(pos_dir)
@@ -37,77 +40,84 @@ class TextClassificationDataset(Dataset):
     def __getitem__(self, idx):
         if idx < len(self.pos_files):
             file = self.pos_files[idx]
-            with open(os.path.join(self.root_dir, "pos", file), 'r', encoding='utf-8') as f:
+            with open(
+                os.path.join(self.root_dir, "pos", file), "r", encoding="utf-8"
+            ) as f:
                 text = f.read()
             label = 1
         else:
             file = self.neg_files[idx - len(self.pos_files)]
-            with open(os.path.join(self.root_dir, "neg", file), 'r', encoding='utf-8') as f:
+            with open(
+                os.path.join(self.root_dir, "neg", file), "r", encoding="utf-8"
+            ) as f:
                 text = f.read()
             label = 0
         return {"text": text, "label": label}
 
 
 class TextClassificationCollatorFn:
-    def __init__(self, max_len, mask_ratio: float=0.3, random_ratio: float=0.33):
+    def __init__(
+        self,
+        max_len: int,
+        random_start: bool = False,
+        add_cls_token: bool = False,
+    ):
         self.max_len = max_len
-        self.mask_ratio = mask_ratio
-        self.random_ratio = random_ratio
+        self.random_start = random_start
+        self.add_cls_token = add_cls_token
 
     def __call__(self, batch):
         input_ids = []
-        corrupted_input_ids = []
         attention_masks = []
         labels = []
 
-        batch_max_len = min(self.max_len, max(len(bytes(item["text"], encoding="utf-8")) for item in batch))
+        batch_max_len = max(
+            len(bytes(item["text"], encoding="utf-8")) for item in batch
+        )
+        batch_max_len = min(self.max_len, batch_max_len)
         for item in batch:
             text, label = item["text"], item["label"]
 
-            start_idx = random.randint(0, max(1, len(text) - batch_max_len))
+            text_idxs = [START_BYTE_IDX + int(b) for b in bytes(text, encoding="utf-8")]
 
-            # indices
-            text = text[start_idx:start_idx + batch_max_len]
-            text_idxs = [START_BYTE_IDX + int(b) for b in bytes(text, encoding="utf-8")]  # 3 for PAD, CLS, MASK
-            indices = [CLS_TOKEN] + text_idxs
+            start_idx = (
+                random.randint(0, max(1, len(text_idxs) - batch_max_len))
+                if self.random_start is True
+                else 0
+            )
 
-            # corrupt data
-            corrupt_indices = indices.copy()
-            mask_idxs = random.sample(range(1, len(corrupt_indices)), int(self.mask_ratio * len(corrupt_indices)))
-            for idx in mask_idxs:
-                if random.random() < self.random_ratio:
-                    corrupt_indices[idx] = random.randint(START_BYTE_IDX, NUM_EMBEDDINGS - 1)
-                else:
-                    corrupt_indices[idx] = MASK_TOKEN
+            indices = text_idxs[start_idx:start_idx + batch_max_len]
+            if self.add_cls_token:
+                indices = [CLS_TOKEN] + indices[:-1]
 
             # cut and pad tokens
             length = min(len(indices), batch_max_len)
             padding_size = batch_max_len - length
             indices = indices[:length] + [PAD_TOKEN] * padding_size
-            corrupt_indices = corrupt_indices[:length] + [PAD_TOKEN] * padding_size
 
             # build attention mask
             attention_mask = [1.] * length + [0.] * padding_size
 
             input_ids.append(indices)
-            corrupted_input_ids.append(corrupt_indices)
             attention_masks.append(attention_mask)
             labels.append(label)
 
         return {
             "input_ids": torch.tensor(input_ids),
-            "corrupted_input_ids": torch.tensor(corrupted_input_ids),
             "attention_mask": torch.tensor(attention_masks, dtype=torch.bool),
             "labels": torch.tensor(labels),
         }
 
+
 class TextClassificationDataModule(pl.LightningDataModule):
+    __TRAIN_SPLIT = 0.9
+
     @classmethod
     def get_default_collator_config(cls):
         return {
             "max_len": 512,
-            "mask_ratio": 0.3,
-            "random_ratio": 0.33,
+            "random_start": False,
+            "add_cls_token": False,
         }
 
     @classmethod
@@ -123,12 +133,10 @@ class TextClassificationDataModule(pl.LightningDataModule):
         config = deepcopy(config)
         data_path = config.pop("data_path")
         collator_config = {
-            k: v for k, v in config.items()
-            if k in cls.get_default_collator_config()
+            k: v for k, v in config.items() if k in cls.get_default_collator_config()
         }
         loader_config = {
-            k: v for k, v in config.items()
-            if k in cls.get_default_loader_config()
+            k: v for k, v in config.items() if k in cls.get_default_loader_config()
         }
         return cls(data_path, collator_config, loader_config)
 
@@ -149,8 +157,15 @@ class TextClassificationDataModule(pl.LightningDataModule):
         }
 
         # load datasets
-        self.train_dataset = TextClassificationDataset(data_path, "train")
-        self.val_dataset = TextClassificationDataset(data_path, "val")
+        trainval_dataset = TextClassificationDataset(data_path, "train")
+
+        train_size = int(self.__TRAIN_SPLIT * len(trainval_dataset))
+        val_size = len(trainval_dataset) - train_size
+        self.train_dataset, self.val_dataset = torch.utils.data.random_split(
+            trainval_dataset, [train_size, val_size]
+        )
+
+        self.test_dataset = TextClassificationDataset(data_path, "test")
 
     def train_dataloader(self):
         return DataLoader(
@@ -164,10 +179,23 @@ class TextClassificationDataModule(pl.LightningDataModule):
 
     def val_dataloader(self):
         collator_config = deepcopy(self.collator_config)
-        collator_config["mask_ratio"] = 0.
+        collator_config["random_start"] = False
 
         return DataLoader(
             dataset=self.val_dataset,
+            **self.loader_config,
+            collate_fn=TextClassificationCollatorFn(
+                **collator_config,
+            ),
+            shuffle=False,
+        )
+    
+    def test_dataloader(self):
+        collator_config = deepcopy(self.collator_config)
+        collator_config["random_start"] = False
+
+        return DataLoader(
+            dataset=self.test_dataset,
             **self.loader_config,
             collate_fn=TextClassificationCollatorFn(
                 **collator_config,
@@ -180,6 +208,6 @@ class TextClassificationDataModule(pl.LightningDataModule):
 
     def get_pad_token_id(self):
         return PAD_TOKEN
-    
+
     def get_cls_token_id(self):
         return CLS_TOKEN

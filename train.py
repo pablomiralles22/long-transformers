@@ -27,6 +27,15 @@ def run(config):
     fit_params = config.get("fit_params") or {}
     wandb_params = config.get("wandb") or {}
 
+    # setup trainer and run
+    if wandb_params is not None:
+        logger = pl.loggers.WandbLogger(
+            config=config,
+            settings=wandb.Settings(start_method="fork"),
+            **wandb_params,
+        )
+    else:
+        logger = None
 
     # setup trainer params
     trainer_module = TrainerModule(
@@ -41,27 +50,20 @@ def run(config):
     # get dataset
     data_module = trainer_module.data_module
 
-    # setup trainer and run
-    if wandb_params is not None:
-        logger = pl.loggers.WandbLogger(
-            config=config,
-            settings=wandb.Settings(start_method="fork"),
-            **wandb_params,
-        )
-    else:
-        logger = None
-
     trainer = pl.Trainer(**trainer_params, logger=logger)
 
-    # store config in log dir
-    if logger is None:
-        config_path = os.path.join(trainer.log_dir, "config.json")
-        os.makedirs(trainer.log_dir, exist_ok=True)
-        with open(config_path, "w", encoding="utf-8") as file:
-            json.dump(config, file, indent=4)
+    # # store config in log dir
+    # if logger is None:
+    #     config_path = os.path.join(trainer.log_dir, "config.json")
+    #     os.makedirs(trainer.log_dir, exist_ok=True)
+    #     with open(config_path, "w", encoding="utf-8") as file:
+    #         json.dump(config, file, indent=4)
 
     # train
     trainer.fit(trainer_module, data_module, **fit_params)
+
+    # test
+    trainer.test(datamodule=data_module, ckpt_path="best")
 
 @hydra.main(version_base=None, config_path="configs", config_name="config.yaml")
 def main(config: OmegaConf):

@@ -32,6 +32,9 @@ class ClassificationTask(Task):
         logits = self.head(outputs, inputs["attention_mask"])  # [B, num_classes]
         labels = inputs["labels"]
 
+        if self.num_classes == 2:
+            labels = labels.float().reshape(-1, 1)
+
         loss = self.loss_fn(logits, labels)
         acc = self.accuracy(logits, labels)
 

@@ -1,0 +1,27 @@
+# @package _global_
+defaults:
+  - /trainer: default
+  - /dataset: text_classification
+  - /optimizer: adamw
+  - /scheduler: plateau
+
+experiment_name: ???
+
+callback:
+  early_stopping:
+    patience: 10
+
+trainer:
+  max_epochs: 100
+
+task:
+  classification:
+    head_params:
+      num_hidden_layers: 0
+      reduction_method: mean
+  
+# scheduler:
+#   schedulers:
+#     cosine:
+#       T_0: 100
+#       T_mult: 1

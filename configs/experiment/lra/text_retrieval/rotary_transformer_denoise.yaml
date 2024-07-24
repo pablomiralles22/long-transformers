@@ -1,0 +1,35 @@
+# @package _global_
+defaults:
+  - /experiment/lra/text_retrieval/base@_here_
+  - /model: rotary_transformer
+  - /task:
+    - denoise
+
+experiment_name: denoise
+
+model:
+  layer:
+    params:
+      d_model: 128
+      nhead: 4
+      dim_feedforward: 256
+      dropout: 0.0
+      attention_params:
+        type: rotary
+        freq: 10000
+  num_layers: 6
+
+optimizer:
+  lr: 1.0e-3
+  weight_decay: 0.0
+
+dataset:
+  batch_size: 32
+
+task:
+  denoise:
+    num_embeddings: 259
+    mask_token_id: 2
+
+trainer:
+  devices: [ 2 ]

@@ -1,0 +1,20 @@
+# @package _global_
+defaults:
+  - /task:
+    - classification
+
+task:
+  classification:
+    num_classes: 2
+    head_params:
+      concat_consecutive: false
+
+dataset:
+  _name_: text-classification
+  data_path: datasets/aclImdb
+  batch_size: 32
+  max_len: 4096
+  random_start: false
+  add_cls_token: false
+  pin_memory: true
+  num_workers: 6

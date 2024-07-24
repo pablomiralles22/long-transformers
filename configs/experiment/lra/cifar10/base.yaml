@@ -10,3 +10,6 @@ experiment_name: ???
 callback:
   early_stopping:
     patience: 20
+
+trainer:
+  max_epochs: 200

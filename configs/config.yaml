@@ -16,7 +16,7 @@ wandb:
   id: null # pass correct id to resume experiment!
   # Below options should not need to be specified
   name: ''
-  # log_model: False
+  log_model: true
   # prefix: ""
   # tags: []
 
