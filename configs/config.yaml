@@ -12,7 +12,7 @@ wandb:
   group: ""
   job_type: training
   mode: online # choices=['online', 'offline', 'disabled']
-  save_dir: null
+  save_dir: ./out/logs/wandb
   id: null # pass correct id to resume experiment!
   # Below options should not need to be specified
   name: ''
@@ -22,4 +22,4 @@ wandb:
 
 hydra:
   run:
-    dir: ./out/hydra_log/${now:%Y-%m-%d}/${now:%H-%M-%S-%f}
+    dir: ./out/logs/hydra/${now:%Y-%m-%d}/${now:%H-%M-%S-%f}
