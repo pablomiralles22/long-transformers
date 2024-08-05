@@ -1,6 +1,5 @@
 import hydra
 import sys
-import json
 import os
 import pytorch_lightning as pl
 import wandb
@@ -10,8 +9,9 @@ dir_path = os.path.dirname(os.path.abspath(__file__))
 project_root_path = os.path.join(dir_path, "..")
 sys.path.append(project_root_path)
 
-from src.trainers.general_trainer import TrainerModule
+from src.training.trainer import TrainerModule
 from omegaconf import OmegaConf
+from copy import deepcopy
 
 
 ###### Train ######
@@ -30,7 +30,7 @@ def run(config):
     # setup trainer and run
     if wandb_params is not None:
         logger = pl.loggers.WandbLogger(
-            config=config,
+            config=deepcopy(config),
             settings=wandb.Settings(start_method="fork"),
             **wandb_params,
         )
@@ -69,7 +69,10 @@ def run(config):
 def main(config: OmegaConf):
     config = OmegaConf.to_object(config)
     # print(OmegaConf.to_yaml(config))
-    run(config)
+    try:
+        run(config)
+    except ReferenceError:
+        print("Catched reference error")
 
 if __name__ == "__main__":
     main()

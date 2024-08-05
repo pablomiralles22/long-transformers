@@ -46,6 +46,8 @@ class ModelBuilder:
         layer_type = layer.pop("type")
         layer_params = layer.pop("params")
 
-        layer = LayerBuilder.build(layer_type, layer_params)
-        layers = [deepcopy(layer) for _ in range(num_layers)]
+        layers = [
+            LayerBuilder.build(layer_type, deepcopy(layer_params))
+            for _ in range(num_layers)
+        ]
         return LayeredModel(**params, layers=layers)

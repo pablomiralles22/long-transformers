@@ -1,6 +1,6 @@
 # @package _global_
 defaults:
-  - /experiment/lra/text_classification/base@_here_
+  - lra/text_classification/base
   - /model: rotary_transformer
   - /task:
     - denoise
@@ -22,7 +22,7 @@ model:
 
 optimizer:
   lr: 1.0e-3
-  weight_decay: 0.01
+  weight_decay: 0.1
 
 dataset:
   batch_size: 16
@@ -33,4 +33,8 @@ task:
     mask_token_id: 2
 
 trainer:
-  devices: [ 2 ]
+  devices: [ 0 ]
+
+callback:
+  stochastic_weight_averaging:
+    swa_lrs: 1.0e-2

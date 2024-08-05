@@ -10,9 +10,10 @@ from copy import deepcopy
 from torchvision import transforms
 
 
-NUM_EMBEDDINGS = 256 + 2  # PAD, CLS, bytes
 PAD_TOKEN = 0
 CLS_TOKEN = 1
+START_TOKEN = 2
+NUM_EMBEDDINGS = 256 + START_TOKEN  # PAD, CLS, bytes
 
 
 class PathfinderSubdataset(Dataset):
@@ -51,23 +52,20 @@ def build_dataset(data_path):
 
 
 class PathfinderCollatorFn:
-    def __init__(self, max_len, enable_augment=False, pad_token=0, cls_token=1):
+    def __init__(self, max_len, enable_augment=False, add_cls_token=False):
         self.max_len = max_len
-        self.pad_token = pad_token
-        self.cls_token = cls_token
+        self.add_cls_token = add_cls_token
         if enable_augment is True:
-            print("Augmentation activated")
             self.transform = transforms.Compose(
                 [
                     transforms.RandomHorizontalFlip(p=0.5),
                     transforms.RandomVerticalFlip(p=0.5),
-                    transforms.RandomAffine(degrees=10, translate=(0.1, 0.1), scale=(0.9, 0.9)),
+                    transforms.RandomAffine(degrees=10, translate=(0.1, 0.1), scale=(0.9, 1.1)),
                     transforms.Grayscale(num_output_channels=1),
                     transforms.PILToTensor(),
                 ]
             )
         else:
-            print("Augmentation deactivated")
             self.transform = transforms.Compose(
                 [
                     transforms.Grayscale(num_output_channels=1),
@@ -87,12 +85,14 @@ class PathfinderCollatorFn:
             image = torch.flatten(image).long()  # Important to prevent overflow
 
             # build input ids
-            idxs = [self.cls_token] + [2 + pixel for pixel in image]  # 2 for PAD, CLS
+            idxs = [START_TOKEN + pixel for pixel in image]
+            if self.add_cls_token:
+                idxs = [CLS_TOKEN] + idxs
 
             length = min(len(idxs), self.max_len)
             padding_size = self.max_len - length
 
-            idxs = idxs[:length] + [self.pad_token] * padding_size
+            idxs = idxs[:length] + [PAD_TOKEN] * padding_size
 
             # build attention mask
             attention_mask = [1.0] * length + [0.0] * padding_size
@@ -109,11 +109,14 @@ class PathfinderCollatorFn:
 
 
 class PathfinderDataModule(pl.LightningDataModule):
+    __SPLIT_RATIOS = (0.8, 0.1, 0.1)
+
     @classmethod
     def get_default_collator_config(cls):
         return {
             "max_len": 512,
             "enable_augment": False,
+            "add_cls_token": False,
         }
 
     @classmethod
@@ -154,11 +157,13 @@ class PathfinderDataModule(pl.LightningDataModule):
 
         # load datasets
         dataset = build_dataset(data_path)
-        # 0.8 train, 0.2 val
-        train_size = int(0.8 * len(dataset))
-        val_size = len(dataset) - train_size
-        self.train_dataset, self.val_dataset = random_split(
-            dataset, [train_size, val_size], generator=torch.Generator().manual_seed(42)
+        # split the dataset
+        train_size = int(len(dataset) * self.__SPLIT_RATIOS[0])
+        val_size = int(len(dataset) * self.__SPLIT_RATIOS[1])
+        test_size = len(dataset) - train_size - val_size
+
+        self.train_dataset, self.val_dataset, self.test_dataset = random_split(
+            dataset, [train_size, val_size, test_size]
         )
 
     def train_dataloader(self):
@@ -176,6 +181,18 @@ class PathfinderDataModule(pl.LightningDataModule):
         collator_config["enable_augment"] = False
         return DataLoader(
             dataset=self.val_dataset,
+            **self.loader_config,
+            collate_fn=PathfinderCollatorFn(
+                **collator_config,
+            ),
+            shuffle=False,
+        )
+    
+    def test_dataloader(self):
+        collator_config = deepcopy(self.collator_config)
+        collator_config["enable_augment"] = False
+        return DataLoader(
+            dataset=self.test_dataset,
             **self.loader_config,
             collate_fn=PathfinderCollatorFn(
                 **collator_config,

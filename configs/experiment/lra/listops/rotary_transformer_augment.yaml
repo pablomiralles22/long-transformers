@@ -1,0 +1,33 @@
+# @package _global_
+defaults:
+  - /experiment/lra/listops/base@_here_
+  - /model: rotary_transformer
+
+experiment_name: augment
+
+model:
+  layer:
+    params:
+      d_model: 256
+      nhead: 4
+      dim_feedforward: 512
+      dropout: 0.0
+      attention_params:
+        type: rotary
+        freq: 10000
+        disable_half: false
+  num_layers: 6
+
+optimizer:
+  lr: 1.0e-4
+  weight_decay: 0.05
+
+dataset:
+  batch_size: 8
+
+  # add_cls_token: true
+  # max_len: 2001
+
+trainer:
+  devices: [ 2 ]
+  accumulate_grad_batches: 8

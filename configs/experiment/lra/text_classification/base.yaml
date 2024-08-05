@@ -3,25 +3,26 @@ defaults:
   - /trainer: default
   - /dataset: text_classification
   - /optimizer: adamw
-  - /scheduler: plateau
+  - /scheduler:
+    - train_plateau
+    # - constant_w_cooldown
+  - /callback:
+    - stochastic_weight_averaging
 
 experiment_name: ???
 
 callback:
   early_stopping:
-    patience: 10
+    patience: 20
+  stochastic_weight_averaging:
+    annealing_epochs: 4
 
 trainer:
-  max_epochs: 100
+  max_epochs: 80
+  max_time: "00:24:00:00"
 
 task:
   classification:
     head_params:
       num_hidden_layers: 0
       reduction_method: mean
-  
-# scheduler:
-#   schedulers:
-#     cosine:
-#       T_0: 100
-#       T_mult: 1

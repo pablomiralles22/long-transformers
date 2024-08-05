@@ -1,0 +1,16 @@
+linear_decay_w_warmup:
+  _type_: sequential
+
+  interval: step
+  frequency: 1
+
+  scheduler_params:
+    schedulers:
+      - _type_: constant
+        step_ratio: 0.9
+        scheduler_params:
+          factor: 1.
+      - _type_: constant
+        step_ratio: 0.1
+        scheduler_params:
+          factor: 0.1

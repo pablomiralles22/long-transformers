@@ -19,7 +19,7 @@ class OptimizerBuilder:
             weight_decay = optimizer_config.get("weight_decay", 0.01)
             if weight_decay > 0:
                 # separate parameters with weight decay and without weight decay
-                weight_decay_params, no_weight_decay_params = WeightDecayParamFilter.filter(model)
+                weight_decay_params, no_weight_decay_params = WeightDecayParamFilter.filter(model, debug=False)
                 optimizer_config["weight_decay"] = 0.0
 
                 parameters = [

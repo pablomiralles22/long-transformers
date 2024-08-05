@@ -1,0 +1,13 @@
+train_plateau:
+  _type_: plateau
+
+  interval: epoch
+  frequency: 1
+
+  scheduler_params:
+    factor: 0.2  # Decay factor when ReduceLROnPlateau is used
+    patience: 3
+    min_lr: 1.0e-7  # Minimum learning rate during annealing
+
+    metric: train_loss
+    mode: min

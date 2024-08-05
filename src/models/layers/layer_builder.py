@@ -45,8 +45,8 @@ LayerType = Literal[
 
 class LayerBuilder:
     @classmethod
-    def build(cls, type: LayerType, params: dict) -> Layer:
-        match type:
+    def build(cls, layer_type: LayerType, params: dict) -> Layer:
+        match layer_type:
             case "linear":
                 return Overlayer(nn.Linear(**params))
             # conv and pooling

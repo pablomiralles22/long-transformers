@@ -1,11 +1,9 @@
 # @package _global_
 defaults:
-  - /experiment/lra/text_retrieval/base@_here_
+  - /experiment/lra/pathfinder/base@_here_
   - /model: rotary_transformer
-  - /task:
-    - denoise
 
-experiment_name: denoise
+experiment_name: augment
 
 model:
   layer:
@@ -22,16 +20,10 @@ model:
 
 optimizer:
   lr: 1.0e-3
-  weight_decay: 0.0
+  weight_decay: 0.01
 
 dataset:
-  batch_size: 16
-
-task:
-  denoise:
-    num_embeddings: 259
-    mask_token_id: 2
+  batch_size: 128
 
 trainer:
-  devices: [ 2 ]
-  accumulate_grad_batches: 4
+  devices: [ 1 ]

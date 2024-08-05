@@ -1,10 +1,18 @@
-_name_: sequential
-schedulers:
-  - _name_: linear
-    step_ratio: 0.1
-    start_factor: 1.0e-8
-    end_factor: 1.0
-  - _name_: linear
-    step_ratio: 0.9
-    start_factor: 1.0
-    end_factor: 0.0
+linear_decay_w_warmup:
+  _type_: sequential
+
+  interval: step
+  frequency: 1
+
+  scheduler_params:
+    schedulers:
+      - _type_: linear
+        step_ratio: 0.1
+        scheduler_params:
+          start_factor: 1.0e-8
+          end_factor: 1.0
+      - _type_: linear
+        step_ratio: 0.9
+        scheduler_params:
+          start_factor: 1.0
+          end_factor: 0.0

@@ -1,0 +1,24 @@
+# @package _global_
+defaults:
+  - /task:
+    - classification
+
+task:
+  classification:
+    num_classes: 10
+    head_params:
+      reduction_method: mean
+
+dataset:
+  _name_: listops
+  data_path: datasets/lra_release/listops-1000
+  batch_size: 64
+
+  max_len: 2000
+  add_cls_token: false
+
+  limit_tree_height: null
+  augment: 1.0
+  
+  pin_memory: true
+  num_workers: 6

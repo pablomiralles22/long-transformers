@@ -3,13 +3,15 @@ import torch
 import pytorch_lightning as pl
 import pandas as pd
 import random
-import math
 
 from copy import deepcopy
 from torch.utils.data import Dataset, DataLoader
 from typing import Literal, Optional
 
-NUM_EMBEDDINGS = 2 + 15  # PAD, CLS, tokens
+PAD_TOKEN = 0
+CLS_TOKEN = 1
+START_TOKEN = 2
+NUM_EMBEDDINGS = START_TOKEN + 15  # PAD, CLS, tokens
 
 class ListopsDataset(Dataset):
     def __init__(
@@ -47,6 +49,11 @@ class ListopsCollatorFn:
         '[MAX', '[MED', '[MIN', '[SM', ']',
     ]
 
+    __TOKEN_TO_IDX = {
+        token: idx + START_TOKEN
+        for idx, token in enumerate(__TOKENS)
+    }
+
     __OPERATORS = {
         "[MED": lambda x: sorted(x)[len(x) // 2],
         "[MAX": max,
@@ -59,31 +66,16 @@ class ListopsCollatorFn:
         max_len, 
         augment: float = 0.,
         limit_tree_height: Optional[int] = None,
-        pad_token_id: int = 0,
-        cls_token_id: int = 1,
-        pad_token_type_id: int = 0,
-        cls_token_type_id: int = 1,
+        add_cls_token: bool = False,
     ):
         self.max_len = max_len
         self.augment = augment
         self.limit_tree_height = limit_tree_height
-
-        self.pad_token_id = pad_token_id
-        self.cls_token_id = cls_token_id
-
-        self.pad_token_type_id = pad_token_type_id
-        self.cls_token_type_id = cls_token_type_id
-
-        start_id = max(pad_token_id, cls_token_id) + 1
-        self.__token_to_id = {
-            token: i + start_id
-            for i, token in enumerate(self.__TOKENS)
-        }
+        self.add_cls_token = add_cls_token
 
     def __call__(self, batch):
         input_ids = []
         attention_masks = []
-        # token_type_ids = []
         labels = []
 
         actual_max_len = -1
@@ -99,13 +91,16 @@ class ListopsCollatorFn:
                 tokens = self.__augment(tokens)
 
             # create input ids and token type ids
-            indices = [self.cls_token_id] + [self.__token_to_id[token] for token in tokens]
+            if self.add_cls_token:
+                indices = [CLS_TOKEN] + [self.__TOKEN_TO_IDX[token] for token in tokens]
+            else:
+                indices = [self.__TOKEN_TO_IDX[token] for token in tokens]
 
             length = min(len(indices), self.max_len)
             actual_max_len = max(actual_max_len, length)
             padding_size = self.max_len - length
 
-            indices = indices[:length] + [self.pad_token_id] * padding_size
+            indices = indices[:length] + [PAD_TOKEN] * padding_size
 
             # create attention mask
             attention_mask = [1.] * length + [0.] * padding_size
@@ -132,7 +127,8 @@ class ListopsCollatorFn:
 
             elif token.startswith("]"):
                 random.shuffle(subtokens[-1])
-                joined_tokens: str = " ".join([ops[-1]] + subtokens[-1] + ["]"])
+                subtokens_str = " ".join(subtokens[-1])
+                joined_tokens: str = f"{ops[-1]} {subtokens_str} ]"
 
                 ops.pop()
                 subtokens.pop()
@@ -182,54 +178,15 @@ class ListopsCollatorFn:
         
         return subtokens[0]
     
-    @classmethod
-    def __augment_close_nodes(cls, tree: list[str], a=-8., b=0.5):
-        ops: list[callable] = []
-        operands: list[list[int]] = [[]]
-        subtokens: list[list[str]] = [[]]
-        current_depth = 1
-
-        for token in tree:
-            if token.startswith("["):
-                ops.append(token)
-                operands.append([])
-                subtokens.append([])
-                current_depth += 1
-
-            elif token.startswith("]"):
-                result = cls.__OPERATORS[ops[-1]](operands[-1])
-                
-                full_tokens: list[str] = [ops[-1]] + subtokens[-1] + ["]"]
-                result_token: list[str] = [str(result)]
-
-                ops.pop()
-                operands.pop()
-                subtokens.pop()
-
-                logit_contract = a + b * current_depth
-                prob_contract = 1. / (1. + math.exp(-logit_contract))
-                if random.uniform(0, 1) < prob_contract:
-                    subtokens[-1].extend(result_token)
-                else:
-                    subtokens[-1].extend(full_tokens)
-
-                operands[-1].append(result)
-
-                current_depth -= 1
-            else:
-                operands[-1].append(int(token))
-                subtokens[-1].append(token)
-        
-        return subtokens[0]
-
 
 class ListopsDataModule(pl.LightningDataModule):
     @classmethod
     def get_default_collator_config(cls):
         return {
             "max_len": 2000,
-            "augment": 0.,
+            "augment": 1.,
             "limit_tree_height": None,
+            "add_cls_token": False,
         }
 
     @classmethod
@@ -265,7 +222,7 @@ class ListopsDataModule(pl.LightningDataModule):
         }
         test_collator_config = {
             **train_collator_config,
-            "augment": False,
+            "augment": 0.,
         }
 
         # build loader config
@@ -310,8 +267,8 @@ class ListopsDataModule(pl.LightningDataModule):
         return NUM_EMBEDDINGS
 
     def get_pad_token_id(self):
-        return self.train_loader_config["collate_fn"].pad_token_id
+        return PAD_TOKEN
     
     def get_cls_token_id(self):
-        return self.train_loader_config["collate_fn"].cls_token_id
+        return CLS_TOKEN
     

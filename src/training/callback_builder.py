@@ -3,6 +3,7 @@ from pytorch_lightning.callbacks import (
     ModelCheckpoint,
     EarlyStopping,
     LearningRateMonitor,
+    StochasticWeightAveraging,
 )
 
 
@@ -24,5 +25,7 @@ class CallbackBuilder:
             return EarlyStopping(**callback_params, monitor=metric_to_track, mode=mode)
         elif name == "learning_rate_monitor":
             return LearningRateMonitor(**callback_params)
+        elif name == "stochastic_weight_averaging":
+            return StochasticWeightAveraging(**callback_params)
         else:
             raise ValueError(f"Unknown callback: {name}")

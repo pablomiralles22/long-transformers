@@ -1,0 +1,7 @@
+stochastic_weight_averaging:
+  _name_: stochastic_weight_averaging
+  swa_lrs: ???
+  swa_epoch_start: 0.75
+  annealing_epochs: ???
+  annealing_strategy: cos
+  device: cpu

@@ -5,9 +5,9 @@ from pytorch_lightning.callbacks import Callback
 from src.data_loaders.data_module_builder import DataModuleBuilder
 from src.models.model_builder import ModelBuilder
 from src.tasks.task_builder import TaskBuilder
-from src.utils.optimizer_builder import OptimizerBuilder
-from src.utils.scheduler_builder import SchedulerBuilder
-from src.utils.callback_builder import CallbackBuilder
+from src.training.optimizer_builder import OptimizerBuilder
+from src.training.scheduler_builder import SchedulerBuilder
+from src.training.callback_builder import CallbackBuilder
 
 class TrainerModule(pl.LightningModule):
     def __init__(
@@ -20,13 +20,15 @@ class TrainerModule(pl.LightningModule):
         callbacks_params: list[dict],
     ):
         super().__init__()
-        # self.save_hyperparameters()  # no need, it is saved in train.py
 
         # optimizer config
         self.optimizer_config = optimizer_params
 
-        # scheduler config
+        # scheduler config & lists
         self.scheduler_config = scheduler_params
+        self.step_schedulers = []
+        self.epoch_schedulers = []
+        self.swa_epoch_start = None
 
         # callbacks
         self.callbacks_config = callbacks_params
@@ -64,6 +66,9 @@ class TrainerModule(pl.LightningModule):
                 self.metric_to_track = task.get_metric_to_track()
         
 
+    # ======================================================== #
+    #                      TRAINING                            #
+    # ======================================================== #
     def training_step(self, batch, batch_idx):
         batch_size = self.__get_batch_size(self.data_module.train_dataloader())
         batch = self._preprocess_batch(batch, train=True)
@@ -112,28 +117,67 @@ class TrainerModule(pl.LightningModule):
     
     def __get_batch_size(self, dataloader):
         return dataloader.batch_size
+    
+    # ======================================================== #
+    #                      SCHEDULERS                          #
+    # ======================================================== #
+    def on_train_batch_end(self, outputs, batch, batch_idx) -> None:
+        super().on_train_batch_end(outputs, batch, batch_idx)
 
+        if self.swa_epoch_start is not None and self.current_epoch >= self.swa_epoch_start:
+            return
+
+        for scheduler_dict in self.step_schedulers:
+            if "monitor" in scheduler_dict:
+                metric_val = self.trainer.callback_metrics[scheduler_dict["monitor"]]
+                scheduler_dict["scheduler"].step(metric_val)
+            else:
+                scheduler_dict["scheduler"].step()
+
+    def on_train_epoch_end(self) -> None:
+        super().on_train_epoch_end()
+
+        if self.swa_epoch_start is not None and self.current_epoch >= self.swa_epoch_start:
+            return
+
+        for scheduler_dict in self.epoch_schedulers:
+            if "monitor" in scheduler_dict:
+                metric_val = self.trainer.callback_metrics[scheduler_dict["monitor"]]
+                scheduler_dict["scheduler"].step(metric_val)
+            else:
+                scheduler_dict["scheduler"].step()
+
+    # ======================================================== #
+    #                      CONFIGURATION                       #
+    # ======================================================== #
     def configure_optimizers(self):
-        scheduler_config = deepcopy(self.scheduler_config)
+        schedulers_configs = deepcopy(self.scheduler_config)
         optimizer_config = deepcopy(self.optimizer_config)
 
+        # build optimizer
         optimizer = OptimizerBuilder.build(self, optimizer_config)
 
-        # set up scheduler
+        # set up schedulers
         train_len = len(self.data_module.train_dataloader())
         max_epochs = self.trainer.max_epochs
         train_steps = train_len * max_epochs
 
-        scheduler: dict = SchedulerBuilder.build(
-            optimizer,
-            scheduler_config,
-            train_steps,
-        )
+        for scheduler_config in schedulers_configs.values():
+            scheduler_dict: dict = SchedulerBuilder.build(
+                optimizer,
+                scheduler_config,
+                train_steps,
+            )
 
-        return {
-            "optimizer": optimizer,
-            "lr_scheduler": scheduler,
-        }
+            if scheduler_dict["interval"] == "step":
+                self.step_schedulers.append(scheduler_dict)
+            else:
+                self.epoch_schedulers.append(scheduler_dict)
+
+        self.__configure_swa_for_schedulers()
+
+        # return
+        return optimizer
     
 
     def configure_callbacks(self) -> list[Callback]:
@@ -144,4 +188,15 @@ class TrainerModule(pl.LightningModule):
             CallbackBuilder.build_callback(config, metric_to_track, mode)
             for config in callbacks_config
         ]
+
+    def __configure_swa_for_schedulers(self) -> None:
+        for callback_config in self.callbacks_config:
+            if callback_config["_name_"] != "stochastic_weight_averaging":
+                continue
+
+            self.swa_epoch_start = callback_config.get("swa_epoch_start", 0.8)
+            if isinstance(self.swa_epoch_start, float):
+                self.swa_epoch_start = int(self.swa_epoch_start * self.trainer.max_epochs)
+            break
+
 

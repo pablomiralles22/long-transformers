@@ -1,13 +1,19 @@
-_name_: sequential
-schedulers:
-  warmup:
-    _name_: linear
-    step_ratio: 0.1
-    start_factor: 1.0e-8
-    end_factor: 1.0
-  cosine:
-    _name_: cosine
-    step_ratio: 0.9
-    T_0: 1
-    T_mult: 2
-    eta_min: 0.0
+cosine_decay_w_warmup:
+  _type_: sequential
+
+  interval: step
+  frequency: 1
+
+  scheduler_params:
+    schedulers:
+      - _type_: linear
+        step_ratio: 0.1
+        scheduler_params:
+          start_factor: 1.0e-5
+          end_factor: 1.0
+      - _type_: cosine
+        step_ratio: 0.9
+        scheduler_params:
+          T_0: 1
+          T_mult: 2
+          eta_min: 0.0

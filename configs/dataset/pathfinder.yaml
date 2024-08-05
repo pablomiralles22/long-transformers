@@ -1,0 +1,26 @@
+# @package _global_
+defaults:
+  - /task:
+    - classification
+
+task:
+  classification:
+    num_classes: 2
+    head_params:
+      reduction_method: mean
+
+dataset:
+  _name_: pathfinder
+
+  data_path:
+    - "datasets/lra_release/pathfinder32/curv_baseline"
+    - "datasets/lra_release/pathfinder32/curv_contour_length_9"
+    - "datasets/lra_release/pathfinder32/curv_contour_length_14"
+
+  max_len: 1024
+  enable_augment: true
+  add_cls_token: false
+
+  batch_size: 128
+  pin_memory: true
+  num_workers: 6
